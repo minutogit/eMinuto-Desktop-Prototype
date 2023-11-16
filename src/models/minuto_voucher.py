@@ -81,33 +81,37 @@ class MinutoVoucher:
         self.guarantor_signatures = [(g[0], base64.b64decode(g[1])) for g in self.guarantor_signatures]
 
     @classmethod
-    def read_from_disk(cls, file_path):
+    def read_from_file(cls, file_path):
         with open(file_path, 'r') as file:
             data = json.load(file)
 
-            # Erstelle ein MinutoVoucher-Objekt mit den ausgelesenen Daten
-            voucher = cls(
-                creator_id=data.get('creator_id', ''),
-                creator_name=data.get('creator_name', ''),
-                creator_address=data.get('creator_address', ''),
-                creator_gender=data.get('creator_gender', 0),
-                email=data.get('email', ''),
-                phone=data.get('phone', ''),
-                service_offer=data.get('service_offer', ''),
-                coordinates=data.get('coordinates', ''),
-                amount=data.get('amount', 0),
-                region=data.get('region', ''),
-                validity=data.get('validity', '')
-            )
-            voucher.voucher_id = data.get('voucher_id', str(uuid.uuid4()))
-            voucher.creation_date = data.get('creation_date', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            # Erstellen einer neuen Voucher-Instanz mit den Basisdaten
+            voucher = cls()
+            voucher.creator_id = "data.get('creator_id', '')"
+            voucher.creator_name = data.get('creator_name', '')
+            voucher.creator_address = data.get('creator_address', '')
+            voucher.creator_gender = data.get('creator_gender', 0)
+            voucher.email = data.get('email', '')
+            voucher.phone = data.get('phone', '')
+            voucher.service_offer = data.get('service_offer', '')
+            voucher.coordinates = data.get('coordinates', '')
+            voucher.amount = data.get('amount', 0)
+            voucher.region = data.get('region', '')
+            voucher.validity = data.get('validity', '')
 
-            # Konvertiert die hexadezimalen Strings zurück in Byte-Objekte
-            voucher.creator_signature = base64.b64decode(data.get('creator_signature', '')) if data.get(
-                'creator_signature') else None
+            # Setzen der zusätzlichen Felder
+            voucher.voucher_id = data.get('voucher_id', voucher.voucher_id)  # Behalte die ursprüngliche ID bei
+            voucher.creation_date = data.get('creation_date', voucher.creation_date)
+
+            # Umwandlung der Base64-kodierten Strings zurück in Byte-Objekte
+            if data.get('creator_signature'):
+                voucher.creator_signature = base64.b64decode(data['creator_signature'])
+
             voucher.guarantor_signatures = [(g[0], base64.b64decode(g[1])) for g in
                                             data.get('guarantor_signatures', [])]
-
+            print("--------------------")
+            print(voucher)
+            print("####################")
             return voucher
 
     def __str__(self):

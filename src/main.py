@@ -16,13 +16,18 @@ def main():
     # Erstelle einen MinutoVoucher mit dieser Person als Ersteller
     hansdampf.create_voucher(100, "Frankfurt", "2028")
     hansdampf.current_voucher.save_to_disk("minutoschein.txt")
+    print(hansdampf.current_voucher)
 
-
+    #buerge_maennlich.init_empty_voucher()
+    buerge_maennlich.read_voucher_from_file("minutoschein.txt")
+    print(buerge_maennlich.current_voucher)
+    # todo schein durch buergen signieren
     #b1_load_voucher = MinutoVoucher.read_from_disk("../minutoschein.txt")
     #buerge_maennlich.sign_voucher_as_guarantor(b1_load_voucher)
     #b1_load_voucher.save_to_disk("minutoschein-b1.txt")
 
-    print(hansdampf.current_voucher)
+
+
     #print(b1_load_voucher)
 
 if __name__ == "__main__":

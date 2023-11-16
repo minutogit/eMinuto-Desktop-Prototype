@@ -17,10 +17,19 @@ class Person:
 
         self.current_voucher = None  # Initialisierung von current_voucher
 
+
+    def init_empty_voucher(self):
+        from src.models.minuto_voucher import MinutoVoucher
+        self.current_voucher = MinutoVoucher()
+
     def create_voucher(self, amount, region, validity):
         """ Erstellt einen neuen MinutoVoucher. """
         from src.models.minuto_voucher import MinutoVoucher
         self.current_voucher = MinutoVoucher.create(self.id, self.name, self.address, self.gender, self.email, self.phone, self.service_offer, self.coordinates, amount, region, validity)
+
+    def read_voucher_from_file(self, filename):
+        self.init_empty_voucher()
+        self.current_voucher = self.current_voucher.read_from_file(filename)
 
     def sign_voucher_as_guarantor(self, voucher):
         """ Bürgen signieren den Gutschein mit erweiterten Informationen. """
