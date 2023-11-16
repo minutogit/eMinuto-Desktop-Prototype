@@ -10,19 +10,19 @@ from .person import Person
 
 
 class MinutoVoucher:
-    def __init__(self, creator: Person, amount=0, region='', validity = ''):
+    def __init__(self, creator_id, creator_name, creator_address, creator_gender, email, phone, service_offer, coordinates, amount=0, region='', validity=''):
         self.voucher_id = str(uuid.uuid4())  # Generiert eine eindeutige voucher_id
-        self.creator_id = creator.id
-        self.creator_name = creator.name
-        self.creator_address = creator.address
-        self.creator_gender = creator.gender
+        self.creator_id = creator_id
+        self.creator_name = creator_name
+        self.creator_address = creator_address
+        self.creator_gender = creator_gender
         self.amount = amount
-        self.service_offer = creator.service_offer
+        self.service_offer = service_offer
         self.validity = validity
         self.region = region
-        self.coordinates = creator.coordinates
-        self.email = creator.email
-        self.phone = creator.phone
+        self.coordinates = coordinates
+        self.email = email
+        self.phone = phone
         self.creation_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.guarantor_signatures = []  # Signaturen der Bürgen
         self.creator_signature = None  # Signatur des Schöpfers
@@ -63,28 +63,21 @@ class MinutoVoucher:
             self.creator_signature = base64.b64decode(self.creator_signature)
         self.guarantor_signatures = [(g[0], base64.b64decode(g[1])) for g in self.guarantor_signatures]
 
-
     @classmethod
     def read_from_disk(cls, file_path):
         with open(file_path, 'r') as file:
             data = json.load(file)
 
-            # Erstelle ein temporäres Person-Objekt mit den geladenen Daten
-            temp_person = Person(
-                key=Key(empty=True),  # Empty Key Object
-                name=data.get('creator_name', ''),
-                address=data.get('creator_address', ''),
-                gender=data.get('creator_gender', 0),
+            # Erstelle ein MinutoVoucher-Objekt mit den ausgelesenen Daten
+            voucher = cls(
+                creator_id=data.get('creator_id', ''),
+                creator_name=data.get('creator_name', ''),
+                creator_address=data.get('creator_address', ''),
+                creator_gender=data.get('creator_gender', 0),
                 email=data.get('email', ''),
                 phone=data.get('phone', ''),
                 service_offer=data.get('service_offer', ''),
                 coordinates=data.get('coordinates', ''),
-                validity=data.get('validity', '')
-            )
-
-            # Erstelle ein MinutoVoucher-Objekt mit dem temporären Person-Objekt
-            voucher = cls(
-                creator=temp_person,
                 amount=data.get('amount', 0),
                 region=data.get('region', ''),
                 validity=data.get('validity', '')

@@ -20,7 +20,7 @@ class Person:
     def create_voucher(self, amount, region, validity):
         """ Erstellt einen neuen MinutoVoucher. """
         from src.models.minuto_voucher import MinutoVoucher
-        self.current_voucher = MinutoVoucher(self, amount, region, validity)
+        self.current_voucher = MinutoVoucher(self.id, self.name, self.address, self.gender, self.email, self.phone, self.service_offer, self.coordinates, amount, region, validity)
 
     def sign_voucher_as_guarantor(self, voucher):
         """ Bürgen signieren den Gutschein mit erweiterten Informationen. """

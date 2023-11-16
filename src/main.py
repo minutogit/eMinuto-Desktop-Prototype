@@ -17,6 +17,7 @@ def main():
     hansdampf.create_voucher(100, "Frankfurt", "2028")
     hansdampf.current_voucher.save_to_disk("minutoschein.txt")
 
+
     #b1_load_voucher = MinutoVoucher.read_from_disk("../minutoschein.txt")
     #buerge_maennlich.sign_voucher_as_guarantor(b1_load_voucher)
     #b1_load_voucher.save_to_disk("minutoschein-b1.txt")
