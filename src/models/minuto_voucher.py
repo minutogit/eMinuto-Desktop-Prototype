@@ -10,22 +10,39 @@ from .person import Person
 
 
 class MinutoVoucher:
-    def __init__(self, creator_id, creator_name, creator_address, creator_gender, email, phone, service_offer, coordinates, amount=0, region='', validity=''):
+    def __init__(self):
         self.voucher_id = str(uuid.uuid4())  # Generiert eine eindeutige voucher_id
-        self.creator_id = creator_id
-        self.creator_name = creator_name
-        self.creator_address = creator_address
-        self.creator_gender = creator_gender
-        self.amount = amount
-        self.service_offer = service_offer
-        self.validity = validity
-        self.region = region
-        self.coordinates = coordinates
-        self.email = email
-        self.phone = phone
+        self.creator_id = ''
+        self.creator_name = ''
+        self.creator_address = ''
+        self.creator_gender = 0
+        self.amount = 0
+        self.service_offer = ''
+        self.validity = ''
+        self.region = ''
+        self.coordinates = ''
+        self.email = ''
+        self.phone = ''
         self.creation_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.guarantor_signatures = []  # Signaturen der Bürgen
         self.creator_signature = None  # Signatur des Schöpfers
+
+    @classmethod
+    def create(cls, creator_id, creator_name, creator_address, creator_gender, email, phone, service_offer, coordinates,
+               amount, region, validity):
+        voucher = cls()
+        voucher.creator_id = creator_id
+        voucher.creator_name = creator_name
+        voucher.creator_address = creator_address
+        voucher.creator_gender = creator_gender
+        voucher.amount = amount
+        voucher.service_offer = service_offer
+        voucher.validity = validity
+        voucher.region = region
+        voucher.coordinates = coordinates
+        voucher.email = email
+        voucher.phone = phone
+        return voucher
 
     def get_voucher_data(self, include_guarantor_signatures=False):
         # Dynamische Generierung der Daten, inklusive optionaler Bürgen-Signaturen
