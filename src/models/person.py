@@ -1,12 +1,12 @@
+# person.py
 from src.models.key import Key
-#from .minuto_voucher import MinutoVoucher
 from datetime import datetime
 import json
 
 class Person:
-    def __init__(self, key: Key, name, address, gender, email, phone, service_offer, coordinates, validity):
-        self.key = key
-        self.id = key.id
+    def __init__(self, name, address, gender, email, phone, service_offer, coordinates, validity, seed=None):
+        self.key = Key(seed) if seed else Key()
+        self.id = self.key.id
         self.name = name
         self.address = address
         self.gender = gender  # 0 für unbekannt, 1 für männlich, 2 für weiblich
@@ -15,9 +15,12 @@ class Person:
         self.service_offer = service_offer  # Angebot / Fähigkeiten
         self.coordinates = coordinates
 
+        self.current_voucher = None  # Initialisierung von current_voucher
+
     def create_voucher(self, amount, region, validity):
         """ Erstellt einen neuen MinutoVoucher. """
-        return MinutoVoucher(self, amount, region, validity)
+        from src.models.minuto_voucher import MinutoVoucher
+        self.current_voucher = MinutoVoucher(self, amount, region, validity)
 
     def sign_voucher_as_guarantor(self, voucher):
         """ Bürgen signieren den Gutschein mit erweiterten Informationen. """

@@ -1,7 +1,13 @@
-from .person import Person
+# minuto_voucher.py
+import base64
+import json
+from datetime import datetime
+
+from .key import Key
 import uuid
 
-from .minuto_voucher import MinutoVoucher
+from .person import Person
+
 
 class MinutoVoucher:
     def __init__(self, creator: Person, amount=0, region='', validity = ''):
