@@ -10,7 +10,7 @@ def main():
                        "2023-12-31","adapt buddy actress swear early offer grow comic code sting hawk marble")
     buerge_weiblich = src.models.person.Person("Susi Musterfrau", "Musterstraße 2", 2, "susi@example.com", "0123456789", "Backen",
                              "50.1109, 8.6821", "2023-12-31", "rookie era bamboo industry group furnace axis disorder economy silly action invite")
-    buerge_maennlich = src.models.person.Person("Max Mustermann", "Musterstraße 1", 1, "max@example.com", "0123456789", "IT-Support",
+    buerge_maennlich = src.models.person.Person("Hans Müller", "Straße 6", 1, "hans@mail.com", "0172653214", "Sport, Handwerk",
                               "50.1109, 8.6821", "2023-12-31", "strong symptom minor attract math clock pool elite half guess album close")
 
     # Erstelle einen MinutoVoucher mit dieser Person als Ersteller
@@ -22,6 +22,13 @@ def main():
     buerge_maennlich.read_voucher_from_file("minutoschein.txt")
     print(buerge_maennlich.current_voucher)
     # todo schein durch buergen signieren
+    buerge_maennlich.sign_voucher_as_guarantor(buerge_maennlich.current_voucher)
+    print(buerge_maennlich.current_voucher)
+    buerge_maennlich.current_voucher.save_to_disk("minutoschein-sign-bm.txt")
+    # todo prüfen ob mit sigantur wieder richtig eingelesen und gespeichert wird.
+    # todo dann die signaturen der bürgen beim laden überprügen
+    # todo dann als schöpfer signieren
+    # todo dann den fertigen minutoschein prüfen inkl signatur des schöpfers
     #b1_load_voucher = MinutoVoucher.read_from_disk("../minutoschein.txt")
     #buerge_maennlich.sign_voucher_as_guarantor(b1_load_voucher)
     #b1_load_voucher.save_to_disk("minutoschein-b1.txt")

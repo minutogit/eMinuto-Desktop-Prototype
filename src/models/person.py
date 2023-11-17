@@ -1,4 +1,6 @@
 # person.py
+import base64
+
 from src.models.key import Key
 from datetime import datetime
 import json
@@ -7,6 +9,7 @@ class Person:
     def __init__(self, name, address, gender, email, phone, service_offer, coordinates, validity, seed=None):
         self.key = Key(seed) if seed else Key()
         self.id = self.key.id
+        self.pubkey_short = self.key.get_compressed_public_key()
         self.name = name
         self.address = address
         self.gender = gender  # 0 für unbekannt, 1 für männlich, 2 für weiblich
@@ -33,6 +36,8 @@ class Person:
 
     def sign_voucher_as_guarantor(self, voucher):
         """ Bürgen signieren den Gutschein mit erweiterten Informationen. """
+        # ... [Rest des Codes bleibt gleich]
+
         guarantor_info = {
             "id": self.id,
             "name": self.name,
@@ -43,14 +48,17 @@ class Person:
             "coordinates": self.coordinates,
             "signature_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
-        signature_data = voucher.get_voucher_data() + json.dumps(guarantor_info, sort_keys=True)
-        signature = self.key.sign_message(self.key.private_key, signature_data)
-        voucher.guarantor_signatures.append((guarantor_info, signature))
+        data_to_sign = voucher.get_voucher_data_for_signing() + json.dumps(guarantor_info, sort_keys=True)
+        signature = self.key.sign(data_to_sign, base64_encode=True)
+        print(voucher.guarantor_signatures)
+        voucher.guarantor_signatures.append((guarantor_info, self.pubkey_short, signature))
+        print(voucher.guarantor_signatures)
 
     def sign_voucher_as_creator(self, voucher):
+        # todo fehler abfangen - nur unterschreiben wenn voucher einem selbst gehört
         # Schöpfer signiert den Gutschein, inklusive der Bürgen-Signaturen
-        data_to_sign = voucher.get_voucher_data(include_guarantor_signatures=True)
-        voucher.creator_signature = self.key.sign_message(self.key.private_key, data_to_sign)
+        data_to_sign = voucher.get_voucher_data_for_signing(include_guarantor_signatures=True)
+        voucher.creator_signature = (self.pubkey_short, self.key.sign(data_to_sign, base64_encode=True))
 
     def __str__(self):
         return f"Person({self.id}, {self.name}, {self.address}, {self.gender}, {self.email}, {self.phone}, {self.service_offer}, {self.coordinates})"

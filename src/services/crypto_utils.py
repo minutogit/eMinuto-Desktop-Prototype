@@ -1,8 +1,15 @@
+from Crypto.Hash import RIPEMD160
+from ecdsa.util import sigdecode_der
+from ecdsa import VerifyingKey, BadSignatureError
+from ecdsa.curves import SECP256k1
+from ecdsa.ecdsa import Public_key
+from ecdsa.numbertheory import square_root_mod_prime
 from mnemonic import Mnemonic
 from ecdsa import SigningKey, SECP256k1
 import hashlib
 import base58
-from Crypto.Hash import RIPEMD160
+
+
 
 def generate_seed():
     """ Generates a random seed of 12 words. """
@@ -42,3 +49,33 @@ def verify_address_checksum(address):
     calculated_checksum = hashlib.sha256(main_part.encode()).digest()[:4]
     calculated_checksum_encoded = base58.b58encode(calculated_checksum).decode()[-4:]
     return calculated_checksum_encoded == existing_checksum
+
+def compress_public_key(public_key):
+    """ Compresses the public key. """
+    x, y = public_key.pubkey.point.x(), public_key.pubkey.point.y()
+    prefix = '02' if y % 2 == 0 else '03'
+    return prefix + hex(x)[2:].zfill(64)
+
+def verify_signature_with_compressed_key(compressed_public_key, message, signature):
+    """ Verifies the signature using the compressed public key. """
+    if len(compressed_public_key) != 66:
+        raise ValueError("Invalid compressed public key length")
+
+    # Decompress the public key
+    prefix = compressed_public_key[:2]
+    x = int(compressed_public_key[2:], 16)
+    y_parity = (prefix == '03')
+    curve = SECP256k1.curve
+    alpha = (x*x*x + curve.a()*x + curve.b()) % curve.p()
+    beta = square_root_mod_prime(alpha, curve.p())
+    y = beta if y_parity == (beta % 2 == 1) else curve.p() - beta
+
+    # Reconstruct the public key
+    public_key_obj = VerifyingKey.from_public_point(Public_key(curve, curve.point(x, y)).point, curve=SECP256k1)
+
+    try:
+        # Verify the signature
+        return public_key_obj.verify(signature, message.encode('utf-8'), sigdecode=sigdecode_der)
+    except BadSignatureError:
+        return False
+

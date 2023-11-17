@@ -14,7 +14,7 @@ class MinutoVoucher:
         self.creator_gender = 0 # 0 for unknown, 1 for male, 2 for female
         self.amount = 0
         self.service_offer = ''
-        self.validity = ''
+        self.validit_until = ''
         self.region = ''
         self.coordinates = ''
         self.email = ''
@@ -37,7 +37,7 @@ class MinutoVoucher:
         voucher.creator_gender = creator_gender
         voucher.amount = amount
         voucher.service_offer = service_offer
-        voucher.validity = datetime.now().year + validity
+        voucher.validit_until = datetime.now().year + validity
         voucher.region = region
         voucher.coordinates = coordinates
         voucher.email = email
@@ -45,41 +45,42 @@ class MinutoVoucher:
         voucher.is_test_voucher = is_test_voucher
         return voucher
 
-    def get_voucher_data(self, include_guarantor_signatures=False):
-        # Dynamische Generierung der Daten, inklusive optionaler Bürgen-Signaturen
+    def get_voucher_data_for_signing(self, include_guarantor_signatures=False):
+        # Dynamically generate the data, including optional guarantor signatures
         data = {
+            "voucher_id": self.voucher_id,
             "creator_id": self.creator_id,
             "creator_name": self.creator_name,
             "creator_address": self.creator_address,
             "creator_gender": self.creator_gender,
-            "amount": self.amount,
+            "email": self.email,
+            "phone": self.phone,
             "service_offer": self.service_offer,
-            "validity": self.validity,
+            "amount": self.amount,
+            "validit_until": self.validit_until,
             "region": self.region,
             "coordinates": self.coordinates,
-            "creation_date": self.creation_date
+            "creation_date": self.creation_date,
+            "is_test_voucher": self.is_test_voucher
         }
+
         if include_guarantor_signatures:
-            data["guarantor_signatures"] = self.guarantor_signatures
-        return json.dumps(data, sort_keys=True)
+            data["guarantor_signatures"] = [(g[0], base64.b64encode(g[1]).decode()) for g in self.guarantor_signatures]
+
+        return json.dumps(data, sort_keys=True, ensure_ascii=False)
 
     def is_valid(self):
         # Überprüft die Gültigkeit des Gutscheins
         return len(self.guarantor_signatures) >= 2 and self.creator_signature is not None
 
     def save_to_disk(self, file_path):
-        # Convert byte objects to hex strings for storage
-        if self.creator_signature:
-            self.creator_signature = base64.b64encode(self.creator_signature).decode()
-        self.guarantor_signatures = [(g[0], base64.b64encode(g[1]).decode()) for g in self.guarantor_signatures]
+        #self.guarantor_signatures = [(g[0], g[1]) for g in self.guarantor_signatures]
 
-        with open(file_path, 'w') as file:
-            file.write(json.dumps(self.__dict__, sort_keys=True, indent=4))
+        with open(file_path, 'w', encoding='utf-8') as file:
+            # Use ensure_ascii=False to properly encode Unicode characters
+            file.write(json.dumps(self.__dict__, sort_keys=True, indent=4, ensure_ascii=False))
 
-        # Convert the signatures back to bytes to maintain the object's state
-        if self.creator_signature:
-            self.creator_signature = base64.b64decode(self.creator_signature)
-        self.guarantor_signatures = [(g[0], base64.b64decode(g[1])) for g in self.guarantor_signatures]
+        #self.guarantor_signatures = [(g[0], g[1]) for g in self.guarantor_signatures]
 
     @classmethod
     def read_from_file(cls, file_path):
@@ -98,7 +99,7 @@ class MinutoVoucher:
             voucher.coordinates = data.get('coordinates', '')
             voucher.amount = data.get('amount', 0)
             voucher.region = data.get('region', '')
-            voucher.validity = data.get('validity', '')
+            voucher.validit_until = data.get('validit_until', '')
             voucher.is_test_voucher = data.get('is_test_voucher', False)  # Read the test voucher status
 
             # Set additional fields
@@ -116,7 +117,7 @@ class MinutoVoucher:
 
     def __str__(self):
         # String representation of the voucher for easy debugging and comparison
-        guarantor_signatures_str = ', '.join([f"{g[0]}: {g[1].hex()}" for g in self.guarantor_signatures])
+        guarantor_signatures_str = ', '.join([f"{g[0]}: {g[1]}" for g in self.guarantor_signatures])
         creator_signature_str = self.creator_signature.hex() if self.creator_signature else 'None'
         test_voucher_status = "Test Voucher" if self.is_test_voucher else "Regular Voucher"
 
@@ -129,7 +130,7 @@ class MinutoVoucher:
             f"  Creator Gender: {self.creator_gender}\n"
             f"  Amount: {self.amount}\n"
             f"  Service Offer: {self.service_offer}\n"
-            f"  Validity: {self.validity}\n"
+            f"  Valid Until: {self.validit_until}\n"
             f"  Region: {self.region}\n"
             f"  Coordinates: {self.coordinates}\n"
             f"  Email: {self.email}\n"
