@@ -2,20 +2,16 @@
 import base64
 import json
 from datetime import datetime
-
-from .key import Key
 import uuid
-
-from .person import Person
-
 
 class MinutoVoucher:
     def __init__(self):
-        self.voucher_id = str(uuid.uuid4())  # Generiert eine eindeutige voucher_id
+        # Initialize default values for voucher attributes
+        self.voucher_id = ''
         self.creator_id = ''
         self.creator_name = ''
         self.creator_address = ''
-        self.creator_gender = 0
+        self.creator_gender = 0 # 0 for unknown, 1 for male, 2 for female
         self.amount = 0
         self.service_offer = ''
         self.validity = ''
@@ -23,25 +19,30 @@ class MinutoVoucher:
         self.coordinates = ''
         self.email = ''
         self.phone = ''
-        self.creation_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.guarantor_signatures = []  # Signaturen der Bürgen
-        self.creator_signature = None  # Signatur des Schöpfers
+        self.creation_date = ''
+        self.guarantor_signatures = []  # Guarantor signatures
+        self.creator_signature = None  # Creator's signature
+        self.is_test_voucher = False  # Indicates if the voucher is a test voucher
 
     @classmethod
-    def create(cls, creator_id, creator_name, creator_address, creator_gender, email, phone, service_offer, coordinates,
-               amount, region, validity):
+    def create(cls, creator_id: str, creator_name: str, creator_address, creator_gender: int, email: str, phone: str, service_offer: str, coordinates: str,
+               amount: float, region: str, validity: int, is_test_voucher: bool = False):
+        # Create a new voucher instance with provided details
         voucher = cls()
         voucher.creator_id = creator_id
+        voucher.voucher_id = str(uuid.uuid4())  # Generate a unique voucher ID
+        voucher.creation_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         voucher.creator_name = creator_name
         voucher.creator_address = creator_address
         voucher.creator_gender = creator_gender
         voucher.amount = amount
         voucher.service_offer = service_offer
-        voucher.validity = validity
+        voucher.validity = datetime.now().year + validity
         voucher.region = region
         voucher.coordinates = coordinates
         voucher.email = email
         voucher.phone = phone
+        voucher.is_test_voucher = is_test_voucher
         return voucher
 
     def get_voucher_data(self, include_guarantor_signatures=False):
@@ -67,7 +68,7 @@ class MinutoVoucher:
         return len(self.guarantor_signatures) >= 2 and self.creator_signature is not None
 
     def save_to_disk(self, file_path):
-        # Konvertiert Byte-Objekte in hexadezimale Strings für die Speicherung
+        # Convert byte objects to hex strings for storage
         if self.creator_signature:
             self.creator_signature = base64.b64encode(self.creator_signature).decode()
         self.guarantor_signatures = [(g[0], base64.b64encode(g[1]).decode()) for g in self.guarantor_signatures]
@@ -75,7 +76,7 @@ class MinutoVoucher:
         with open(file_path, 'w') as file:
             file.write(json.dumps(self.__dict__, sort_keys=True, indent=4))
 
-        # Konvertiert die Signaturen zurück in Bytes, um den Zustand des Objekts beizubehalten
+        # Convert the signatures back to bytes to maintain the object's state
         if self.creator_signature:
             self.creator_signature = base64.b64decode(self.creator_signature)
         self.guarantor_signatures = [(g[0], base64.b64decode(g[1])) for g in self.guarantor_signatures]
@@ -85,7 +86,7 @@ class MinutoVoucher:
         with open(file_path, 'r') as file:
             data = json.load(file)
 
-            # Erstellen einer neuen Voucher-Instanz mit den Basisdaten
+            # Create a new voucher instance with the base data
             voucher = cls()
             voucher.creator_id = data.get('creator_id', '')
             voucher.creator_name = data.get('creator_name', '')
@@ -98,12 +99,13 @@ class MinutoVoucher:
             voucher.amount = data.get('amount', 0)
             voucher.region = data.get('region', '')
             voucher.validity = data.get('validity', '')
+            voucher.is_test_voucher = data.get('is_test_voucher', False)  # Read the test voucher status
 
-            # Setzen der zusätzlichen Felder
-            voucher.voucher_id = data.get('voucher_id', voucher.voucher_id)  # Behalte die ursprüngliche ID bei
+            # Set additional fields
+            voucher.voucher_id = data.get('voucher_id', voucher.voucher_id)
             voucher.creation_date = data.get('creation_date', voucher.creation_date)
 
-            # Umwandlung der Base64-kodierten Strings zurück in Byte-Objekte
+            # Convert the Base64-encoded strings back into byte objects
             if data.get('creator_signature'):
                 voucher.creator_signature = base64.b64decode(data['creator_signature'])
 
@@ -113,7 +115,11 @@ class MinutoVoucher:
             return voucher
 
     def __str__(self):
+        # String representation of the voucher for easy debugging and comparison
         guarantor_signatures_str = ', '.join([f"{g[0]}: {g[1].hex()}" for g in self.guarantor_signatures])
+        creator_signature_str = self.creator_signature.hex() if self.creator_signature else 'None'
+        test_voucher_status = "Test Voucher" if self.is_test_voucher else "Regular Voucher"
+
         return (
             f"MinutoVoucher(\n"
             f"  Voucher ID: {self.voucher_id}\n"
@@ -130,7 +136,8 @@ class MinutoVoucher:
             f"  Phone: {self.phone}\n"
             f"  Creation Date: {self.creation_date}\n"
             f"  Guarantor Signatures: [{guarantor_signatures_str}]\n"
-            f"  Creator Signature: {self.creator_signature.hex() if self.creator_signature else 'None'}\n"
+            f"  Creator Signature: {creator_signature_str}\n"
+            f"  Status: {test_voucher_status}\n"
             ")"
         )
 

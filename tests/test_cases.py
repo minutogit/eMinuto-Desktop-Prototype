@@ -15,7 +15,7 @@ class TestPerson(unittest.TestCase):
 
     def test_voucher_creation_and_persistence(self):
         # Test 1: Erstelle einen Voucher und speichere ihn
-        self.hansdampf.create_voucher(100, "Frankfurt", "2028")
+        self.hansdampf.create_voucher(100, "Frankfurt", 5)
         original_voucher = self.hansdampf.current_voucher
         original_voucher.save_to_disk(self.voucher_path)
         # Überprüfen, ob die Datei existiert

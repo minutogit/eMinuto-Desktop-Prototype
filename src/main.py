@@ -14,7 +14,7 @@ def main():
                               "50.1109, 8.6821", "2023-12-31", "strong symptom minor attract math clock pool elite half guess album close")
 
     # Erstelle einen MinutoVoucher mit dieser Person als Ersteller
-    hansdampf.create_voucher(100, "Frankfurt", "2028")
+    hansdampf.create_voucher(100, "Frankfurt", 5)
     hansdampf.current_voucher.save_to_disk("minutoschein.txt")
     print(hansdampf.current_voucher)
 
