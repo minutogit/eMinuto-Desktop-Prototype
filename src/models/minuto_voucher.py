@@ -87,7 +87,7 @@ class MinutoVoucher:
 
             # Erstellen einer neuen Voucher-Instanz mit den Basisdaten
             voucher = cls()
-            voucher.creator_id = "data.get('creator_id', '')"
+            voucher.creator_id = data.get('creator_id', '')
             voucher.creator_name = data.get('creator_name', '')
             voucher.creator_address = data.get('creator_address', '')
             voucher.creator_gender = data.get('creator_gender', 0)
@@ -109,9 +109,7 @@ class MinutoVoucher:
 
             voucher.guarantor_signatures = [(g[0], base64.b64decode(g[1])) for g in
                                             data.get('guarantor_signatures', [])]
-            print("--------------------")
-            print(voucher)
-            print("####################")
+
             return voucher
 
     def __str__(self):
@@ -135,3 +133,10 @@ class MinutoVoucher:
             f"  Creator Signature: {self.creator_signature.hex() if self.creator_signature else 'None'}\n"
             ")"
         )
+
+    def __eq__(self, other):
+        # Vergleichen Sie die string-Repräsentationen der beiden Objekte.
+        if not isinstance(other, MinutoVoucher):
+            return False
+
+        return str(self) == str(other)
