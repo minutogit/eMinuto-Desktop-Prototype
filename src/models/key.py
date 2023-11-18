@@ -21,7 +21,7 @@ class Key:
         else:
             self.seed_words = seed_words if seed_words else generate_seed()
             self.private_key, self.public_key = create_key_pair(self.seed_words)
-            self.id = create_public_address(self.public_key)
+            self.id = self.get_id_from_public_key(self.public_key)
 
     def sign(self, message, base64_encode=False):
         """
@@ -46,6 +46,10 @@ class Key:
             return compress_public_key(self.public_key)
         else:
             return None
+
+    def get_id_from_public_key(self,pupkey, compressed_pubkey = False):
+        """ Returns user ID generated from public key."""
+        return create_public_address(pupkey, compressed_pubkey)
 
     def __str__(self):
         return f"Key(Public Address: {self.id}, Seed Words: {self.seed_words})"

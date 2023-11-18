@@ -28,8 +28,10 @@ def verify_signature(public_key, message, signature):
     """ Verifies the signature using the public key. """
     return public_key.verify(signature, message.encode('utf-8'))
 
-def create_public_address(public_key):
+def create_public_address(public_key, compressed_pubkey = False):
     """ Creates a public address (ID) from the public key. """
+    if compressed_pubkey:
+        public_key = decompress_public_key(public_key)
     public_key_bytes = public_key.to_string("uncompressed")
     sha256_bpk = hashlib.sha256(public_key_bytes)
     ripemd160_bpk = RIPEMD160.new(sha256_bpk.digest())
@@ -53,11 +55,19 @@ def compress_public_key(public_key):
     public_key_bytes = public_key.to_string()  # uncompressed format
     return base64.b64encode(public_key_bytes).decode()
 
+def decompress_public_key(compressed_public_key):
+    """
+    Decompresses a Base64 encoded public key back into a VerifyingKey object.
+    """
+    public_key_bytes = base64.b64decode(compressed_public_key)
+    return VerifyingKey.from_string(public_key_bytes, curve=SECP256k1)
+
 def verify_signature_with_compressed_key(compressed_public_key, message, signature):
-    """ Verifies the signature using a Base64 encoded (but not compressed) public key. """
+    """
+    Verifies the signature using a Base64 encoded (but not compressed) public key.
+    """
     try:
-        public_key_bytes = base64.b64decode(compressed_public_key)
-        public_key = VerifyingKey.from_string(public_key_bytes, curve=SECP256k1)
+        public_key = decompress_public_key(compressed_public_key)
         return public_key.verify(signature, message.encode('utf-8'))
     except (BadSignatureError, ValueError, TypeError):
         return False

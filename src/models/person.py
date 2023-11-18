@@ -35,8 +35,7 @@ class Person:
         self.current_voucher = self.current_voucher.read_from_file(filename)
 
     def sign_voucher_as_guarantor(self, voucher):
-        """ Bürgen signieren den Gutschein mit erweiterten Informationen. """
-        # ... [Rest des Codes bleibt gleich]
+        """ Signieren den Gutschein inkl. der eigenen persönlichen Daten """
 
         guarantor_info = {
             "id": self.id,
@@ -50,20 +49,25 @@ class Person:
         }
         data_to_sign = voucher.get_voucher_data_for_signing() + json.dumps(guarantor_info, sort_keys=True)
         signature = self.key.sign(data_to_sign, base64_encode=True)
-        print(voucher.guarantor_signatures)
         voucher.guarantor_signatures.append((guarantor_info, self.pubkey_short, signature))
-        print(voucher.guarantor_signatures)
 
     def verify_guarantor_signatures(self, voucher):
-        """ Verifies whether all guarantor signatures on the voucher are valid. """
+        """
+        Validates all guarantor signatures on the voucher.
+        """
         for guarantor_info, pubkey_short, signature in voucher.guarantor_signatures:
-            # Combining the voucher data with guarantor info for verification
+            # Check if guarantor ID matches with the ID from the compressed public key
+            if self.key.get_id_from_public_key(pubkey_short, compressed_pubkey=True) != guarantor_info["id"]:
+                return False  # Mismatch found
+
+            # Combine voucher data with guarantor info for signature verification
             data_to_verify = voucher.get_voucher_data_for_signing() + json.dumps(guarantor_info, sort_keys=True)
-            # Verifying the signature. Note: the signature is decoded from Base64 format
-            print("signature:",signature)
+
+            # Verify the signature against the guarantor's public key
             if not self.key.verify(data_to_verify, base64.b64decode(signature), pubkey_short, compressed_pubkey=True):
-                return False  # Return False if any signature is invalid
-        return True  # Return True if all signatures are valid
+                return False  # Invalid signature
+
+        return True  # All signatures valid
 
     def sign_voucher_as_creator(self, voucher):
         # todo fehler abfangen - nur unterschreiben wenn voucher einem selbst gehört

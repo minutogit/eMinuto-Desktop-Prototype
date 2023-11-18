@@ -24,9 +24,16 @@ def main():
 
     buerge_maennlich.sign_voucher_as_guarantor(buerge_maennlich.current_voucher)
     print(buerge_maennlich.current_voucher)
-    buerge_maennlich.current_voucher.save_to_disk("minutoschein-sign-bm.txt")
-    buerge_weiblich.read_voucher_from_file("minutoschein-sign-bm.txt")
-    print(buerge_weiblich.verify_guarantor_signatures(buerge_weiblich.current_voucher))
+    buerge_maennlich.current_voucher.save_to_disk("minutoschein-male-signed.txt")
+    buerge_weiblich.read_voucher_from_file("minutoschein-male-signed.txt")
+    print(buerge_weiblich.verify_guarantor_signatures(buerge_weiblich.current_voucher)) #assert here
+    buerge_weiblich.sign_voucher_as_guarantor(buerge_weiblich.current_voucher)
+    print(buerge_weiblich.current_voucher)
+    buerge_weiblich.current_voucher.save_to_disk("minutoschein-male_female-signed.txt")
+    hansdampf.read_voucher_from_file("minutoschein-male_female-signed.txt")
+    print("check both guarantor signs: ", hansdampf.verify_guarantor_signatures(hansdampf.current_voucher))
+
+
     # todo signaturen der bürgen prüfen wenn beide unterschrieben haben
     # todo dann die signaturen der bürgen beim laden überprüfen
     # todo dann als schöpfer signieren
