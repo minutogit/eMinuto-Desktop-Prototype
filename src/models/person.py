@@ -54,6 +54,17 @@ class Person:
         voucher.guarantor_signatures.append((guarantor_info, self.pubkey_short, signature))
         print(voucher.guarantor_signatures)
 
+    def verify_guarantor_signatures(self, voucher):
+        """ Verifies whether all guarantor signatures on the voucher are valid. """
+        for guarantor_info, pubkey_short, signature in voucher.guarantor_signatures:
+            # Combining the voucher data with guarantor info for verification
+            data_to_verify = voucher.get_voucher_data_for_signing() + json.dumps(guarantor_info, sort_keys=True)
+            # Verifying the signature. Note: the signature is decoded from Base64 format
+            print("signature:",signature)
+            if not self.key.verify(data_to_verify, base64.b64decode(signature), pubkey_short, compressed_pubkey=True):
+                return False  # Return False if any signature is invalid
+        return True  # Return True if all signatures are valid
+
     def sign_voucher_as_creator(self, voucher):
         # todo fehler abfangen - nur unterschreiben wenn voucher einem selbst gehört
         # Schöpfer signiert den Gutschein, inklusive der Bürgen-Signaturen

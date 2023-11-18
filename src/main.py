@@ -21,13 +21,16 @@ def main():
     #buerge_maennlich.init_empty_voucher()
     buerge_maennlich.read_voucher_from_file("minutoschein.txt")
     print(buerge_maennlich.current_voucher)
-    # todo schein durch buergen signieren
+
     buerge_maennlich.sign_voucher_as_guarantor(buerge_maennlich.current_voucher)
     print(buerge_maennlich.current_voucher)
     buerge_maennlich.current_voucher.save_to_disk("minutoschein-sign-bm.txt")
-    # todo prüfen ob mit sigantur wieder richtig eingelesen und gespeichert wird.
-    # todo dann die signaturen der bürgen beim laden überprügen
+    buerge_weiblich.read_voucher_from_file("minutoschein-sign-bm.txt")
+    print(buerge_weiblich.verify_guarantor_signatures(buerge_weiblich.current_voucher))
+    # todo signaturen der bürgen prüfen wenn beide unterschrieben haben
+    # todo dann die signaturen der bürgen beim laden überprüfen
     # todo dann als schöpfer signieren
+    # signatur des schöpfer prüfen (beim einlesen noch richtig einlesen da auch pubkey und signatur als liste gespeichert wird
     # todo dann den fertigen minutoschein prüfen inkl signatur des schöpfers
     #b1_load_voucher = MinutoVoucher.read_from_disk("../minutoschein.txt")
     #buerge_maennlich.sign_voucher_as_guarantor(b1_load_voucher)

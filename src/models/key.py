@@ -7,6 +7,7 @@ from src.services.crypto_utils import (
     create_public_address,
     sign_message, 
     verify_signature,
+    verify_signature_with_compressed_key,
     compress_public_key
 )
 
@@ -33,8 +34,10 @@ class Key:
         else:
             return signature
 
-    def verify(self, message, signature):
+    def verify(self, message, signature, public_key, compressed_pubkey = False):
         """ Verify a signature using the public key. """
+        if compressed_pubkey:
+            return verify_signature_with_compressed_key(public_key, message, signature)
         return verify_signature(self.public_key, message, signature)
 
     def get_compressed_public_key(self):

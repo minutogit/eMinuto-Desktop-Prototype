@@ -106,13 +106,14 @@ class MinutoVoucher:
             voucher.voucher_id = data.get('voucher_id', voucher.voucher_id)
             voucher.creation_date = data.get('creation_date', voucher.creation_date)
 
-            # Convert the Base64-encoded strings back into byte objects
             if data.get('creator_signature'):
-                voucher.creator_signature = base64.b64decode(data['creator_signature'])
+                voucher.creator_signature = data['creator_signature']
 
-            voucher.guarantor_signatures = [(g[0], base64.b64decode(g[1])) for g in
-                                            data.get('guarantor_signatures', [])]
+            guarantor_signatures = []
+            for guarantor_info, pubkey_short, signature in data.get('guarantor_signatures', []):
+                guarantor_signatures.append((guarantor_info, pubkey_short, signature))
 
+            voucher.guarantor_signatures = guarantor_signatures
             return voucher
 
     def __str__(self):
