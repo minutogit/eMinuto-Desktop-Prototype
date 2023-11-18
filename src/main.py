@@ -22,26 +22,25 @@ def main():
     hansdampf.current_voucher.save_to_disk("minutoschein.txt")
     print(hansdampf.current_voucher)
     buerge_maennlich.read_voucher_from_file("minutoschein.txt")
-    print(buerge_maennlich.current_voucher)
 
-    buerge_maennlich.sign_voucher_as_guarantor(buerge_maennlich.current_voucher)
+    buerge_maennlich.sign_voucher_as_guarantor()
     print(buerge_maennlich.current_voucher)
     buerge_maennlich.current_voucher.save_to_disk("minutoschein-male-signed.txt")
 
     buerge_weiblich.read_voucher_from_file("minutoschein-male-signed.txt")
-    print(buerge_weiblich.verify_guarantor_signatures(buerge_weiblich.current_voucher)) #assert here
-    buerge_weiblich.sign_voucher_as_guarantor(buerge_weiblich.current_voucher)
+    print(buerge_weiblich.verify_guarantor_signatures()) #assert here
+    buerge_weiblich.sign_voucher_as_guarantor()
     print(buerge_weiblich.current_voucher)
     buerge_weiblich.current_voucher.save_to_disk("minutoschein-male_female-signed.txt")
 
     hansdampf.read_voucher_from_file("minutoschein-male_female-signed.txt")
-    print("both guarantor signs ok? ", hansdampf.verify_guarantor_signatures(hansdampf.current_voucher))
-    hansdampf.sign_voucher_as_creator(hansdampf.current_voucher)
-    print("creator signature ok? ",hansdampf.verify_creator_signature(hansdampf.current_voucher))
+    print("both guarantor signs ok? ", hansdampf.verify_guarantor_signatures())
+    hansdampf.sign_voucher_as_creator()
+    print("creator signature ok? ",hansdampf.verify_creator_signature())
     hansdampf.current_voucher.save_to_disk("minutoschein-complete.txt")
 
-    user1.read_voucher_from_file("minutoschein-complete1.txt")
-    print("user1 cerator sign ok? ",user1.verify_creator_signature(user1.current_voucher))
+    user1.read_voucher_from_file("minutoschein-complete.txt")
+    print("user1 cerator sign ok? ",user1.verify_creator_signature())
 
 if __name__ == "__main__":
     main()

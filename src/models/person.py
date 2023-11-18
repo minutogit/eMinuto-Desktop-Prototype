@@ -34,10 +34,9 @@ class Person:
         self.init_empty_voucher()
         self.current_voucher = self.current_voucher.read_from_file(filename)
 
-    def sign_voucher_as_guarantor(self, voucher):
+    def sign_voucher_as_guarantor(self, voucher=None):
         """ Signs the voucher including the guarantor's personal details. """
-
-        # Prevent guarantors from signing their own vouchers
+        voucher = voucher or self.current_voucher
 
         if voucher.creator_id == self.id:
             print("Guarantors cannot sign their own vouchers.")
@@ -62,10 +61,10 @@ class Person:
         # Append the signed guarantor information to the voucher
         voucher.guarantor_signatures.append((guarantor_info, self.pubkey_short, signature))
 
-    def verify_guarantor_signatures(self, voucher):
-        """
-        Validates all guarantor signatures on the voucher.
-        """
+    def verify_guarantor_signatures(self, voucher=None):
+        """ Validates all guarantor signatures on the voucher. """
+        voucher = voucher or self.current_voucher
+
         for guarantor_info, pubkey_short, signature in voucher.guarantor_signatures:
             # Check if guarantor ID matches with the ID from the compressed public key
             if self.key.get_id_from_public_key(pubkey_short, compressed_pubkey=True) != guarantor_info["id"]:
@@ -80,7 +79,10 @@ class Person:
 
         return True  # All signatures valid
 
-    def sign_voucher_as_creator(self, voucher):
+    def sign_voucher_as_creator(self, voucher=None):
+        """ Signs the voucher as its creator. """
+        voucher = voucher or self.current_voucher
+
         if voucher.creator_id != self.id:
             print("Can only sign own voucher as creator!")
             return
@@ -88,10 +90,10 @@ class Person:
         data_to_sign = voucher.get_voucher_data_for_signing(include_guarantor_signatures=True)
         voucher.creator_signature = (self.pubkey_short, self.key.sign(data_to_sign, base64_encode=True))
 
-    def verify_creator_signature(self, voucher):
-        """
-        Verifies the signature of the voucher's creator.
-        """
+    def verify_creator_signature(self, voucher=None):
+        """ Verifies the signature of the voucher's creator. """
+        voucher = voucher or self.current_voucher
+
         # Extract the creator's public key (shortened) and signature from the voucher
         pubkey_short, signature = voucher.creator_signature
 
