@@ -35,8 +35,15 @@ class Person:
         self.current_voucher = self.current_voucher.read_from_file(filename)
 
     def sign_voucher_as_guarantor(self, voucher):
-        """ Signieren den Gutschein inkl. der eigenen persönlichen Daten """
+        """ Signs the voucher including the guarantor's personal details. """
 
+        # Prevent guarantors from signing their own vouchers
+
+        if voucher.creator_id == self.id:
+            print("Guarantors cannot sign their own vouchers.")
+            return
+
+        # Prepare guarantor information for signature
         guarantor_info = {
             "id": self.id,
             "name": self.name,
@@ -47,8 +54,12 @@ class Person:
             "coordinates": self.coordinates,
             "signature_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
+
+        # Combine voucher data with guarantor information to create data for signing
         data_to_sign = voucher.get_voucher_data_for_signing() + json.dumps(guarantor_info, sort_keys=True)
         signature = self.key.sign(data_to_sign, base64_encode=True)
+
+        # Append the signed guarantor information to the voucher
         voucher.guarantor_signatures.append((guarantor_info, self.pubkey_short, signature))
 
     def verify_guarantor_signatures(self, voucher):
@@ -70,10 +81,30 @@ class Person:
         return True  # All signatures valid
 
     def sign_voucher_as_creator(self, voucher):
-        # todo fehler abfangen - nur unterschreiben wenn voucher einem selbst gehört
+        if voucher.creator_id != self.id:
+            print("Can only sign own voucher as creator!")
+            return
         # Schöpfer signiert den Gutschein, inklusive der Bürgen-Signaturen
         data_to_sign = voucher.get_voucher_data_for_signing(include_guarantor_signatures=True)
         voucher.creator_signature = (self.pubkey_short, self.key.sign(data_to_sign, base64_encode=True))
+
+    def verify_creator_signature(self, voucher):
+        """
+        Verifies the signature of the voucher's creator.
+        """
+        # Extract the creator's public key (shortened) and signature from the voucher
+        pubkey_short, signature = voucher.creator_signature
+
+        # Check if the creator's ID matches with the ID from the compressed public key
+        if self.key.get_id_from_public_key(pubkey_short, compressed_pubkey=True) != voucher.creator_id:
+            print("creator's ID doesn't match with the ID from the compressed public key")
+            return False  # Mismatch found
+
+        # Combine voucher data (including guarantor signatures) for signature verification
+        data_to_verify = voucher.get_voucher_data_for_signing(include_guarantor_signatures=True)
+
+        # Verify the signature against the creator's public key
+        return self.key.verify(data_to_verify, base64.b64decode(signature), pubkey_short, compressed_pubkey=True)
 
     def __str__(self):
         return f"Person({self.id}, {self.name}, {self.address}, {self.gender}, {self.email}, {self.phone}, {self.service_offer}, {self.coordinates})"

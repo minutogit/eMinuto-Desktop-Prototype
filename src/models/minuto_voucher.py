@@ -65,7 +65,7 @@ class MinutoVoucher:
         }
 
         if include_guarantor_signatures:
-            data["guarantor_signatures"] = [(g[0], base64.b64encode(g[1]).decode()) for g in self.guarantor_signatures]
+            data["guarantor_signatures"] = self.guarantor_signatures
 
         return json.dumps(data, sort_keys=True, ensure_ascii=False)
 
@@ -74,13 +74,9 @@ class MinutoVoucher:
         return len(self.guarantor_signatures) >= 2 and self.creator_signature is not None
 
     def save_to_disk(self, file_path):
-        #self.guarantor_signatures = [(g[0], g[1]) for g in self.guarantor_signatures]
-
         with open(file_path, 'w', encoding='utf-8') as file:
             # Use ensure_ascii=False to properly encode Unicode characters
             file.write(json.dumps(self.__dict__, sort_keys=True, indent=4, ensure_ascii=False))
-
-        #self.guarantor_signatures = [(g[0], g[1]) for g in self.guarantor_signatures]
 
     @classmethod
     def read_from_file(cls, file_path):
