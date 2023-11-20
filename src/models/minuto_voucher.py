@@ -49,7 +49,7 @@ class MinutoVoucher:
         voucher.is_test_voucher = is_test_voucher
         return voucher
 
-    def get_voucher_data_for_signing(self, include_guarantor_signatures=False):
+    def get_voucher_data_for_signing(self, include_guarantor_signatures=False, creator_signature= False):
         # Dynamically generate the data, including optional guarantor signatures
         data = {
             "voucher_id": self.voucher_id,
@@ -70,6 +70,10 @@ class MinutoVoucher:
 
         if include_guarantor_signatures:
             data["guarantor_signatures"] = self.guarantor_signatures
+
+        if creator_signature:
+            data["creator_signature"] = self.creator_signature
+
 
         return json.dumps(data, sort_keys=True, ensure_ascii=False)
 

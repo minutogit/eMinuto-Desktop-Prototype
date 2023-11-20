@@ -37,10 +37,12 @@ def main():
     print("both guarantor signs ok? ", hansdampf.verify_guarantor_signatures())
     hansdampf.sign_voucher_as_creator()
     print("creator signature ok? ",hansdampf.verify_creator_signature())
+    hansdampf.send_amount(50, 'MC4WT6nYDe3AJLGPHcKFj7vZfuxR14VKLg')
     hansdampf.current_voucher.save_to_disk("minutoschein-complete.txt")
 
     user1.read_voucher_from_file("minutoschein-complete.txt")
     print("user1 cerator sign ok? ",user1.verify_creator_signature())
+    # todo verify all transactions
 
 if __name__ == "__main__":
     main()

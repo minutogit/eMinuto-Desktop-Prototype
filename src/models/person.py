@@ -2,7 +2,8 @@
 import base64
 
 from src.models.key import Key
-from datetime import datetime
+from src.models.transaction import Transaction
+from src.services.utils import get_timestamp
 import json
 
 class Person:
@@ -51,7 +52,7 @@ class Person:
             "email": self.email,
             "phone": self.phone,
             "coordinates": self.coordinates,
-            "signature_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "signature_time": get_timestamp()
         }
 
         # Combine voucher data with guarantor information to create data for signing
@@ -76,11 +77,41 @@ class Person:
         # Schöpfer signiert den Gutschein, inklusive der Bürgen-Signaturen
         data_to_sign = voucher.get_voucher_data_for_signing(include_guarantor_signatures=True)
         voucher.creator_signature = (self.pubkey_short, self.key.sign(data_to_sign, base64_encode=True))
+        transaction = Transaction(voucher)
+        transaction_data = transaction.get_first_transaction(self.key)
+
+        # Füge die Transaktion der Transaktionsliste des Gutscheins hinzu
+        voucher.transactions.append(transaction_data)
 
     def verify_creator_signature(self, voucher=None):
         """ Verifies the signature of the voucher's creator. """
         voucher = voucher or self.current_voucher
         return voucher.verify_creator_signature(voucher)
+
+    def send_amount(self, amount, recipient_id):
+        # still a lot todo
+        selected_vouchers = []
+        # todo logic needed for to select vouchers from all available vouchers
+        selected_vouchers.append((self.current_voucher, amount))
+
+        for voucher, amount_to_send in selected_vouchers:
+            self.append_transaction_to_voucher(amount_to_send, recipient_id, voucher)
+
+    def append_transaction_to_voucher(self, amount, recipient_id, voucher=None):
+        if voucher is None:
+            print("No voucher selected")
+            return
+
+        # Erstellen einer neuen Transaktion
+        transaction = Transaction(voucher)
+
+        # Transaktionsdaten generieren und signieren
+        transaction_data = transaction.get_transaction(amount, recipient_id, self.key)
+
+        # Füge die Transaktion der Transaktionsliste des Gutscheins hinzu
+        voucher.transactions.append(transaction_data)
+
+
 
     def __str__(self):
         return f"Person({self.id}, {self.name}, {self.address}, {self.gender}, {self.email}, {self.phone}, {self.service_offer}, {self.coordinates})"
