@@ -3,6 +3,8 @@ import base64
 import json
 from datetime import datetime
 import uuid
+from src.models.key import Key
+
 
 class MinutoVoucher:
     def __init__(self):
@@ -23,6 +25,8 @@ class MinutoVoucher:
         self.guarantor_signatures = []  # Guarantor signatures
         self.creator_signature = None  # Creator's signature
         self.is_test_voucher = False  # Indicates if the voucher is a test voucher
+        self.transactions = [] # list of transactions
+        self.key_instance = Key() # only for access to Key functions
 
     @classmethod
     def create(cls, creator_id: str, creator_name: str, creator_address, creator_gender: int, email: str, phone: str, service_offer: str, coordinates: str,
@@ -74,9 +78,12 @@ class MinutoVoucher:
         return len(self.guarantor_signatures) >= 2 and self.creator_signature is not None
 
     def save_to_disk(self, file_path):
+        exclude=["key_instance"]
+        data_to_save = {k: v for k, v in self.__dict__.items() if k not in exclude}
+
         with open(file_path, 'w', encoding='utf-8') as file:
-            # Use ensure_ascii=False to properly encode Unicode characters
-            file.write(json.dumps(self.__dict__, sort_keys=True, indent=4, ensure_ascii=False))
+            file.write(json.dumps(data_to_save, sort_keys=True, indent=4, ensure_ascii=False))
+
 
     @classmethod
     def read_from_file(cls, file_path):
@@ -97,6 +104,8 @@ class MinutoVoucher:
             voucher.region = data.get('region', '')
             voucher.validit_until = data.get('validit_until', '')
             voucher.is_test_voucher = data.get('is_test_voucher', False)  # Read the test voucher status
+            voucher.transactions = data.get('transactions', [])
+
 
             # Set additional fields
             voucher.voucher_id = data.get('voucher_id', voucher.voucher_id)
@@ -111,6 +120,29 @@ class MinutoVoucher:
 
             voucher.guarantor_signatures = guarantor_signatures
             return voucher
+
+    def verify_all_guarantor_signatures(self, voucher):
+        """ Validates all guarantor signatures on the given voucher. """
+        for guarantor_info, pubkey_short, signature in voucher.guarantor_signatures:
+            # hier kommt der fehler: TypeError: Key.get_id_from_public_key() missing 1 required positional argument: 'pupkey'
+            if self.key_instance.get_id_from_public_key(pubkey_short, compressed_pubkey=True) != guarantor_info["id"]:
+                return False
+
+            data_to_verify = voucher.get_voucher_data_for_signing() + json.dumps(guarantor_info, sort_keys=True)
+            if not self.key_instance.verify(data_to_verify, base64.b64decode(signature), pubkey_short,
+                                      compressed_pubkey=True):
+                return False
+
+        return True
+
+    def verify_creator_signature(self, voucher):
+        """ Verifies the creator's signature on the given voucher. """
+        pubkey_short, signature = voucher.creator_signature
+        if self.key_instance.get_id_from_public_key(pubkey_short, compressed_pubkey=True) != voucher.creator_id:
+            return False
+
+        data_to_verify = voucher.get_voucher_data_for_signing(include_guarantor_signatures=True)
+        return self.key_instance.verify(data_to_verify, base64.b64decode(signature), pubkey_short, compressed_pubkey=True)
 
     def __str__(self):
         # String representation of the voucher for easy debugging and comparison

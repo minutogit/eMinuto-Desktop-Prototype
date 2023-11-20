@@ -47,7 +47,7 @@ class Key:
         else:
             return None
 
-    def get_id_from_public_key(self,pupkey, compressed_pubkey = False):
+    def get_id_from_public_key(self, pupkey, compressed_pubkey = False):
         """ Returns user ID generated from public key."""
         return create_public_address(pupkey, compressed_pubkey)
 
