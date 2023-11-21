@@ -72,6 +72,21 @@ def verify_signature_with_compressed_key(compressed_public_key, message, signatu
     except (BadSignatureError, ValueError, TypeError):
         return False
 
+def get_transaction_hash(data):
+    """
+    Calculates the SHA-256 hash of the given data and encodes it in Base58.
+
+    :param data: The data to be hashed. This should be in bytes.
+    :return: A Base58 encoded string representing the hash of the data.
+    """
+    # Berechnen des SHA-256 Hashes
+    hash_obj = hashlib.sha256(data)
+    hash_digest = hash_obj.digest()
+
+    # Kodierung des Hashes in Base58
+    hash_base58 = base58.b58encode(hash_digest)
+    return hash_base58.decode()
+
 
 
 

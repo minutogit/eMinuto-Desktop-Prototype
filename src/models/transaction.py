@@ -4,6 +4,7 @@ import hashlib
 #from src.models.minuto_voucher import MinutoVoucher
 from src.models.key import Key
 from src.services.utils import get_timestamp
+from src.services.crypto_utils import get_transaction_hash
 
 class Transaction:
     def __init__(self, voucher):
@@ -18,7 +19,7 @@ class Transaction:
         self.recipient_id = self.voucher.creator_id
         self.amount = self.voucher.amount
         data = self.voucher.get_voucher_data_for_signing(include_guarantor_signatures=True, creator_signature=True).encode()
-        self.previous_hash = hashlib.sha256(data).hexdigest()
+        self.previous_hash = get_transaction_hash(data)
         self.sender_public_key = key_for_signing.get_compressed_public_key()
         self.transaction_time = get_timestamp()
         transaction_data = self._assemble_transaction_data()
@@ -36,7 +37,7 @@ class Transaction:
             # Wenn keine Transaktionen vorhanden sind, wird der Hash des gesamten Gutscheins verwendet
             data = self.voucher.get_voucher_data_for_signing(include_guarantor_signatures=True, creator_signature=True).encode()
 
-        self.previous_hash = hashlib.sha256(data).hexdigest()
+        self.previous_hash = get_transaction_hash(data)
         self.sender_public_key = key_for_signing.get_compressed_public_key()
         self.transaction_time = get_timestamp()
         transaction_data = self._assemble_transaction_data()

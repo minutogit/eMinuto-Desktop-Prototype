@@ -4,6 +4,8 @@ import json
 from datetime import datetime
 import uuid
 from src.models.key import Key
+from src.services.utils import get_timestamp
+
 
 
 class MinutoVoucher:
@@ -35,13 +37,13 @@ class MinutoVoucher:
         voucher = cls()
         voucher.creator_id = creator_id
         voucher.voucher_id = str(uuid.uuid4())  # Generate a unique voucher ID
-        voucher.creation_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        voucher.creation_date = get_timestamp()
         voucher.creator_name = creator_name
         voucher.creator_address = creator_address
         voucher.creator_gender = creator_gender
         voucher.amount = amount
         voucher.service_offer = service_offer
-        voucher.validit_until = datetime.now().year + validity
+        voucher.validit_until = get_timestamp(validity, end_of_year=True)
         voucher.region = region
         voucher.coordinates = coordinates
         voucher.email = email
