@@ -51,15 +51,23 @@ def verify_address_checksum(address):
 
 
 def compress_public_key(public_key):
-    """ Encodes the public key to a Base64 string without compressing it. """
-    public_key_bytes = public_key.to_string()  # uncompressed format
-    return base64.b64encode(public_key_bytes).decode()
+    """
+    Encodes the public key in its compressed form to a Base58 string.
+
+    :param public_key: The public key to be compressed and encoded.
+    :return: A Base58 encoded string of the compressed public key.
+    """
+    public_key_bytes = public_key.to_string("compressed")  # compressed format
+    return base58.b58encode(public_key_bytes).decode()
 
 def decompress_public_key(compressed_public_key):
     """
-    Decompresses a Base64 encoded public key back into a VerifyingKey object.
+    Decompresses a Base58 encoded, compressed public key back into a VerifyingKey object.
+
+    :param compressed_public_key: The Base58 encoded, compressed public key.
+    :return: A VerifyingKey object.
     """
-    public_key_bytes = base64.b64decode(compressed_public_key)
+    public_key_bytes = base58.b58decode(compressed_public_key)
     return VerifyingKey.from_string(public_key_bytes, curve=SECP256k1)
 
 def verify_signature_with_compressed_key(compressed_public_key, message, signature):
