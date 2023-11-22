@@ -68,7 +68,7 @@ class Person:
         return voucher.verify_all_guarantor_signatures(voucher)
 
     def sign_voucher_as_creator(self, voucher=None):
-        """ Signs the voucher as its creator. """
+        """ Signs the voucher as its creator and initialize the transaction list"""
         voucher = voucher or self.current_voucher
 
         if voucher.creator_id != self.id:
@@ -77,10 +77,9 @@ class Person:
         # Schöpfer signiert den Gutschein, inklusive der Bürgen-Signaturen
         data_to_sign = voucher.get_voucher_data_for_signing(include_guarantor_signatures=True)
         voucher.creator_signature = (self.key.sign(data_to_sign, base64_encode=True))
+        # Initialize first transaction
         transaction = Transaction(voucher)
-        transaction_data = transaction.get_first_transaction(self.key)
-
-        # Füge die Transaktion der Transaktionsliste des Gutscheins hinzu
+        transaction_data = transaction.get_initial_transaction(self.key)
         voucher.transactions.append(transaction_data)
 
     def verify_creator_signature(self, voucher=None):
