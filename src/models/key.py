@@ -2,13 +2,15 @@
 import base64
 
 from src.services.crypto_utils import (
-    generate_seed, 
-    create_key_pair, 
-    create_public_address,
-    sign_message, 
+    generate_seed,
+    create_key_pair,
+    create_user_ID,
+    sign_message,
     verify_signature,
     verify_signature_with_compressed_key,
-    compress_public_key
+    compress_public_key,
+    extract_compressed_pubkey_from_public_ID,
+    verify_ID_checksum
 )
 
 class Key:
@@ -21,7 +23,7 @@ class Key:
         else:
             self.seed_words = seed_words if seed_words else generate_seed()
             self.private_key, self.public_key = create_key_pair(self.seed_words)
-            self.id = self.get_id_from_public_key(self.public_key)
+            self.id = self.get_user_id_from_pubkey(self.public_key)
 
     def sign(self, message, base64_encode=False):
         """
@@ -47,9 +49,20 @@ class Key:
         else:
             return None
 
-    def get_id_from_public_key(self, pupkey, compressed_pubkey = False):
+    def get_user_id_from_pubkey(self, pupkey):
         """ Returns user ID generated from public key."""
-        return create_public_address(pupkey, compressed_pubkey)
+        return create_user_ID(pupkey)
+
+    def get_pubkey_from_id(self,id):
+        """ Returns public key extracted from user ID."""
+        return extract_compressed_pubkey_from_public_ID(id)
+
+    def check_user_id(self, user_id):
+        """
+        Verifies the checksum of a given user id.
+        :return: True if the checksum is valid, False otherwise.
+        """
+        return verify_ID_checksum(user_id)
 
     def __str__(self):
         return f"Key(Public Address: {self.id}, Seed Words: {self.seed_words})"

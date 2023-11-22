@@ -1,6 +1,4 @@
 # main.py
-#from src.models.key import Key
-#from src.models.minuto_voucher import MinutoVoucher
 import src.models.person
 
 

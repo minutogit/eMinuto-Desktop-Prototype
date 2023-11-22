@@ -121,18 +121,18 @@ class MinutoVoucher:
                 voucher.creator_signature = data['creator_signature']
 
             guarantor_signatures = []
-            for guarantor_info, pubkey_short, signature in data.get('guarantor_signatures', []):
-                guarantor_signatures.append((guarantor_info, pubkey_short, signature))
+            for guarantor_info, signature in data.get('guarantor_signatures', []):
+                guarantor_signatures.append((guarantor_info, signature))
 
             voucher.guarantor_signatures = guarantor_signatures
             return voucher
 
     def verify_all_guarantor_signatures(self, voucher):
         """ Validates all guarantor signatures on the given voucher. """
-        for guarantor_info, pubkey_short, signature in voucher.guarantor_signatures:
-            # hier kommt der fehler: TypeError: Key.get_id_from_public_key() missing 1 required positional argument: 'pupkey'
-            if self.key_instance.get_id_from_public_key(pubkey_short, compressed_pubkey=True) != guarantor_info["id"]:
-                return False
+        for guarantor_info, signature in voucher.guarantor_signatures:
+            if self.key_instance.check_user_id(guarantor_info["id"]) == False:
+                 return False
+            pubkey_short = self.key_instance.get_pubkey_from_id(guarantor_info["id"])
 
             data_to_verify = voucher.get_voucher_data_for_signing() + json.dumps(guarantor_info, sort_keys=True)
             if not self.key_instance.verify(data_to_verify, base64.b64decode(signature), pubkey_short,
@@ -143,9 +143,10 @@ class MinutoVoucher:
 
     def verify_creator_signature(self, voucher):
         """ Verifies the creator's signature on the given voucher. """
-        pubkey_short, signature = voucher.creator_signature
-        if self.key_instance.get_id_from_public_key(pubkey_short, compressed_pubkey=True) != voucher.creator_id:
+        signature = voucher.creator_signature
+        if self.key_instance.check_user_id(voucher.creator_id) == False:
             return False
+        pubkey_short = self.key_instance.get_pubkey_from_id(voucher.creator_id)
 
         data_to_verify = voucher.get_voucher_data_for_signing(include_guarantor_signatures=True)
         return self.key_instance.verify(data_to_verify, base64.b64decode(signature), pubkey_short, compressed_pubkey=True)

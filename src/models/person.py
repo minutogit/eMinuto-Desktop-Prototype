@@ -60,7 +60,7 @@ class Person:
         signature = self.key.sign(data_to_sign, base64_encode=True)
 
         # Append the signed guarantor information to the voucher
-        voucher.guarantor_signatures.append((guarantor_info, self.pubkey_short, signature))
+        voucher.guarantor_signatures.append((guarantor_info, signature))
 
     def verify_guarantor_signatures(self, voucher=None):
         """ Validates all guarantor signatures on the voucher. """
@@ -76,7 +76,7 @@ class Person:
             return
         # Schöpfer signiert den Gutschein, inklusive der Bürgen-Signaturen
         data_to_sign = voucher.get_voucher_data_for_signing(include_guarantor_signatures=True)
-        voucher.creator_signature = (self.pubkey_short, self.key.sign(data_to_sign, base64_encode=True))
+        voucher.creator_signature = (self.key.sign(data_to_sign, base64_encode=True))
         transaction = Transaction(voucher)
         transaction_data = transaction.get_first_transaction(self.key)
 
@@ -91,7 +91,7 @@ class Person:
     def send_amount(self, amount, recipient_id):
         # still a lot todo
         selected_vouchers = []
-        # todo logic needed for to select vouchers from all available vouchers
+        # todo later logic needed for to select vouchers from all available vouchers
         selected_vouchers.append((self.current_voucher, amount))
 
         for voucher, amount_to_send in selected_vouchers:

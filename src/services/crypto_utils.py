@@ -1,12 +1,9 @@
 #crypto_utils.py
-from Crypto.Hash import RIPEMD160
 from ecdsa import VerifyingKey, BadSignatureError
-
 from mnemonic import Mnemonic
 from ecdsa import SigningKey, SECP256k1
 import hashlib
 import base58
-import base64
 
 def generate_seed():
     """ Generates a random seed of 12 words. """
@@ -28,26 +25,54 @@ def verify_signature(public_key, message, signature):
     """ Verifies the signature using the public key. """
     return public_key.verify(signature, message.encode('utf-8'))
 
-def create_public_address(public_key, compressed_pubkey = False):
-    """ Creates a public address (ID) from the public key. """
-    if compressed_pubkey:
-        public_key = decompress_public_key(public_key)
-    public_key_bytes = public_key.to_string("uncompressed")
-    sha256_bpk = hashlib.sha256(public_key_bytes)
-    ripemd160_bpk = RIPEMD160.new(sha256_bpk.digest())
-    encoded_ripemd160_bpk = base58.b58encode(ripemd160_bpk.digest())
-    address_with_prefix = "MC" + encoded_ripemd160_bpk.decode()
-    checksum = hashlib.sha256(address_with_prefix.encode()).digest()[:4]
-    final_address = address_with_prefix + base58.b58encode(checksum).decode()[-4:]
-    return final_address
+def create_user_ID(public_key):
+    """
+    Generates an user_id (I)D from the compressed public key with a specified prefix and a checksum.
 
-def verify_address_checksum(address):
-    """ Verifies the checksum of an address. """
-    main_part = address[:-4]
-    existing_checksum = address[-4:]
-    calculated_checksum = hashlib.sha256(main_part.encode()).digest()[:4]
-    calculated_checksum_encoded = base58.b58encode(calculated_checksum).decode()[-4:]
-    return calculated_checksum_encoded == existing_checksum
+    :param public_key: The public key to be used.
+    :return: A string representing the user_id with the prefix and checksum.
+    """
+
+    prefix = "MC" # prefix to be added to the user_id. MC as MinutoCash
+    compressed_key = compress_public_key(public_key)
+    address = prefix + compressed_key
+    checksum = base58.b58encode(hashlib.sha256(address.encode()).digest()).decode()[-4:]
+
+    # add checksum
+    full_address = address + checksum
+    return full_address
+
+def verify_ID_checksum(user_id):
+    """
+    Verifies the checksum of a given user id.
+
+    :param user_id: The address whose checksum is to be verified.
+    :return: True if the checksum is valid, False otherwise.
+    """
+    # Split the user_id into the main part and the checksum
+    main_part, checksum = user_id[:-4], user_id[-4:]
+
+    # Calculate the new checksum from the main part of the user_id
+    new_checksum = base58.b58encode(hashlib.sha256(main_part.encode()).digest()).decode()[-4:]
+
+    # Compare the calculated checksum with the one in the user_id (both as strings)
+    return new_checksum == checksum
+
+def extract_compressed_pubkey_from_public_ID(public_ID):
+    """
+    Extracts the compressed public key from a public ID.
+
+    :param public_ID: The public ID from which the compressed public key is to be extracted.
+    :return: A string representing the compressed public key.
+    """
+    prefix = "MC"  # The prefix used in the public ID
+    prefix_length = len(prefix)
+    # Assuming the checksum is always 4 characters long
+    checksum_length = 4
+
+    # Extract the compressed public key (between the prefix and the checksum)
+    compressed_pubkey = public_ID[prefix_length:-checksum_length]
+    return compressed_pubkey
 
 
 def compress_public_key(public_key):
@@ -94,9 +119,5 @@ def get_transaction_hash(data):
     # Kodierung des Hashes in Base58
     hash_base58 = base58.b58encode(hash_digest)
     return hash_base58.decode()
-
-
-
-
 
 
