@@ -23,7 +23,7 @@ class Key:
         else:
             self.seed_words = seed_words if seed_words else generate_seed()
             self.private_key, self.public_key = create_key_pair(self.seed_words)
-            self.id = self.get_user_id_from_pubkey(self.public_key)
+            self.id = self.get_user_id_from_pubkey()
 
     def sign(self, message, base64_encode=False):
         """
@@ -49,9 +49,9 @@ class Key:
         else:
             return None
 
-    def get_user_id_from_pubkey(self, pupkey):
+    def get_user_id_from_pubkey(self):
         """ Returns user ID generated from public key."""
-        return create_user_ID(pupkey)
+        return create_user_ID(self.public_key)
 
     def get_pubkey_from_id(self,id):
         """ Returns public key extracted from user ID."""
