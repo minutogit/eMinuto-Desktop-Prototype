@@ -35,7 +35,8 @@ class Key:
         else:
             return signature
 
-    def verify_signature(self, message, signature, public_key):
+    @staticmethod
+    def verify_signature(message, signature, public_key):
         """ Verify a signature using the public key. """
         return verify_message_signature(public_key, message, signature)
 
@@ -50,11 +51,13 @@ class Key:
         """ Returns user ID generated from public key."""
         return create_user_ID(self.public_key)
 
-    def get_pubkey_from_id(self,id):
+    @staticmethod
+    def get_pubkey_from_id(id):
         """ Returns public key extracted from user ID."""
         return extract_compressed_pubkey_from_public_ID(id)
 
-    def check_user_id(self, user_id):
+    @staticmethod
+    def check_user_id(user_id):
         """
         Verifies the checksum of a given user id.
         :return: True if the checksum is valid, False otherwise.

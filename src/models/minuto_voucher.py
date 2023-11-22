@@ -1,11 +1,9 @@
 # minuto_voucher.py
 import base64
 import json
-from datetime import datetime
 import uuid
 from src.models.key import Key
 from src.services.utils import get_timestamp
-
 
 
 class MinutoVoucher:
@@ -28,7 +26,6 @@ class MinutoVoucher:
         self.creator_signature = None  # Creator's signature
         self.is_test_voucher = False  # Indicates if the voucher is a test voucher
         self.transactions = [] # list of transactions
-        self.key_instance = Key() # only for access to Key functions
 
     @classmethod
     def create(cls, creator_id: str, creator_name: str, creator_address, creator_gender: int, email: str, phone: str, service_offer: str, coordinates: str,
@@ -84,12 +81,11 @@ class MinutoVoucher:
         return len(self.guarantor_signatures) >= 2 and self.creator_signature is not None
 
     def save_to_disk(self, file_path):
-        exclude=["key_instance"]
-        data_to_save = {k: v for k, v in self.__dict__.items() if k not in exclude}
+        # Speichern aller Attribute des MinutoVoucher-Objekts
+        data_to_save = self.__dict__.copy()
 
         with open(file_path, 'w', encoding='utf-8') as file:
             file.write(json.dumps(data_to_save, sort_keys=True, indent=4, ensure_ascii=False))
-
 
     @classmethod
     def read_from_file(cls, file_path):
@@ -130,12 +126,12 @@ class MinutoVoucher:
     def verify_all_guarantor_signatures(self, voucher):
         """ Validates all guarantor signatures on the given voucher. """
         for guarantor_info, signature in voucher.guarantor_signatures:
-            if self.key_instance.check_user_id(guarantor_info["id"]) == False:
+            if Key.check_user_id(guarantor_info["id"]) == False:
                  return False
-            pubkey_short = self.key_instance.get_pubkey_from_id(guarantor_info["id"])
+            pubkey_short = Key.get_pubkey_from_id(guarantor_info["id"])
 
             data_to_verify = voucher.get_voucher_data_for_signing() + json.dumps(guarantor_info, sort_keys=True)
-            if not self.key_instance.verify_signature(data_to_verify, base64.b64decode(signature), pubkey_short):
+            if not Key.verify_signature(data_to_verify, base64.b64decode(signature), pubkey_short):
                 return False
 
         return True
@@ -143,12 +139,12 @@ class MinutoVoucher:
     def verify_creator_signature(self, voucher):
         """ Verifies the creator's signature on the given voucher. """
         signature = voucher.creator_signature
-        if self.key_instance.check_user_id(voucher.creator_id) == False:
+        if Key.check_user_id(voucher.creator_id) == False:
             return False
-        pubkey_short = self.key_instance.get_pubkey_from_id(voucher.creator_id)
+        pubkey_short = Key.get_pubkey_from_id(voucher.creator_id)
 
         data_to_verify = voucher.get_voucher_data_for_signing(include_guarantor_signatures=True)
-        return self.key_instance.verify_signature(data_to_verify, base64.b64decode(signature), pubkey_short)
+        return Key.verify_signature(data_to_verify, base64.b64decode(signature), pubkey_short)
 
     def __str__(self):
         # String representation of the voucher for easy debugging and comparison
