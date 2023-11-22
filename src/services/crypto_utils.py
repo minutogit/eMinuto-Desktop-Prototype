@@ -21,9 +21,15 @@ def sign_message(private_key, message):
     """ Signs a message using the private key. """
     return private_key.sign(message.encode('utf-8'))
 
-def verify_signature(public_key, message, signature):
-    """ Verifies the signature using the public key. """
-    return public_key.verify(signature, message.encode('utf-8'))
+def verify_message_signature(compressed_public_key, message, signature):
+    """
+    Verifies the signature from the message using a Base58 encoded compressed public key.
+    """
+    try:
+        public_key = decompress_public_key(compressed_public_key)
+        return public_key.verify(signature, message.encode('utf-8'))
+    except (BadSignatureError, ValueError, TypeError):
+        return False
 
 def create_user_ID(public_key):
     """
@@ -42,7 +48,7 @@ def create_user_ID(public_key):
     full_address = address + checksum
     return full_address
 
-def verify_ID_checksum(user_id):
+def verify_user_ID(user_id):
     """
     Verifies the checksum of a given user id.
 
@@ -95,15 +101,6 @@ def decompress_public_key(compressed_public_key):
     public_key_bytes = base58.b58decode(compressed_public_key)
     return VerifyingKey.from_string(public_key_bytes, curve=SECP256k1)
 
-def verify_signature_with_compressed_key(compressed_public_key, message, signature):
-    """
-    Verifies the signature using a Base64 encoded (but not compressed) public key.
-    """
-    try:
-        public_key = decompress_public_key(compressed_public_key)
-        return public_key.verify(signature, message.encode('utf-8'))
-    except (BadSignatureError, ValueError, TypeError):
-        return False
 
 def get_transaction_hash(data):
     """

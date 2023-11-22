@@ -40,7 +40,7 @@ def main():
 
     user1.read_voucher_from_file("minutoschein-complete.txt")
     print("user1 cerator sign ok? ",user1.verify_creator_signature())
-    # todo verify all transactions
+
 
 if __name__ == "__main__":
     main()

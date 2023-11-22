@@ -135,8 +135,7 @@ class MinutoVoucher:
             pubkey_short = self.key_instance.get_pubkey_from_id(guarantor_info["id"])
 
             data_to_verify = voucher.get_voucher_data_for_signing() + json.dumps(guarantor_info, sort_keys=True)
-            if not self.key_instance.verify(data_to_verify, base64.b64decode(signature), pubkey_short,
-                                      compressed_pubkey=True):
+            if not self.key_instance.verify_signature(data_to_verify, base64.b64decode(signature), pubkey_short):
                 return False
 
         return True
@@ -149,7 +148,7 @@ class MinutoVoucher:
         pubkey_short = self.key_instance.get_pubkey_from_id(voucher.creator_id)
 
         data_to_verify = voucher.get_voucher_data_for_signing(include_guarantor_signatures=True)
-        return self.key_instance.verify(data_to_verify, base64.b64decode(signature), pubkey_short, compressed_pubkey=True)
+        return self.key_instance.verify_signature(data_to_verify, base64.b64decode(signature), pubkey_short)
 
     def __str__(self):
         # String representation of the voucher for easy debugging and comparison

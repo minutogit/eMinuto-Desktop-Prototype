@@ -27,20 +27,20 @@ class Transaction:
         transaction_data = self._assemble_transaction_data()
         return self._sign_transaction_data(key_for_signing, transaction_data)
 
-    def get_transaction(self, amount, recipient_id, key_for_signing: Key, sender_note = '', recipient_note = ''):
+    def get_transaction(self, amount, recipient_id, key_for_signing: Key, sender_note='', recipient_note=''):
         self.amount = amount
         self.recipient_id = recipient_id
         self.t_type = ''
-        self.sender_note = sender_note # Encrypted note for the sender itself"
-        self.recipient_note = recipient_note # Encrypted note from sender for recipient
+        self.sender_note = sender_note  # Encrypted note for the sender itself
+        self.recipient_note = recipient_note  # Encrypted note from sender for recipient
 
         # Check if there are transactions and use the hash of the last transaction
         if self.voucher.transactions:
             last_transaction = self.voucher.transactions[-1]
             previous_transaction = json.dumps(last_transaction, sort_keys=True).encode()
         else:
-            # If no transactions exist, use the hash of the entire voucher
-            previous_transaction = self.voucher.get_voucher_data_for_signing(include_guarantor_signatures=True, creator_signature=True).encode()
+            # Raise an error if no previous transactions exist
+            raise ValueError("No previous transactions exist for this voucher.")
 
         self.previous_hash = get_transaction_hash(previous_transaction)
         self.sender_id = key_for_signing.get_compressed_public_key()

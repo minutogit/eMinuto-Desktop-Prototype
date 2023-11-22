@@ -6,11 +6,10 @@ from src.services.crypto_utils import (
     create_key_pair,
     create_user_ID,
     sign_message,
-    verify_signature,
-    verify_signature_with_compressed_key,
+    verify_message_signature,
     compress_public_key,
     extract_compressed_pubkey_from_public_ID,
-    verify_ID_checksum
+    verify_user_ID
 )
 
 class Key:
@@ -36,11 +35,9 @@ class Key:
         else:
             return signature
 
-    def verify(self, message, signature, public_key, compressed_pubkey = False):
+    def verify_signature(self, message, signature, public_key):
         """ Verify a signature using the public key. """
-        if compressed_pubkey:
-            return verify_signature_with_compressed_key(public_key, message, signature)
-        return verify_signature(self.public_key, message, signature)
+        return verify_message_signature(public_key, message, signature)
 
     def get_compressed_public_key(self):
         """ Returns the compressed form of the public key. """
@@ -62,7 +59,7 @@ class Key:
         Verifies the checksum of a given user id.
         :return: True if the checksum is valid, False otherwise.
         """
-        return verify_ID_checksum(user_id)
+        return verify_user_ID(user_id)
 
     def __str__(self):
         return f"Key(Public Address: {self.id}, Seed Words: {self.seed_words})"
