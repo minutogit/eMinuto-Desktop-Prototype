@@ -150,7 +150,7 @@ class MinutoVoucher:
 
     def verify_initial_transaction(self):
         """
-        Verify the first initial transaction of the voucher.
+        Verifies the initial transaction of the voucher.
 
         :return: True if the initial transaction is valid, False otherwise.
         """
@@ -158,29 +158,111 @@ class MinutoVoucher:
         if not self.transactions:
             return False
 
-        # Get the initial transaction from the transaction list
+        # Retrieve the initial transaction from the transaction list
         initial_transaction = self.transactions[0]
 
-        # Check if initial transaction conditions are correct
-        if initial_transaction['t_type'] != 'init' or initial_transaction['recipient_id'] != self.creator_id or \
-                initial_transaction['amount'] != self.amount:
+        # Validate that the initial transaction meets expected conditions
+        if initial_transaction['t_type'] != 'init' or \
+                initial_transaction['recipient_id'] != self.creator_id or \
+                initial_transaction['amount'] != self.amount or \
+                initial_transaction['sender_id'] != self.creator_id:
             return False
 
-        # verify hash from complete voucher data
-        data_for_prev_hash = self.get_voucher_data_for_signing(include_guarantor_signatures=True, creator_signature=True).encode()
+        # Verify the linkage to the voucher - verify hash from complete voucher data
+        data_for_prev_hash = self.get_voucher_data_for_signing(include_guarantor_signatures=True,
+                                                               creator_signature=True).encode()
         if get_hash(data_for_prev_hash) != initial_transaction['previous_hash']:
             return False
 
-        # verify transaction id
+        # Verify transaction ID and the correct signature of the sender (creator)
         if Transaction.calculate_transaction_id(initial_transaction) != initial_transaction['t_id']:
             return False
 
-        # Verify the signature of the transaction id
-        pubkey_short = Key.get_pubkey_from_id(self.creator_id)
-        is_signature_valid = Key.verify_signature(initial_transaction["t_id"],
-                                                  base64.b64decode(initial_transaction['sender_signature']),
-                                                  pubkey_short)
+        # Verify the signature of the transaction ID
+        is_signature_valid = self.verify_transaction_ids_signature(initial_transaction)
+
         return is_signature_valid
+
+    def verify_transaction_ids_signature(self, transaction):
+        """
+        Verifies whether the transaction ID is correctly calculated and properly signed by the sender_id (creator of the transaction).
+        Note: This is not a complete verification in context with the previous transaction! (linkage, amount, sender's authorization, etc., need to be checked separately.)
+        Receives a transaction.
+        Returns True if the signature from the sender is correct.
+        """
+
+        # Check if the transaction ID is correct
+        if not transaction["t_id"] == Transaction.calculate_transaction_id(transaction):
+            return False
+
+        # Verify the signature against the sender's public key
+        pubkey = Key.get_pubkey_from_id(transaction['sender_id'])
+        is_signature_valid = Key.verify_signature(transaction["t_id"],
+                                                  base64.b64decode(transaction['sender_signature']),
+                                                  pubkey)
+        return is_signature_valid
+
+    def verify_all_transactions(self):
+        """
+        Verifies all transactions in the voucher.
+
+        :return: True if all transactions are valid, False otherwise.
+        """
+
+        # Check if there are any transactions
+        if not self.transactions:
+            return False
+
+        # Verify the initial transaction
+        if not self.verify_initial_transaction():
+            return False
+
+        # Loop through and verify each subsequent transaction
+        for i in range(1, len(self.transactions)):
+            current_transaction = self.transactions[i]
+            previous_transaction = self.transactions[i - 1]
+
+            print(f"Verifying transaction: {i}  -  {current_transaction['t_id']}")
+
+            # Verify the transaction ID and the sender's signature
+            if not self.verify_transaction_ids_signature(current_transaction):
+                return False
+            else:
+                print("Transaction ID and Signature are okay")
+
+            # Verify if the sender was authorized to send
+            allowed_senders = [previous_transaction['recipient_id']]
+            if previous_transaction.get('type', '') == 'split':
+                allowed_senders.append(previous_transaction['sender_id'])
+            if current_transaction['sender_id'] not in allowed_senders:
+                return False
+            else:
+                print(f"Sender {current_transaction['sender_id']} was allowed to send")
+
+            # Verify if the sent amount was permissible
+            allowed_amount = previous_transaction[
+                'amount']  # Typically, the recipient of the last transaction is the sender of the current transaction
+            # If the sender is sending the remaining amount
+            if previous_transaction.get('type', '') == 'split' and current_transaction['sender_id'] == \
+                    previous_transaction['sender_id']:
+                allowed_amount = previous_transaction[
+                    'sender_remaining_amount']  # available remaining amount from the sender
+            if current_transaction[
+                'amount'] > allowed_amount:  # If the received amount is greater than the allowed amount, then error
+                print(f"Too much sent! {current_transaction['amount']} Minuto (max allowed {allowed_amount})")
+                return False
+            else:
+                print(f"Received {current_transaction['amount']} Minuto (max allowed {allowed_amount})")
+
+            # Verify the linkage to the previous transaction
+            previous_transaction_hash = get_hash(json.dumps(previous_transaction, sort_keys=True).encode())
+            if not current_transaction['previous_hash'] == previous_transaction_hash:
+                return False
+            else:
+                print("Linkage (Hash of the previous transaction) is correct\n")
+
+        print("All transactions are okay")
+        return True
 
     def __str__(self):
         # String representation of the voucher for easy debugging and comparison

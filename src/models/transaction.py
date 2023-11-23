@@ -19,6 +19,7 @@ class Transaction:
     def get_initial_transaction(self, key_for_signing: Key):
         # Initial transaction to initialize the transaction chain with the voucher creator's ID
         self.recipient_id = self.voucher.creator_id
+        self.sender_id = self.voucher.creator_id
         self.amount = self.voucher.amount
         self.t_type = 'init'  # type for the initial transaction
         data = self.voucher.get_voucher_data_for_signing(include_guarantor_signatures=True, creator_signature=True).encode()
