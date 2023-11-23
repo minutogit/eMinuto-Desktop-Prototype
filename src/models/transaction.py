@@ -2,7 +2,7 @@
 import json
 from src.models.key import Key
 from src.services.utils import get_timestamp
-from src.services.crypto_utils import get_transaction_hash
+from src.services.crypto_utils import get_hash
 
 class Transaction:
     def __init__(self, voucher):
@@ -22,9 +22,10 @@ class Transaction:
         self.amount = self.voucher.amount
         self.t_type = 'init'  # type for the initial transaction
         data = self.voucher.get_voucher_data_for_signing(include_guarantor_signatures=True, creator_signature=True).encode()
-        self.previous_hash = get_transaction_hash(data)
+        self.previous_hash = get_hash(data)
         self.t_time = get_timestamp()
         transaction_data = self._assemble_transaction_data()
+        print("transaction_data",transaction_data)
         return self._sign_transaction_data(key_for_signing, transaction_data)
 
     def do_transaction(self, send_amount, sender_id, recipient_id, key_for_signing: Key, sender_note='',
@@ -63,7 +64,7 @@ class Transaction:
         if self.voucher.transactions:
             last_transaction = self.voucher.transactions[-1]
             previous_transaction = json.dumps(last_transaction, sort_keys=True).encode()
-            self.previous_hash = get_transaction_hash(previous_transaction)
+            self.previous_hash = get_hash(previous_transaction)
         else:
             raise ValueError("No previous transactions exist for this voucher.")
 
@@ -86,19 +87,16 @@ class Transaction:
             "sender_remaining_amount": self.sender_remaining_amount
         }
 
-        # Remove keys with empty string values
+        # Remove empty keys to save space
         transaction_data = {k: v for k, v in transaction_data.items() if v != ''}
 
-        # Generate t_id from current transaction data
-        current_transaction_data = json.dumps(transaction_data, sort_keys=True).encode()
-        self.t_id = get_transaction_hash(current_transaction_data)
-        transaction_data["t_id"] = self.t_id
+        transaction_data["t_id"] = self.calculate_transaction_id(transaction_data)
 
         return transaction_data
 
     def _sign_transaction_data(self, key, transaction_data):
-        data_to_sign = json.dumps(transaction_data, sort_keys=True)
-        self.sender_signature = key.sign(data_to_sign, base64_encode=True)
+        # signs transatction an der returns the complete transaction data
+        self.sender_signature = key.sign(transaction_data["t_id"], base64_encode=True)
         transaction_data["sender_signature"] = self.sender_signature
         return transaction_data
 
@@ -130,3 +128,20 @@ class Transaction:
 
         # Default case for other scenarios
         return 0  # or a suitable error message or logic
+
+    @staticmethod
+    def calculate_transaction_id(transaction_data):
+        """
+        Calculate the transaction ID (t_id) for a given transaction.
+
+        :param transaction_data: A dictionary representing the transaction.
+        :return: The calculated transaction ID.
+        """
+        # Remove 't_id' and 'sender_signature' keys if they exist in the transaction data
+        transaction_data = {k: v for k, v in transaction_data.items() if k not in ['t_id', 'sender_signature']}
+
+        # Convert the transaction data to JSON and encode it
+        encoded_transaction_data = json.dumps(transaction_data, sort_keys=True).encode()
+
+        # Generate and return the transaction hash
+        return get_hash(encoded_transaction_data)

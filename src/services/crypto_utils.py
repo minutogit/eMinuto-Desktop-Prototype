@@ -102,7 +102,7 @@ def decompress_public_key(compressed_public_key):
     return VerifyingKey.from_string(public_key_bytes, curve=SECP256k1)
 
 
-def get_transaction_hash(data):
+def get_hash(data):
     """
     Calculates the SHA-256 hash of the given data and encodes it in Base58.
 

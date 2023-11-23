@@ -4,6 +4,8 @@ import json
 import uuid
 from src.models.key import Key
 from src.services.utils import get_timestamp
+from src.services.crypto_utils import get_hash
+from src.models.transaction import Transaction
 
 
 class MinutoVoucher:
@@ -145,6 +147,40 @@ class MinutoVoucher:
 
         data_to_verify = voucher.get_voucher_data_for_signing(include_guarantor_signatures=True)
         return Key.verify_signature(data_to_verify, base64.b64decode(signature), pubkey_short)
+
+    def verify_initial_transaction(self):
+        """
+        Verify the first initial transaction of the voucher.
+
+        :return: True if the initial transaction is valid, False otherwise.
+        """
+        # Check if there are any transactions
+        if not self.transactions:
+            return False
+
+        # Get the initial transaction from the transaction list
+        initial_transaction = self.transactions[0]
+
+        # Check if initial transaction conditions are correct
+        if initial_transaction['t_type'] != 'init' or initial_transaction['recipient_id'] != self.creator_id or \
+                initial_transaction['amount'] != self.amount:
+            return False
+
+        # verify hash from complete voucher data
+        data_for_prev_hash = self.get_voucher_data_for_signing(include_guarantor_signatures=True, creator_signature=True).encode()
+        if get_hash(data_for_prev_hash) != initial_transaction['previous_hash']:
+            return False
+
+        # verify transaction id
+        if Transaction.calculate_transaction_id(initial_transaction) != initial_transaction['t_id']:
+            return False
+
+        # Verify the signature of the transaction id
+        pubkey_short = Key.get_pubkey_from_id(self.creator_id)
+        is_signature_valid = Key.verify_signature(initial_transaction["t_id"],
+                                                  base64.b64decode(initial_transaction['sender_signature']),
+                                                  pubkey_short)
+        return is_signature_valid
 
     def __str__(self):
         # String representation of the voucher for easy debugging and comparison
