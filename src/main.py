@@ -4,7 +4,7 @@ import src.models.person
 
 def main():
     # Erstelle eine Person
-    hansdampf = src.models.person.Person("Max Mustermann", "Musterstraße 1", 1, "max@example.com", "0123456789", "IT-Support", "50.1109, 8.6821",
+    hansdampf = src.models.person.Person("Hans Dampf", "Musterstraße 1", 1, "max@example.com", "0123456789", "IT-Support", "50.1109, 8.6821",
                        "2023-12-31","adapt buddy actress swear early offer grow comic code sting hawk marble")
     buerge_weiblich = src.models.person.Person("Susi Musterfrau", "Musterstraße 2", 2, "susi@example.com", "0123456789", "Backen",
                              "50.1109, 8.6821", "2023-12-31", "rookie era bamboo industry group furnace axis disorder economy silly action invite")
@@ -35,10 +35,17 @@ def main():
     print("both guarantor signs ok? ", hansdampf.verify_guarantor_signatures())
     hansdampf.sign_voucher_as_creator()
     print("creator signature ok? ",hansdampf.verify_creator_signature())
-    hansdampf.send_amount(50, 'MC4WT6nYDe3AJLGPHcKFj7vZfuxR14VKLg')
+    hansdampf.send_amount(33, 'MC22m5UFhMczBb3mnmxhH5o6kqv5e1RpmFL2Y2ibciRKbwfXhNM')
     hansdampf.current_voucher.save_to_disk("minutoschein-complete.txt")
 
+    buerge_maennlich.read_voucher_from_file("minutoschein-complete.txt")
+    buerge_maennlich.send_amount(32, 'MCbcUb8Tg6xtCFL6WhDv1uXgyC4LjvkV9BR53hn1MowLpYPGPp')
+    buerge_maennlich.current_voucher.save_to_disk("minutoschein-complete.txt")
+
     user1.read_voucher_from_file("minutoschein-complete.txt")
+    #print(user1.current_voucher)
+    print("verify_initial_transaction: ",user1.current_voucher.verify_initial_transaction())
+    print(user1.current_voucher.verify_all_transactions())
     print("user1 cerator sign ok? ",user1.verify_creator_signature())
 
 

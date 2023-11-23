@@ -202,19 +202,24 @@ class MinutoVoucher:
                                                   pubkey)
         return is_signature_valid
 
-    def verify_all_transactions(self):
+    def verify_all_transactions(self, verbose=False):
         """
         Verifies all transactions in the voucher.
 
+        :param verbose: If set to True, print detailed messages during the verification process.
         :return: True if all transactions are valid, False otherwise.
         """
 
         # Check if there are any transactions
         if not self.transactions:
+            if verbose:
+                print("No transactions to verify.")
             return False
 
         # Verify the initial transaction
         if not self.verify_initial_transaction():
+            if verbose:
+                print("Initial transaction verification failed.")
             return False
 
         # Loop through and verify each subsequent transaction
@@ -222,12 +227,16 @@ class MinutoVoucher:
             current_transaction = self.transactions[i]
             previous_transaction = self.transactions[i - 1]
 
-            print(f"Verifying transaction: {i}  -  {current_transaction['t_id']}")
+            if verbose:
+                print(f"Verifying transaction: {i}  -  {current_transaction['t_id']}")
 
             # Verify the transaction ID and the sender's signature
             if not self.verify_transaction_ids_signature(current_transaction):
+                if verbose:
+                    print("Transaction ID or sender's signature verification failed.")
                 return False
-            else:
+
+            if verbose:
                 print("Transaction ID and Signature are okay")
 
             # Verify if the sender was authorized to send
@@ -235,33 +244,66 @@ class MinutoVoucher:
             if previous_transaction.get('type', '') == 'split':
                 allowed_senders.append(previous_transaction['sender_id'])
             if current_transaction['sender_id'] not in allowed_senders:
+                if verbose:
+                    print(f"Sender {current_transaction['sender_id']} was not authorized to send.")
                 return False
-            else:
+
+            if verbose:
                 print(f"Sender {current_transaction['sender_id']} was allowed to send")
 
             # Verify if the sent amount was permissible
             allowed_amount = previous_transaction[
                 'amount']  # Typically, the recipient of the last transaction is the sender of the current transaction
-            # If the sender is sending the remaining amount
             if previous_transaction.get('type', '') == 'split' and current_transaction['sender_id'] == \
                     previous_transaction['sender_id']:
                 allowed_amount = previous_transaction[
                     'sender_remaining_amount']  # available remaining amount from the sender
-            if current_transaction[
-                'amount'] > allowed_amount:  # If the received amount is greater than the allowed amount, then error
-                print(f"Too much sent! {current_transaction['amount']} Minuto (max allowed {allowed_amount})")
+            if current_transaction['amount'] > allowed_amount:
+                if verbose:
+                    print(f"Too much sent! {current_transaction['amount']} Minuto (max allowed {allowed_amount})")
                 return False
-            else:
+
+            if verbose:
                 print(f"Received {current_transaction['amount']} Minuto (max allowed {allowed_amount})")
 
             # Verify the linkage to the previous transaction
             previous_transaction_hash = get_hash(json.dumps(previous_transaction, sort_keys=True).encode())
-            if not current_transaction['previous_hash'] == previous_transaction_hash:
+            if current_transaction['previous_hash'] != previous_transaction_hash:
+                if verbose:
+                    print("Linkage to the previous transaction failed.")
                 return False
-            else:
+
+            if verbose:
                 print("Linkage (Hash of the previous transaction) is correct\n")
 
-        print("All transactions are okay")
+        if verbose:
+            print("All transactions are okay")
+        return True
+
+    def verify_complete_voucher(self):
+        """
+        Verifies the entire voucher including guarantor signatures, creator's signature,
+        and all transactions.
+
+        :return: True if the entire voucher is valid, False otherwise.
+        """
+
+        # Verify guarantor signatures
+        if not self.verify_all_guarantor_signatures(self):
+            print("Guarantor signature verification failed.")
+            return False
+
+        # Verify creator's signature
+        if not self.verify_creator_signature(self):
+            print("Creator signature verification failed.")
+            return False
+
+        # Verify all transactions
+        if not self.verify_all_transactions():
+            print("Transaction verification failed.")
+            return False
+
+        print("The entire voucher is verified and valid.")
         return True
 
     def __str__(self):
