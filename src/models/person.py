@@ -105,12 +105,10 @@ class Person:
         transaction = Transaction(voucher)
 
         # Transaktionsdaten generieren und signieren
-        transaction_data = transaction.get_transaction(amount, recipient_id, self.key)
+        transaction_data = transaction.do_transaction(amount, self.id, recipient_id, self.key)
 
         # Füge die Transaktion der Transaktionsliste des Gutscheins hinzu
         voucher.transactions.append(transaction_data)
-
-
 
     def __str__(self):
         return f"Person({self.id}, {self.name}, {self.address}, {self.gender}, {self.email}, {self.phone}, {self.service_offer}, {self.coordinates})"

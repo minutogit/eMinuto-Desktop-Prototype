@@ -149,7 +149,7 @@ class MinutoVoucher:
     def __str__(self):
         # String representation of the voucher for easy debugging and comparison
         guarantor_signatures_str = ', '.join([f"{g[0]}: {g[1]}" for g in self.guarantor_signatures])
-        creator_signature_str = self.creator_signature.hex() if self.creator_signature else 'None'
+        creator_signature_str = self.creator_signature if self.creator_signature else 'None'
         test_voucher_status = "Test Voucher" if self.is_test_voucher else "Regular Voucher"
 
         return (
@@ -170,6 +170,7 @@ class MinutoVoucher:
             f"  Guarantor Signatures: [{guarantor_signatures_str}]\n"
             f"  Creator Signature: {creator_signature_str}\n"
             f"  Status: {test_voucher_status}\n"
+            f"  transactions: {self.transactions}\n"
             ")"
         )
 
