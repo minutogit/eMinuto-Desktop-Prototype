@@ -86,53 +86,45 @@ class MinutoVoucher:
         # Check the validity of the voucher
         return len(self.guarantor_signatures) >= 2 and self.creator_signature is not None
 
-    def save_to_disk(self, file_path):
+    def save_to_disk(self, file_path=None, virtual=False):
         """
-        Saves all attributes of the MinutoVoucher object to a specified file path.
+        Saves all attributes of the MinutoVoucher object either to a specified file path or returns the serialized data.
+        If virtual mode is activated, the file_path is ignored and the serialized data is returned instead.
 
-        :param file_path: The path of the file where the voucher data will be saved.
+        :param file_path: Optional. The path of the file where the voucher data will be saved when not in virtual mode.
+        :param virtual: If True, operates in virtual mode and returns the serialized data; otherwise, saves to the specified file path.
+        :return: The serialized data if virtual mode is activated.
         """
-        # Save all attributes of the MinutoVoucher object
-        data_to_save = self.__dict__.copy()
-
-        with open(file_path, 'w', encoding='utf-8') as file:
-            file.write(json.dumps(data_to_save, sort_keys=False, indent=4, ensure_ascii=False))
+        data_to_save = json.dumps(self.__dict__.copy(), sort_keys=False, indent=4, ensure_ascii=False)
+        if virtual:
+            return data_to_save  # Return the serialized data in virtual mode
+        else:
+            if file_path:
+                with open(file_path, 'w', encoding='utf-8') as file:
+                    file.write(data_to_save)
 
     @classmethod
-    def read_from_file(cls, file_path):
-        with open(file_path, 'r') as file:
-            data = json.load(file)
+    def read_from_file(cls, file_path, virtual=False):
+        """
+        Reads and creates a MinutoVoucher object from a file or a virtual file system.
+        In virtual mode, the 'file_path' parameter is treated as the content of the virtual file.
 
-            # Create a new voucher instance with the base data
-            voucher = cls()
-            voucher.creator_id = data.get('creator_id', '')
-            voucher.creator_name = data.get('creator_name', '')
-            voucher.creator_address = data.get('creator_address', '')
-            voucher.creator_gender = data.get('creator_gender', 0)
-            voucher.email = data.get('email', '')
-            voucher.phone = data.get('phone', '')
-            voucher.service_offer = data.get('service_offer', '')
-            voucher.coordinates = data.get('coordinates', '')
-            voucher.amount = data.get('amount', 0)
-            voucher.region = data.get('region', '')
-            voucher.validit_until = data.get('validit_until', '')
-            voucher.is_test_voucher = data.get('is_test_voucher', False)  # Read the test voucher status
-            voucher.transactions = data.get('transactions', [])
+        :param file_path: The path of the file from which the voucher data will be read, or the content of virtual storage.
+        :param virtual: If True, operates in virtual mode for simulation purposes, otherwise performs actual file operations.
+        :return: A MinutoVoucher object instantiated with the read data.
+        """
+        if virtual:
+            data_str = file_path  # Treat 'file_path' as the content in virtual mode
+        else:
+            with open(file_path, 'r') as file:
+                data_str = file.read()
 
+        data = json.loads(data_str)
+        voucher = cls()
+        for key, value in data.items():
+            setattr(voucher, key, value)
 
-            # Set additional fields
-            voucher.voucher_id = data.get('voucher_id', voucher.voucher_id)
-            voucher.creation_date = data.get('creation_date', voucher.creation_date)
-
-            if data.get('creator_signature'):
-                voucher.creator_signature = data['creator_signature']
-
-            guarantor_signatures = []
-            for guarantor_info, signature in data.get('guarantor_signatures', []):
-                guarantor_signatures.append((guarantor_info, signature))
-
-            voucher.guarantor_signatures = guarantor_signatures
-            return voucher
+        return voucher
 
     def verify_all_guarantor_signatures(self, voucher):
         """ Validates all guarantor signatures on the given voucher. """

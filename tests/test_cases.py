@@ -33,19 +33,19 @@ class TestPerson(unittest.TestCase):
         # Erstellen und Speichern des initialen Vouchers
         self.voucher_path = os.path.join(self.temp_subfolder, "minutoschein.txt")
         self.hansdampf.create_voucher(100, "Frankfurt", 5)
-        self.hansdampf.current_voucher.save_to_disk(self.voucher_path)
+        self.hansdampf.save_voucher(self.voucher_path)
 
         # Signieren des Vouchers durch den männlichen Bürgen und Speichern
         self.male_signed_voucher_path = os.path.join(self.temp_subfolder, "minutoschein-male-signed.txt")
-        self.buerge_maennlich.read_voucher_from_file(self.voucher_path)
+        self.buerge_maennlich.read_voucher(self.voucher_path)
         self.buerge_maennlich.sign_voucher_as_guarantor()
-        self.buerge_maennlich.current_voucher.save_to_disk(self.male_signed_voucher_path)
+        self.buerge_maennlich.save_voucher(self.male_signed_voucher_path)
 
         # Signieren des Vouchers durch den weiblichen Bürgen und Speichern
         self.male_female_signed_voucher_path = os.path.join(self.temp_subfolder, "minutoschein-male_female-signed.txt")
-        self.buerge_weiblich.read_voucher_from_file(self.male_signed_voucher_path)
+        self.buerge_weiblich.read_voucher(self.male_signed_voucher_path)
         self.buerge_weiblich.sign_voucher_as_guarantor()
-        self.buerge_weiblich.current_voucher.save_to_disk(self.male_female_signed_voucher_path)
+        self.buerge_weiblich.save_voucher(self.male_female_signed_voucher_path)
 
 
     def test_voucher_creation_and_persistence(self):
@@ -56,27 +56,27 @@ class TestPerson(unittest.TestCase):
         self.assertTrue(os.path.exists(self.voucher_path), "Voucher erfolgreich gespeichert.")
 
         # Test 2: Initialisiere einen leeren Voucher und lese den gespeicherten Voucher ein
-        self.hansdampf.read_voucher_from_file(self.voucher_path)
+        self.hansdampf.read_voucher(self.voucher_path)
         self.assertEqual(self.hansdampf.current_voucher, original_voucher, "Daten korrekt eingelesen.")
 
     def test_male_guarantor_signature(self):
         # Test 3a: Überprüfen der Unterschrift des männlichen Bürgen
-        self.buerge_maennlich.read_voucher_from_file(self.male_signed_voucher_path)
+        self.buerge_maennlich.read_voucher(self.male_signed_voucher_path)
         self.assertTrue(self.buerge_maennlich.verify_guarantor_signatures(), "Signatur von männlichem Bürgen erfolgreich geprüft.")
 
     def test_female_guarantor_signature(self):
         # Test 3b: Überprüfen der Unterschrift des weiblichen Bürgen
-        self.buerge_weiblich.read_voucher_from_file(self.male_female_signed_voucher_path)
+        self.buerge_weiblich.read_voucher(self.male_female_signed_voucher_path)
         self.assertTrue(self.buerge_weiblich.verify_guarantor_signatures(), "Signatur von weiblichem Bürgen erfolgreich geprüft.")
 
     def test_creator_signature_verification(self):
         # Test 4: Überprüfen der Unterschrift des Erstellers
-        self.hansdampf.read_voucher_from_file(self.male_female_signed_voucher_path)
+        self.hansdampf.read_voucher(self.male_female_signed_voucher_path)
         self.hansdampf.sign_voucher_as_creator()
         complete_voucher_path = os.path.join(self.temp_subfolder, "minutoschein-complete.txt")
-        self.hansdampf.current_voucher.save_to_disk(complete_voucher_path)
+        self.hansdampf.save_voucher(complete_voucher_path)
 
-        self.user1.read_voucher_from_file(complete_voucher_path)
+        self.user1.read_voucher(complete_voucher_path)
         self.assertTrue(self.user1.verify_creator_signature(), "Signatur des Erstellers erfolgreich verifiziert.")
 
     def tearDown(self):
