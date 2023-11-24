@@ -7,7 +7,7 @@ from src.services.utils import get_timestamp
 import json
 
 class Person:
-    def __init__(self, name, address, gender, email, phone, service_offer, coordinates, validity, seed=None):
+    def __init__(self, name, address, gender, email, phone, service_offer, coordinates, seed=None):
         self.key = Key(seed) if seed else Key()
         self.id = self.key.id
         self.pubkey_short = self.key.get_compressed_public_key()

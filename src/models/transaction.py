@@ -26,7 +26,6 @@ class Transaction:
         self.previous_hash = get_hash(data)
         self.t_time = get_timestamp()
         transaction_data = self._assemble_transaction_data()
-        print("transaction_data",transaction_data)
         return self._sign_transaction_data(key_for_signing, transaction_data)
 
     def do_transaction(self, send_amount, sender_id, recipient_id, key_for_signing: Key, sender_note='',

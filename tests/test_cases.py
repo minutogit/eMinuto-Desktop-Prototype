@@ -7,22 +7,22 @@ class TestPerson(unittest.TestCase):
         # Setup: Erstelle verschiedene Personen
         self.hansdampf = src.models.person.Person(
             "Max Mustermann", "Musterstraße 1", 1, "max@example.com", "0123456789",
-            "IT-Support", "50.1109, 8.6821", "2023-12-31",
+            "IT-Support", "50.1109, 8.6821",
             "adapt buddy actress swear early offer grow comic code sting hawk marble"
         )
         self.buerge_weiblich = src.models.person.Person(
             "Susi Musterfrau", "Musterstraße 2", 2, "susi@example.com", "0123456789", "Backen",
-            "50.1109, 8.6821", "2023-12-31",
+            "50.1109, 8.6821",
             "rookie era bamboo industry group furnace axis disorder economy silly action invite"
         )
         self.buerge_maennlich = src.models.person.Person(
             "Hans Müller", "Straße 6", 1, "hans@mail.com", "0172653214", "Sport, Handwerk",
-            "50.1109, 8.6821", "2023-12-31",
+            "50.1109, 8.6821",
             "strong symptom minor attract math clock pool elite half guess album close"
         )
         self.user1 = src.models.person.Person(
             "Franz Müller", "Weg 3", 1, "franzi@gmx.com", "0717-362541", "Ich kann viel",
-            "51.56, 8.22", "2023-12-31",
+            "51.56, 8.22",
             "orchard honey actor together basket wasp ankle wire eyebrow clever ensure expose"
         )
 

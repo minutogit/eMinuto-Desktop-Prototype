@@ -24,9 +24,9 @@ class MinutoVoucher:
         self.email = ''
         self.phone = ''
         self.creation_date = ''
+        self.is_test_voucher = False  # Indicates if the voucher is a test voucher
         self.guarantor_signatures = []  # Guarantor signatures
         self.creator_signature = None  # Creator's signature
-        self.is_test_voucher = False  # Indicates if the voucher is a test voucher
         self.transactions = [] # list of transactions
 
     @classmethod
@@ -79,15 +79,24 @@ class MinutoVoucher:
         return json.dumps(data, sort_keys=True, ensure_ascii=False)
 
     def is_valid(self):
-        # Überprüft die Gültigkeit des Gutscheins
+        """
+        Checks the validity of the voucher.
+        A voucher is considered valid if it has at least two guarantor signatures and a creator signature.
+        """
+        # Check the validity of the voucher
         return len(self.guarantor_signatures) >= 2 and self.creator_signature is not None
 
     def save_to_disk(self, file_path):
-        # Speichern aller Attribute des MinutoVoucher-Objekts
+        """
+        Saves all attributes of the MinutoVoucher object to a specified file path.
+
+        :param file_path: The path of the file where the voucher data will be saved.
+        """
+        # Save all attributes of the MinutoVoucher object
         data_to_save = self.__dict__.copy()
 
         with open(file_path, 'w', encoding='utf-8') as file:
-            file.write(json.dumps(data_to_save, sort_keys=True, indent=4, ensure_ascii=False))
+            file.write(json.dumps(data_to_save, sort_keys=False, indent=4, ensure_ascii=False))
 
     @classmethod
     def read_from_file(cls, file_path):
@@ -282,12 +291,10 @@ class MinutoVoucher:
 
     def verify_complete_voucher(self):
         """
-        Verifies the entire voucher including guarantor signatures, creator's signature,
-        and all transactions.
+        Verifies the entire voucher including guarantor signatures, creator's signature, and all transactions.
 
         :return: True if the entire voucher is valid, False otherwise.
         """
-
         # Verify guarantor signatures
         if not self.verify_all_guarantor_signatures(self):
             print("Guarantor signature verification failed.")
@@ -335,7 +342,7 @@ class MinutoVoucher:
         )
 
     def __eq__(self, other):
-        # Vergleichen Sie die string-Repräsentationen der beiden Objekte.
+        # compare with string representation of the voucher
         if not isinstance(other, MinutoVoucher):
             return False
 
