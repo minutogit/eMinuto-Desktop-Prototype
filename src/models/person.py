@@ -3,7 +3,7 @@ import base64
 
 from src.models.key import Key
 from src.models.vouchertransaction import VoucherTransaction
-from src.models.transactionmanager import TransactionManager
+from src.models.usertransaction import UserTransaction
 from src.services.utils import get_timestamp, dprint
 import json
 
@@ -22,6 +22,7 @@ class Person:
 
         self.current_voucher = None  # Initialisierung von current_voucher
         self.vouchers = [] # list of vouchers
+        self.usertransaction = UserTransaction()
 
     def init_empty_voucher(self):
         from src.models.minuto_voucher import MinutoVoucher
@@ -99,27 +100,33 @@ class Person:
 
     def send_amount(self, amount, recipient_id):
         """
-        Send a specified amount to a recipient using available vouchers.
+        Send a specified amount to a person (recipient) using available vouchers.
 
         :param amount: The amount to send.
         :param recipient_id: The ID of the recipient.
         :return: List of vouchers used for the transaction.
         """
-        return TransactionManager.process_transactions(self, amount, recipient_id)
+        return self.usertransaction.process_transaction_to_user(self, amount, recipient_id)
 
-    def append_transaction_to_voucher(self, amount, recipient_id, voucher=None):
-        if voucher is None:
-            print("No voucher selected")
-            return
+    def receive_amount(self, user_transaction):
+        """
+        Receives a transaction from another person, which may contain multiple vouchers,
+        and stores these transactions in the recipient's own list of vouchers.
 
-        # Erstellen einer neuen Transaktion
-        transaction = VoucherTransaction(voucher)
+        This method takes a UserTransaction representing the incoming transaction,
+        and appends the vouchers involved in this transaction to the recipient's voucher list.
 
-        # Transaktionsdaten generieren und signieren
-        transaction_data = transaction.do_transaction(amount, self.id, recipient_id, self.key)
+        :param user_transaction: UserTransaction object containing the transaction details
+                                 and the vouchers to be received.
+        """
+        self.usertransaction.receive_transaction_from_user(user_transaction, self)
 
-        # Füge die Transaktion der Transaktionsliste des Gutscheins hinzu
-        voucher.transactions.append(transaction_data)
+    def list_vouchers(self):
+        """prints a short list of all vouchers"""
+        print("### Voucher List: ID -- Creator -- Available Amount ###")
+        for voucher in self.vouchers:
+            #dprint(voucher.get_voucher_amount(self.id))
+            print(f"{voucher.voucher_id} -- {voucher.creator_name} -- {voucher.get_voucher_amount(self.id)}")
 
     def __str__(self):
         return f"Person({self.id}, {self.name}, {self.address}, {self.gender}, {self.email}, {self.phone}, {self.service_offer}, {self.coordinates})"

@@ -340,7 +340,6 @@ class MinutoVoucher:
             print("VoucherTransaction verification failed.")
             return False
 
-        print("The entire voucher is verified and valid.")
         return True
 
     def __str__(self):

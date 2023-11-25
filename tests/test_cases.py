@@ -4,8 +4,8 @@ from simulationhelper import SimulationHelper
 
 class TestPerson(unittest.TestCase):
     def setUp(self):
-        simulation = SimulationHelper(4)
-        simulation.generate_persons()
+        simulation = SimulationHelper()
+        simulation.generate_persons(4)
         self.test_person = simulation.persons
 
         self.temp_subfolder = "temp_files"
