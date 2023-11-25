@@ -20,7 +20,7 @@ class Person:
         self.coordinates = coordinates
 
         self.current_voucher = None  # Initialisierung von current_voucher
-
+        self.vouchers = [] # list of vouchers
 
     def init_empty_voucher(self):
         from src.models.minuto_voucher import MinutoVoucher
