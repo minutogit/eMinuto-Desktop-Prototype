@@ -1,4 +1,5 @@
 # utils.py
+import inspect
 from datetime import datetime
 
 def get_timestamp(years_to_add=0, end_of_year=False):
@@ -23,3 +24,21 @@ def get_timestamp(years_to_add=0, end_of_year=False):
 
     return future_time.isoformat() + "Z"
 
+
+def dprint(*args, sep=' ', end='\n'):
+    # Get the current frame
+    current_frame = inspect.currentframe()
+    # Get the outer frame (where dprint is called)
+    outer_frame = inspect.getouterframes(current_frame, 2)
+    # Get the frame information
+    frame_info = outer_frame[1]
+
+    # Extracting file name and line number
+    file_name = frame_info.filename.split('/')[-1]
+    line_number = frame_info.lineno
+
+    # Constructing the debug information
+    debug_info = f"{file_name}:{line_number} :"
+
+    # Printing the debug information followed by the original print content
+    print(debug_info, *args, sep=sep, end=end)

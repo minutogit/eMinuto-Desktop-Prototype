@@ -3,9 +3,9 @@ import base64
 import json
 import uuid
 from src.models.key import Key
-from src.services.utils import get_timestamp
+from src.services.utils import get_timestamp, dprint
 from src.services.crypto_utils import get_hash
-from src.models.transaction import Transaction
+from src.models.vouchertransaction import VoucherTransaction
 
 
 class MinutoVoucher:
@@ -126,6 +126,40 @@ class MinutoVoucher:
 
         return voucher
 
+    def get_voucher_amount(self, sender_id, voucher=None):
+        """
+        Calculates the available amount of the last transaction of the voucher based on the sender_id.
+        If no voucher is provided, the method uses the current instance as the voucher.
+
+        :param sender_id: The ID of the sender to calculate the available amount for.
+        :param voucher: Optional. The voucher to calculate the amount for. Defaults to the current instance if not provided.
+        :return: The calculated available amount.
+        """
+        # If no voucher is provided, use the current instance
+        if voucher is None:
+            voucher = self
+
+        # Ensure there are transactions to evaluate
+        if not voucher.transactions:
+            raise ValueError("No transactions exist for this voucher.")
+
+        # Retrieve the last transaction
+        last_transaction = voucher.transactions[-1]
+
+        # For 'split' type, check if sender_id matches sender or recipient of the last transaction
+        if last_transaction['t_type'] == 'split':
+            if sender_id == last_transaction['sender_id']:
+                return last_transaction['sender_remaining_amount']
+            elif sender_id == last_transaction['recipient_id']:
+                return last_transaction['amount']
+
+        # For non-split or undefined t_type, return amount if sender_id matches recipient of the last transaction
+        elif sender_id == last_transaction['recipient_id']:
+            return last_transaction['amount']
+
+        # Default case for other scenarios
+        return 0  # or a suitable error message or logic
+
     def verify_all_guarantor_signatures(self, voucher):
         """ Validates all guarantor signatures on the given voucher. """
         if not voucher.guarantor_signatures:
@@ -180,7 +214,7 @@ class MinutoVoucher:
             return False
 
         # Verify transaction ID and the correct signature of the sender (creator)
-        if Transaction.calculate_transaction_id(initial_transaction) != initial_transaction['t_id']:
+        if VoucherTransaction.calculate_transaction_id(initial_transaction) != initial_transaction['t_id']:
             return False
 
         # Verify the signature of the transaction ID
@@ -197,13 +231,13 @@ class MinutoVoucher:
         """
 
         # Check if the transaction ID is correct
-        if not transaction["t_id"] == Transaction.calculate_transaction_id(transaction):
+        if not transaction["t_id"] == VoucherTransaction.calculate_transaction_id(transaction):
             return False
 
         # Verify the signature against the sender's public key
         pubkey = Key.get_pubkey_from_id(transaction['sender_id'])
         is_signature_valid = Key.verify_signature(transaction["t_id"],
-                                                  base64.b64decode(transaction['sender_signature']),
+                                                  transaction['sender_signature'],
                                                   pubkey)
         return is_signature_valid
 
@@ -238,11 +272,11 @@ class MinutoVoucher:
             # Verify the transaction ID and the sender's signature
             if not self.verify_transaction_ids_signature(current_transaction):
                 if verbose:
-                    print("Transaction ID or sender's signature verification failed.")
+                    print("VoucherTransaction ID or sender's signature verification failed.")
                 return False
 
             if verbose:
-                print("Transaction ID and Signature are okay")
+                print("VoucherTransaction ID and Signature are okay")
 
             # Verify if the sender was authorized to send
             allowed_senders = [previous_transaction['recipient_id']]
@@ -303,7 +337,7 @@ class MinutoVoucher:
 
         # Verify all transactions
         if not self.verify_all_transactions():
-            print("Transaction verification failed.")
+            print("VoucherTransaction verification failed.")
             return False
 
         print("The entire voucher is verified and valid.")

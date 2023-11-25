@@ -1,10 +1,10 @@
-# transaction.py
+# vouchertransaction.py
 import json
 from src.models.key import Key
 from src.services.utils import get_timestamp
 from src.services.crypto_utils import get_hash
 
-class Transaction:
+class VoucherTransaction:
     def __init__(self, voucher):
         self.voucher = voucher
         self.sender_id = ''
@@ -42,8 +42,7 @@ class Transaction:
         :return: The signed transaction data.
         """
         # Calculate available amount for the sender
-        available_amount = self.available_voucher_amount(sender_id, self.voucher)
-
+        available_amount = self.voucher.get_voucher_amount(sender_id)
         # Check if the send amount is within the available amount
         if send_amount > available_amount or available_amount == 0:
             raise ValueError("Insufficient available amount for the transaction.")
@@ -99,35 +98,6 @@ class Transaction:
         self.sender_signature = key.sign(transaction_data["t_id"], base64_encode=True)
         transaction_data["sender_signature"] = self.sender_signature
         return transaction_data
-
-    @staticmethod
-    def available_voucher_amount(sender_id, voucher):
-        """
-        Calculates the available amount of  the last transaction of the voucher based on the sender_id.
-
-        :param sender_id: The ID of the sender to calculate the available amount for.
-        :return: The calculated available amount.
-        """
-        # Ensure there are transactions to evaluate
-        if not voucher.transactions:
-            raise ValueError("No transactions exist for this voucher.")
-
-        # Retrieve the last transaction
-        last_transaction = voucher.transactions[-1]
-
-        # For 'split' type, check if sender_id matches sender or recipient of the last transaction
-        if last_transaction['t_type'] == 'split':
-            if sender_id == last_transaction['sender_id']:
-                return last_transaction['sender_remaining_amount']
-            elif sender_id == last_transaction['recipient_id']:
-                return last_transaction['amount']
-
-        # For non-split or undefined t_type, return amount if sender_id matches recipient of the last transaction
-        elif sender_id == last_transaction['recipient_id']:
-            return last_transaction['amount']
-
-        # Default case for other scenarios
-        return 0  # or a suitable error message or logic
 
     @staticmethod
     def calculate_transaction_id(transaction_data):

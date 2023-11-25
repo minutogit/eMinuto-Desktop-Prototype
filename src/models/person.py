@@ -2,8 +2,9 @@
 import base64
 
 from src.models.key import Key
-from src.models.transaction import Transaction
-from src.services.utils import get_timestamp
+from src.models.vouchertransaction import VoucherTransaction
+from src.models.transactionmanager import TransactionManager
+from src.services.utils import get_timestamp, dprint
 import json
 
 class Person:
@@ -31,7 +32,13 @@ class Person:
         from src.models.minuto_voucher import MinutoVoucher
         self.current_voucher = MinutoVoucher.create(self.id, self.name, self.address, self.gender, self.email, self.phone, self.service_offer, self.coordinates, amount, region, validity)
 
+    def read_voucher_and_save_voucher(self, filename, virtual = False):
+        """read the voucher and stores it to persons voucher list"""
+        self.read_voucher(filename, virtual)
+        self.vouchers.append(self.current_voucher)
+
     def read_voucher(self, filename, virtual = False):
+        """read the voucher"""
         self.init_empty_voucher()
         self.current_voucher = self.current_voucher.read_from_file(filename, virtual)
 
@@ -81,7 +88,7 @@ class Person:
         data_to_sign = voucher.get_voucher_data_for_signing(include_guarantor_signatures=True)
         voucher.creator_signature = (self.key.sign(data_to_sign, base64_encode=True))
         # Initialize first transaction
-        transaction = Transaction(voucher)
+        transaction = VoucherTransaction(voucher)
         transaction_data = transaction.get_initial_transaction(self.key)
         voucher.transactions.append(transaction_data)
 
@@ -91,13 +98,14 @@ class Person:
         return voucher.verify_creator_signature(voucher)
 
     def send_amount(self, amount, recipient_id):
-        # still a lot todo
-        selected_vouchers = []
-        # todo later logic needed for to select vouchers from all available vouchers
-        selected_vouchers.append((self.current_voucher, amount))
+        """
+        Send a specified amount to a recipient using available vouchers.
 
-        for voucher, amount_to_send in selected_vouchers:
-            self.append_transaction_to_voucher(amount_to_send, recipient_id, voucher)
+        :param amount: The amount to send.
+        :param recipient_id: The ID of the recipient.
+        :return: List of vouchers used for the transaction.
+        """
+        return TransactionManager.process_transactions(self, amount, recipient_id)
 
     def append_transaction_to_voucher(self, amount, recipient_id, voucher=None):
         if voucher is None:
@@ -105,7 +113,7 @@ class Person:
             return
 
         # Erstellen einer neuen Transaktion
-        transaction = Transaction(voucher)
+        transaction = VoucherTransaction(voucher)
 
         # Transaktionsdaten generieren und signieren
         transaction_data = transaction.do_transaction(amount, self.id, recipient_id, self.key)
