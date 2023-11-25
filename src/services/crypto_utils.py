@@ -1,4 +1,6 @@
 #crypto_utils.py
+import base64
+
 from ecdsa import VerifyingKey, BadSignatureError
 from mnemonic import Mnemonic
 from ecdsa import SigningKey, SECP256k1
@@ -17,6 +19,13 @@ def create_key_pair(seed_words):
     private_key = SigningKey.from_string(seed_bytes[:32], curve=SECP256k1)
     return private_key, private_key.verifying_key
 
+def is_base64(s):
+    try:
+        base64.b64decode(s)
+        return True
+    except Exception:
+        return False
+
 def sign_message(private_key, message):
     """ Signs a message using the private key. """
     return private_key.sign(message.encode('utf-8'))
@@ -27,6 +36,9 @@ def verify_message_signature(compressed_public_key, message, signature):
     """
     try:
         public_key = decompress_public_key(compressed_public_key)
+        # Check if signature is base64 encoded and decode if necessary
+        if is_base64(signature):
+            signature = base64.b64decode(signature)
         return public_key.verify(signature, message.encode('utf-8'))
     except (BadSignatureError, ValueError, TypeError):
         return False

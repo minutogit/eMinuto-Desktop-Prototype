@@ -128,13 +128,15 @@ class MinutoVoucher:
 
     def verify_all_guarantor_signatures(self, voucher):
         """ Validates all guarantor signatures on the given voucher. """
+        if not voucher.guarantor_signatures:
+            return False
         for guarantor_info, signature in voucher.guarantor_signatures:
             if Key.check_user_id(guarantor_info["id"]) == False:
                  return False
             pubkey_short = Key.get_pubkey_from_id(guarantor_info["id"])
 
             data_to_verify = voucher.get_voucher_data_for_signing() + json.dumps(guarantor_info, sort_keys=True)
-            if not Key.verify_signature(data_to_verify, base64.b64decode(signature), pubkey_short):
+            if not Key.verify_signature(data_to_verify, signature, pubkey_short):
                 return False
 
         return True
@@ -142,12 +144,14 @@ class MinutoVoucher:
     def verify_creator_signature(self, voucher):
         """ Verifies the creator's signature on the given voucher. """
         signature = voucher.creator_signature
+        if not signature:
+            return False
         if Key.check_user_id(voucher.creator_id) == False:
             return False
         pubkey_short = Key.get_pubkey_from_id(voucher.creator_id)
 
         data_to_verify = voucher.get_voucher_data_for_signing(include_guarantor_signatures=True)
-        return Key.verify_signature(data_to_verify, base64.b64decode(signature), pubkey_short)
+        return Key.verify_signature(data_to_verify, signature, pubkey_short)
 
     def verify_initial_transaction(self):
         """
