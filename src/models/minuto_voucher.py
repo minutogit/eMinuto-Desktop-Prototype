@@ -1,6 +1,7 @@
 # minuto_voucher.py
 import base64
 import json
+import os
 import uuid
 from src.models.key import Key
 from src.services.utils import get_timestamp, dprint
@@ -86,12 +87,13 @@ class MinutoVoucher:
         # Check the validity of the voucher
         return len(self.guarantor_signatures) >= 2 and self.creator_signature is not None
 
-    def save_to_disk(self, file_path=None, simulation=False):
+    def save_to_disk(self, file_path=None, subfolder=None, simulation=False):
         """
         Saves all attributes of the MinutoVoucher object either to a specified file path or returns the serialized data.
         If simulation mode is activated, the file_path is ignored and the serialized data is returned instead.
 
         :param file_path: Optional. The path of the file where the voucher data will be saved when not in simulation mode.
+        :param subfolder: Optional. The subfolder under the script directory where the file will be saved.
         :param simulation: If True, operates in simulation mode and returns the serialized data; otherwise, saves to the specified file path.
         :return: The serialized data if simulation mode is activated.
         """
@@ -100,23 +102,39 @@ class MinutoVoucher:
             return data_to_save  # Return the serialized data in simulation mode
         else:
             if file_path:
-                with open(file_path, 'w', encoding='utf-8') as file:
+                # Construct the full file path with subfolder if provided
+                if subfolder:
+                    base_dir = os.path.dirname(os.path.abspath(__file__))
+                    full_path = os.path.join(base_dir, subfolder, file_path)
+                    os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                else:
+                    full_path = file_path
+
+                with open(full_path, 'w', encoding='utf-8') as file:
                     file.write(data_to_save)
 
     @classmethod
-    def read_from_file(cls, file_path, simulation=False):
+    def read_from_file(cls, file_path, subfolder=None, simulation=False):
         """
         Reads and creates a MinutoVoucher object from a file or a simulation variable.
-        In simulation mode, the 'file_path' parameter is treated as the content of the simulationsilmulation variable.
+        In simulation mode, the 'file_path' parameter is treated as the content of the simulation variable.
 
         :param file_path: The path of the file from which the voucher data will be read, or the content of simulation variable.
+        :param subfolder: Optional. The subfolder under the script directory from where the file will be read.
         :param simulation: If True, operates in simulation mode for simulation purposes, otherwise performs actual file operations.
         :return: A MinutoVoucher object instantiated with the read data.
         """
         if simulation:
             data_str = file_path  # Treat 'file_path' as the content in simulation mode
         else:
-            with open(file_path, 'r') as file:
+            # Construct the full file path with subfolder if provided
+            if subfolder:
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                full_path = os.path.join(base_dir, subfolder, file_path)
+            else:
+                full_path = file_path
+
+            with open(full_path, 'r', encoding='utf-8') as file:
                 data_str = file.read()
 
         data = json.loads(data_str)
