@@ -101,17 +101,15 @@ class MinutoVoucher:
         if simulation:
             return data_to_save  # Return the serialized data in simulation mode
         else:
-            if file_path:
-                # Construct the full file path with subfolder if provided
-                if subfolder:
-                    base_dir = os.path.dirname(os.path.abspath(__file__))
-                    full_path = os.path.join(base_dir, subfolder, file_path)
-                    os.makedirs(os.path.dirname(full_path), exist_ok=True)
-                else:
-                    full_path = file_path
+            base_dir = os.getcwd()  # Get the current working directory
+            if subfolder:
+                full_path = os.path.join(base_dir, subfolder, file_path)
+                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            else:
+                full_path = os.path.join(base_dir, file_path)
 
-                with open(full_path, 'w', encoding='utf-8') as file:
-                    file.write(data_to_save)
+            with open(full_path, 'w', encoding='utf-8') as file:
+                file.write(data_to_save)
 
     @classmethod
     def read_from_file(cls, file_path, subfolder=None, simulation=False):
@@ -127,12 +125,11 @@ class MinutoVoucher:
         if simulation:
             data_str = file_path  # Treat 'file_path' as the content in simulation mode
         else:
-            # Construct the full file path with subfolder if provided
+            base_dir = os.getcwd()  # Get the current working directory
             if subfolder:
-                base_dir = os.path.dirname(os.path.abspath(__file__))
                 full_path = os.path.join(base_dir, subfolder, file_path)
             else:
-                full_path = file_path
+                full_path = os.path.join(base_dir, file_path)
 
             with open(full_path, 'r', encoding='utf-8') as file:
                 data_str = file.read()
