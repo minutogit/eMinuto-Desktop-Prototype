@@ -10,7 +10,7 @@ class UserTransaction:
         self.transaction_amount = 0
         self.transaction_failure_reason = ""
 
-    def process_transaction_to_user(self, person, amount, recipient_id):
+    def process_transaction_to_user(self, person, amount, recipient_id, verbose=False):
         """
         Processes transactions by selecting suitable vouchers and creating transaction data.
 
@@ -25,7 +25,7 @@ class UserTransaction:
         selected_vouchers = []
 
         for voucher in person.vouchers:
-            if not voucher.verify_complete_voucher():
+            if not voucher.verify_complete_voucher(verbose):
                 continue  # Use only valid vouchers
 
             voucher_amount = voucher.get_voucher_amount(person.id)
@@ -62,13 +62,13 @@ class UserTransaction:
         :param verbose: If True, provides detailed output during the process.
         """
         if not transaction.transaction_successful:
-            print("Transaction receiving failed.")
+            print(f"Received failed transaction from sender. Reason: {transaction.transaction_failure_reason}")
             transaction.transaction_amount = 0
-            self.return_transaction_failure("Failed due to empty transaction received.")
+            self.return_transaction_failure("Received failed transaction from sender.")
 
         # Verify all new incoming vouchers
         for voucher in transaction.transaction_vouchers:
-            if not voucher.verify_complete_voucher():
+            if not voucher.verify_complete_voucher(verbose):
                 if verbose:
                     print("Corrupt transaction received. Voucher verification failed.")
                 self.return_transaction_failure("Corrupt voucher received.")

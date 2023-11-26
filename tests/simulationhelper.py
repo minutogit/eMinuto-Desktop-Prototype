@@ -77,12 +77,12 @@ class SimulationHelper:
         :param amount: The amount for the voucher.
         :param years_valid: Number of years the voucher is valid.
         """
-        creator = self.persons[creator]
+        v_creator = self.persons[creator]
         guarantor1 = self.persons[guarantor1]
         guarantor2 = self.persons[guarantor2]
 
-        creator.create_voucher(amount, "Frankfurt", years_valid)
-        virtual_vouchers = creator.save_voucher(simulation=True)
+        v_creator.create_voucher(amount, "Frankfurt", years_valid)
+        virtual_vouchers = v_creator.save_voucher(simulation=True)
 
         guarantor1.read_voucher(virtual_vouchers, simulation=True)
         guarantor1.sign_voucher_as_guarantor()
@@ -93,11 +93,11 @@ class SimulationHelper:
         virtual_vouchers = guarantor2.save_voucher(simulation=True)
 
         # Verification of signatures and creator's signature
-        creator.read_voucher_and_save_voucher(virtual_vouchers, simulation=True)
-        assert creator.verify_guarantor_signatures(), "Guarantor signatures are not correct"
-        creator.sign_voucher_as_creator()
-        assert creator.verify_creator_signature(), "Creator's signature is not correct"
-        if creator.current_voucher.verify_complete_voucher() and self.print_info:
+        v_creator.read_voucher_and_save_voucher(virtual_vouchers, simulation=True)
+        assert v_creator.verify_guarantor_signatures(), "Guarantor signatures are not correct"
+        v_creator.sign_voucher_as_creator()
+        assert v_creator.verify_creator_signature(), "Creator's signature is not correct"
+        if v_creator.current_voucher.verify_complete_voucher() and self.print_info:
             print(f"Voucher created for person[{creator}] with {amount}M")
 
     def send_amount(self, sender, receiver, amount):
@@ -140,6 +140,13 @@ class SimulationHelper:
         """
         for i, person in enumerate(self.persons):
             self.save_vouchers(i, subfolder)
+
+    def print_all_user_vouchers(self):
+        i = 0
+        for person in self.persons:
+            print(f"\nPerson[{i}]")
+            person.list_vouchers()
+            i += 1
 
 
 

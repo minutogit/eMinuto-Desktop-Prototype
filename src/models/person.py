@@ -139,10 +139,17 @@ class Person:
 
     def list_vouchers(self):
         """prints a short list of all vouchers"""
-        print(f"\n### {self.name} - Vouchers ###")
+        print(f"### {self.name} {self.id[:6]} - Vouchers  (Full Amount: {self.get_amount_of_all_vouchers()} Min) ###")
         for voucher in self.vouchers:
             #dprint(voucher.get_voucher_amount(self.id))
-            print(f"V-Creator: {voucher.creator_name} - Amount: {voucher.get_voucher_amount(self.id)}Min")
+            print(f"V-Creator: {voucher.creator_name} - Amount: {voucher.get_voucher_amount(self.id)} Min")
+
+    def get_amount_of_all_vouchers(self):
+        """calculates the full amount of all vouchers of the person"""
+        full_amount = 0
+        for voucher in self.vouchers:
+            full_amount += voucher.get_voucher_amount(self.id)
+        return full_amount
 
     def __str__(self):
         return f"Person({self.id}, {self.name}, {self.address}, {self.gender}, {self.email}, {self.phone}, {self.service_offer}, {self.coordinates})"
