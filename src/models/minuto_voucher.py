@@ -282,7 +282,7 @@ class MinutoVoucher:
             previous_transaction = self.transactions[i - 1]
 
             if verbose:
-                print(f"Verifying transaction: {i}  -  {current_transaction['t_id']}")
+                print(f"Verifying transaction: {i} - ID: {current_transaction['t_id'][:6]}...")
 
             # Verify the transaction ID and the sender's signature
             if not self.verify_transaction_ids_signature(current_transaction):
@@ -299,11 +299,11 @@ class MinutoVoucher:
                 allowed_senders.append(previous_transaction['sender_id'])
             if current_transaction['sender_id'] not in allowed_senders:
                 if verbose:
-                    print(f"Sender {current_transaction['sender_id']} was not authorized to send.")
+                    print(f"Sender {current_transaction['sender_id'][:6]}... was not authorized to send.")
                 return False
 
             if verbose:
-                print(f"Sender {current_transaction['sender_id']} was allowed to send")
+                print(f"Sender {current_transaction['sender_id'][:6]}... was allowed to send")
 
             # Verify if the sent amount was permissible
             allowed_amount = previous_transaction[
@@ -334,7 +334,7 @@ class MinutoVoucher:
             print("All transactions are okay")
         return True
 
-    def verify_complete_voucher(self):
+    def verify_complete_voucher(self, verbose=False):
         """
         Verifies the entire voucher including guarantor signatures, creator's signature, and all transactions.
 
@@ -351,8 +351,8 @@ class MinutoVoucher:
             return False
 
         # Verify all transactions
-        if not self.verify_all_transactions():
-            print("VoucherTransaction verification failed.")
+        if not self.verify_all_transactions(verbose):
+            print("Voucher Transaction verification failed.")
             return False
 
         return True
