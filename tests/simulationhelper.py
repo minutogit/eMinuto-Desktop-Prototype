@@ -1,16 +1,25 @@
+import copy
+
 from faker import Faker
+from typing import List
 from src.services.crypto_utils import generate_seed
 from src.services.utils import dprint
-import src.models.person
+from src.models.person import Person
 import random
 
 fake = Faker()
 
 class SimulationHelper:
-    def __init__(self,print_info = False):
+    def __init__(self, print_info=False):
+        """
+        Initialize the SimulationHelper with optional print information.
+
+        :param print_info: If set to True, additional information will be printed during simulation. Default is False.
+        """
         self.num_persons = 0
         self.print_info = print_info
-        self.persons = []
+        # Using type annotations to specify the list type for enhanced code development
+        self.persons: List[Person] = []
         self.services = [
             "IT Support", "Baking", "Sports", "Craftsmanship", "Gardening",
             "Teaching", "Photography", "Design", "Consulting", "Accounting",
@@ -23,10 +32,14 @@ class SimulationHelper:
             "Car Repair", "Pet Training", "Computer Programming"
         ]
         self.transaction_counter = 0
+        self.simulation_folder = None # folder for storing files of simulation
 
     def generate_person(self, index):
         """
-        Generate a person with gender based on the index: even for female, odd for male.
+        Generates a person with a gender based on the provided index (even index for female, odd for male).
+
+        :param index: The index to determine the gender of the person.
+        :return: A Person object with attributes based on the index.
         """
         if index % 2 == 0:  # Even index for female
             gender = 2
@@ -42,24 +55,31 @@ class SimulationHelper:
         coordinates = f"{fake.latitude()}, {fake.longitude()}"
         seed = generate_seed()
 
-        return src.models.person.Person(name, address, gender, email, phone, service_offer, coordinates, seed=seed)
+        return Person(name, address, gender, email, phone, service_offer, coordinates, seed=seed)
 
     def generate_persons(self, num_persons):
         """
-        Generate a list of persons with specified number. Each person's gender is determined based on their index.
+        Generates a specified number of persons, each with a gender based on their index position.
+
+        :param num_persons: The number of persons to generate.
         """
         self.num_persons = num_persons
         for i in range(self.num_persons):
             self.persons.append(self.generate_person(i))
 
-    def generate_voucher_for_person(self, person_number, guarantor1_num, guarantor2_num, amount, years_valid):
+    def generate_voucher_for_person(self, creator, guarantor1, guarantor2, amount, years_valid):
         """
-        Generate a voucher for a specified person and have it signed by two guarantors.
+        Generates a voucher for a specified person, signed by two guarantors.
+
+        :param creator: Index of the person for whom the voucher is created.
+        :param guarantor1: Index of the first guarantor.
+        :param guarantor2: Index of the second guarantor.
+        :param amount: The amount for the voucher.
+        :param years_valid: Number of years the voucher is valid.
         """
-        # Voucher creation and signing by guarantors
-        creator = self.persons[person_number]
-        guarantor1 = self.persons[guarantor1_num]
-        guarantor2 = self.persons[guarantor2_num]
+        creator = self.persons[creator]
+        guarantor1 = self.persons[guarantor1]
+        guarantor2 = self.persons[guarantor2]
 
         creator.create_voucher(amount, "Frankfurt", years_valid)
         virtual_vouchers = creator.save_voucher(simulation=True)
@@ -78,16 +98,48 @@ class SimulationHelper:
         creator.sign_voucher_as_creator()
         assert creator.verify_creator_signature(), "Creator's signature is not correct"
         if creator.current_voucher.verify_complete_voucher() and self.print_info:
-            print(f"Voucher created for person[{person_number}] with {amount}M")
+            print(f"Voucher created for person[{creator}] with {amount}M")
 
-    def send_minuto_to_person(self, sender_number, receiver_number, amount):
-        transaction = self.persons[sender_number].send_amount(amount, self.persons[receiver_number].id)
-        self.persons[receiver_number].receive_amount(transaction)
-        if not transaction.transaction_successful:
+    def send_amount(self, sender, receiver, amount):
+        """
+        Sends a specified amount of Minuto from one person to another.
+
+        :param sender: Index of the sender in the persons list.
+        :param receiver: Index of the receiver in the persons list.
+        :param amount: The amount of Minuto to be sent.
+        """
+        transaction = self.persons[sender].send_amount(amount, self.persons[receiver].id)
+
+        # To ensure independent transactions in the simulation, create a deep copy of the transaction.
+        # This prevents referencing issues where changes to the copied transaction might unintentionally
+        # affect the original transaction object. A deep copy creates a new, separate instance of the transaction.
+        transaction_copy = copy.deepcopy(transaction)
+
+        self.persons[receiver].receive_amount(transaction_copy)
+        if not transaction_copy.transaction_successful:
             return
         if self.print_info:
-            print(f"Person[{sender_number}] send {amount}M to Person[{receiver_number}]")
+            print(f"Person[{sender}] send {amount}M to Person[{receiver}]")
         self.transaction_counter += 1
+
+
+    def save_vouchers(self, person_number, subfolder=None):
+        """
+        Saves all vouchers of a specified person to disk.
+
+        :param person_number: Index of the person whose vouchers will be saved.
+        """
+        if self.simulation_folder and not subfolder: # when no subfolder use default simulation folder
+            subfolder = self.simulation_folder
+
+        self.persons[person_number].save_all_vouchers(fileprefix=f"Person{person_number}", prefix_only=True, subfolder=subfolder)
+
+    def save_all_persons_vouchers(self, subfolder=None):
+        """
+        Saves vouchers of all persons in the simulation to disk.
+        """
+        for i, person in enumerate(self.persons):
+            self.save_vouchers(i, subfolder)
 
 
 
