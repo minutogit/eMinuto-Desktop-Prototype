@@ -147,7 +147,7 @@ class MinutoVoucher:
         last_transaction = voucher.transactions[-1]
 
         # For 'split' type, check if sender_id matches sender or recipient of the last transaction
-        if last_transaction['t_type'] == 'split':
+        if last_transaction.get('t_type') == 'split':
             if sender_id == last_transaction['sender_id']:
                 return last_transaction['sender_remaining_amount']
             elif sender_id == last_transaction['recipient_id']:
@@ -280,7 +280,7 @@ class MinutoVoucher:
 
             # Verify if the sender was authorized to send
             allowed_senders = [previous_transaction['recipient_id']]
-            if previous_transaction.get('type', '') == 'split':
+            if previous_transaction.get('t_type', '') == 'split':
                 allowed_senders.append(previous_transaction['sender_id'])
             if current_transaction['sender_id'] not in allowed_senders:
                 if verbose:
