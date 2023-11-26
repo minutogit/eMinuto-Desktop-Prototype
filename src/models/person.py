@@ -43,11 +43,24 @@ class Person:
         self.init_empty_voucher()
         self.current_voucher = self.current_voucher.read_from_file(filename, subfolder, simulation)
 
-    def save_voucher(self, filename = None, subfolder=None, simulation = False):
-        return self.current_voucher.save_to_disk(filename, subfolder, simulation)
+    def save_voucher(self, filename = None, subfolder=None, voucher=None, simulation = False):
+        if voucher == None:
+            return self.current_voucher.save_to_disk(filename, subfolder, simulation)
+        return voucher.save_to_disk(filename, subfolder, simulation)
 
-    def save_all_vouchers(self,filename):
-        pass
+    def save_all_vouchers(self, subfolder=None, fileprefix='', prefix_only=False):
+        """saves all vouchers to disk"""
+        filename = ''
+        i = 0
+        for voucher in self.vouchers:
+            i += 1
+            if len(fileprefix) > 0:
+                filename = f"{str(fileprefix)}-"
+            if not prefix_only:
+                filename += f"{str(self.id)[:8]}"
+            filename += f"-{i}.txt"
+
+            return self.save_voucher(filename, subfolder, voucher)
 
     def sign_voucher_as_guarantor(self, voucher=None):
         """ Signs the voucher including the guarantor's personal details. """
@@ -126,10 +139,10 @@ class Person:
 
     def list_vouchers(self):
         """prints a short list of all vouchers"""
-        print("### Voucher List: ID -- Creator -- Available Amount ###")
+        print(f"\n### {self.name} - Vouchers ###")
         for voucher in self.vouchers:
             #dprint(voucher.get_voucher_amount(self.id))
-            print(f"{voucher.voucher_id} -- {voucher.creator_name} -- {voucher.get_voucher_amount(self.id)}")
+            print(f"V-Creator: {voucher.creator_name} - Amount: {voucher.get_voucher_amount(self.id)}Min")
 
     def __str__(self):
         return f"Person({self.id}, {self.name}, {self.address}, {self.gender}, {self.email}, {self.phone}, {self.service_offer}, {self.coordinates})"
