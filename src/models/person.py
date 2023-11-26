@@ -33,18 +33,18 @@ class Person:
         from src.models.minuto_voucher import MinutoVoucher
         self.current_voucher = MinutoVoucher.create(self.id, self.name, self.address, self.gender, self.email, self.phone, self.service_offer, self.coordinates, amount, region, validity)
 
-    def read_voucher_and_save_voucher(self, filename, virtual = False):
+    def read_voucher_and_save_voucher(self, filename, simulation = False):
         """read the voucher and stores it to persons voucher list"""
-        self.read_voucher(filename, virtual)
+        self.read_voucher(filename, simulation)
         self.vouchers.append(self.current_voucher)
 
-    def read_voucher(self, filename, virtual = False):
+    def read_voucher(self, filename, simulation = False):
         """read the voucher"""
         self.init_empty_voucher()
-        self.current_voucher = self.current_voucher.read_from_file(filename, virtual)
+        self.current_voucher = self.current_voucher.read_from_file(filename, simulation)
 
-    def save_voucher(self, filename = None, virtual = False):
-        return self.current_voucher.save_to_disk(filename, virtual)
+    def save_voucher(self, filename = None, simulation = False):
+        return self.current_voucher.save_to_disk(filename, simulation)
 
     def sign_voucher_as_guarantor(self, voucher=None):
         """ Signs the voucher including the guarantor's personal details. """

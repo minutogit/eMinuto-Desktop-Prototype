@@ -86,35 +86,35 @@ class MinutoVoucher:
         # Check the validity of the voucher
         return len(self.guarantor_signatures) >= 2 and self.creator_signature is not None
 
-    def save_to_disk(self, file_path=None, virtual=False):
+    def save_to_disk(self, file_path=None, simulation=False):
         """
         Saves all attributes of the MinutoVoucher object either to a specified file path or returns the serialized data.
-        If virtual mode is activated, the file_path is ignored and the serialized data is returned instead.
+        If simulation mode is activated, the file_path is ignored and the serialized data is returned instead.
 
-        :param file_path: Optional. The path of the file where the voucher data will be saved when not in virtual mode.
-        :param virtual: If True, operates in virtual mode and returns the serialized data; otherwise, saves to the specified file path.
-        :return: The serialized data if virtual mode is activated.
+        :param file_path: Optional. The path of the file where the voucher data will be saved when not in simulation mode.
+        :param simulation: If True, operates in simulation mode and returns the serialized data; otherwise, saves to the specified file path.
+        :return: The serialized data if simulation mode is activated.
         """
         data_to_save = json.dumps(self.__dict__.copy(), sort_keys=False, indent=4, ensure_ascii=False)
-        if virtual:
-            return data_to_save  # Return the serialized data in virtual mode
+        if simulation:
+            return data_to_save  # Return the serialized data in simulation mode
         else:
             if file_path:
                 with open(file_path, 'w', encoding='utf-8') as file:
                     file.write(data_to_save)
 
     @classmethod
-    def read_from_file(cls, file_path, virtual=False):
+    def read_from_file(cls, file_path, simulation=False):
         """
-        Reads and creates a MinutoVoucher object from a file or a virtual file system.
-        In virtual mode, the 'file_path' parameter is treated as the content of the virtual file.
+        Reads and creates a MinutoVoucher object from a file or a simulation variable.
+        In simulation mode, the 'file_path' parameter is treated as the content of the simulationsilmulation variable.
 
-        :param file_path: The path of the file from which the voucher data will be read, or the content of virtual storage.
-        :param virtual: If True, operates in virtual mode for simulation purposes, otherwise performs actual file operations.
+        :param file_path: The path of the file from which the voucher data will be read, or the content of simulation variable.
+        :param simulation: If True, operates in simulation mode for simulation purposes, otherwise performs actual file operations.
         :return: A MinutoVoucher object instantiated with the read data.
         """
-        if virtual:
-            data_str = file_path  # Treat 'file_path' as the content in virtual mode
+        if simulation:
+            data_str = file_path  # Treat 'file_path' as the content in simulation mode
         else:
             with open(file_path, 'r') as file:
                 data_str = file.read()

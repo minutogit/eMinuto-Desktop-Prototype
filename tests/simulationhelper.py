@@ -62,18 +62,18 @@ class SimulationHelper:
         guarantor2 = self.persons[guarantor2_num]
 
         creator.create_voucher(amount, "Frankfurt", years_valid)
-        virtual_vouchers = creator.save_voucher(virtual=True)
+        virtual_vouchers = creator.save_voucher(simulation=True)
 
-        guarantor1.read_voucher(virtual_vouchers, virtual=True)
+        guarantor1.read_voucher(virtual_vouchers, simulation=True)
         guarantor1.sign_voucher_as_guarantor()
-        virtual_vouchers = guarantor1.save_voucher(virtual=True)
+        virtual_vouchers = guarantor1.save_voucher(simulation=True)
 
-        guarantor2.read_voucher(virtual_vouchers, virtual=True)
+        guarantor2.read_voucher(virtual_vouchers, simulation=True)
         guarantor2.sign_voucher_as_guarantor()
-        virtual_vouchers = guarantor2.save_voucher(virtual=True)
+        virtual_vouchers = guarantor2.save_voucher(simulation=True)
 
         # Verification of signatures and creator's signature
-        creator.read_voucher_and_save_voucher(virtual_vouchers, virtual=True)
+        creator.read_voucher_and_save_voucher(virtual_vouchers, simulation=True)
         assert creator.verify_guarantor_signatures(), "Guarantor signatures are not correct"
         creator.sign_voucher_as_creator()
         assert creator.verify_creator_signature(), "Creator's signature is not correct"
