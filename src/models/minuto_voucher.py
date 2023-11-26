@@ -308,7 +308,7 @@ class MinutoVoucher:
             # Verify if the sent amount was permissible
             allowed_amount = previous_transaction[
                 'amount']  # Typically, the recipient of the last transaction is the sender of the current transaction
-            if previous_transaction.get('type', '') == 'split' and current_transaction['sender_id'] == \
+            if previous_transaction.get('t_type', '') == 'split' and current_transaction['sender_id'] == \
                     previous_transaction['sender_id']:
                 allowed_amount = previous_transaction[
                     'sender_remaining_amount']  # available remaining amount from the sender
