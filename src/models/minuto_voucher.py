@@ -4,7 +4,7 @@ import json
 import os
 import uuid
 from src.models.key import Key
-from src.services.utils import get_timestamp, dprint
+from src.services.utils import get_timestamp, dprint, amount_precision
 from src.services.crypto_utils import get_hash
 from src.models.vouchertransaction import VoucherTransaction
 
@@ -41,7 +41,7 @@ class MinutoVoucher:
         voucher.creator_name = creator_name
         voucher.creator_address = creator_address
         voucher.creator_gender = creator_gender
-        voucher.amount = amount
+        voucher.amount = amount_precision(amount)
         voucher.service_offer = service_offer
         voucher.validit_until = get_timestamp(validity, end_of_year=True)
         voucher.region = region
@@ -164,13 +164,13 @@ class MinutoVoucher:
         # For 'split' type, check if sender_id matches sender or recipient of the last transaction
         if last_transaction.get('t_type') == 'split':
             if sender_id == last_transaction['sender_id']:
-                return last_transaction['sender_remaining_amount']
+                return float(last_transaction['sender_remaining_amount'])
             elif sender_id == last_transaction['recipient_id']:
-                return last_transaction['amount']
+                return float(last_transaction['amount'])
 
         # For non-split or undefined t_type, return amount if sender_id matches recipient of the last transaction
         elif sender_id == last_transaction['recipient_id']:
-            return last_transaction['amount']
+            return float(last_transaction['amount'])
 
         # Default case for other scenarios
         return 0  # or a suitable error message or logic
@@ -306,19 +306,19 @@ class MinutoVoucher:
                 print(f"Sender {current_transaction['sender_id'][:6]}... was allowed to send")
 
             # Verify if the sent amount was permissible
-            allowed_amount = previous_transaction[
-                'amount']  # Typically, the recipient of the last transaction is the sender of the current transaction
+            # Typically, the recipient of the last transaction is the sender of the current transaction
+            allowed_amount = float(previous_transaction['amount'])
             if previous_transaction.get('t_type', '') == 'split' and current_transaction['sender_id'] == \
                     previous_transaction['sender_id']:
-                allowed_amount = previous_transaction[
-                    'sender_remaining_amount']  # available remaining amount from the sender
-            if current_transaction['amount'] > allowed_amount:
+                # when after split transaction the sender will send again, the remaining amount of the prev. transaction is the allowed amount
+                allowed_amount = float(previous_transaction['sender_remaining_amount'])
+            if float(current_transaction['amount']) > allowed_amount:
                 if verbose:
-                    print(f"Too much sent! {current_transaction['amount']} Minuto (max allowed {allowed_amount})")
+                    print(f"Too much sent! {float(current_transaction['amount'])} Minuto (max allowed {allowed_amount})")
                 return False
 
             if verbose:
-                print(f"Received {current_transaction['amount']} Minuto (max allowed {allowed_amount})")
+                print(f"Received {float(current_transaction['amount'])} Minuto (max allowed {allowed_amount})")
 
             # Verify the linkage to the previous transaction
             previous_transaction_hash = get_hash(json.dumps(previous_transaction, sort_keys=True).encode())

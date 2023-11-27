@@ -25,6 +25,24 @@ def get_timestamp(years_to_add=0, end_of_year=False):
     return future_time.isoformat() + "Z"
 
 
+def amount_precision(amount, precision=2):
+    """
+    Determines the maximum precision (number of decimal places) of the specified amount.
+    If the last two decimal places are zero, no decimal place is shown.
+
+    :param amount: The floating-point number to be rounded.
+    :param precision: The number of decimal places to round to. Default is 2.
+    :return: The rounded number, formatted as a string.
+    """
+    rounded_amount = round(amount, precision)
+
+    # Check if rounded amount is effectively an integer
+    if rounded_amount == int(rounded_amount):
+        return f"{int(rounded_amount)}"
+    else:
+        return f"{rounded_amount:.{precision}f}"
+
+
 def dprint(*args, sep=' ', end='\n'):
     # Get the current frame
     current_frame = inspect.currentframe()

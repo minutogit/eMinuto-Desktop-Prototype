@@ -1,5 +1,5 @@
 from src.models.vouchertransaction import VoucherTransaction
-from src.services.utils import dprint
+from src.services.utils import dprint, amount_precision
 
 class UserTransaction:
     """Manages transactions between users (persons). A user transaction can contain multiple vouchers."""
@@ -20,7 +20,7 @@ class UserTransaction:
         :return: A UserTransaction object with the selected vouchers.
         """
         user_transaction = UserTransaction()
-        user_transaction.transaction_amount = amount
+        user_transaction.transaction_amount = amount_precision(amount)
         remaining_amount_to_send = amount
         selected_vouchers = []
 
@@ -29,7 +29,7 @@ class UserTransaction:
                 continue  # Use only valid vouchers
 
             voucher_amount = voucher.get_voucher_amount(person.id)
-
+            dprint(type(voucher_amount),type(remaining_amount_to_send))
             if voucher_amount > remaining_amount_to_send:
                 # wähle diesen voucher und sende damit remaining_amount_to_send
                 selected_vouchers.append((voucher, remaining_amount_to_send))

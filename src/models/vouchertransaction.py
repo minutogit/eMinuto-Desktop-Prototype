@@ -1,7 +1,7 @@
 # vouchertransaction.py
 import json
 from src.models.key import Key
-from src.services.utils import get_timestamp
+from src.services.utils import get_timestamp, amount_precision
 from src.services.crypto_utils import get_hash
 
 class VoucherTransaction:
@@ -50,11 +50,11 @@ class VoucherTransaction:
         # Set transaction type and calculate remaining amount if transaction is a split
         if send_amount < available_amount:
             self.t_type = 'split'
-            self.sender_remaining_amount = available_amount - send_amount
+            self.sender_remaining_amount = amount_precision(available_amount - send_amount)
 
         # Set up the transaction data
         self.sender_id = sender_id # Always insert sender_id for easier transaction verification.
-        self.amount = send_amount
+        self.amount = amount_precision(send_amount)
         self.recipient_id = recipient_id
         self.sender_note = sender_note  # Encrypted note for the sender
         self.recipient_note = recipient_note  # Encrypted note from sender for recipient

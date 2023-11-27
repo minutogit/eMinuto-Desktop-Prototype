@@ -4,7 +4,7 @@ import base64
 from src.models.key import Key
 from src.models.vouchertransaction import VoucherTransaction
 from src.models.usertransaction import UserTransaction
-from src.services.utils import get_timestamp, dprint
+from src.services.utils import get_timestamp, dprint, amount_precision
 import json
 
 class Person:
@@ -58,9 +58,8 @@ class Person:
                 filename = f"{str(fileprefix)}-"
             if not prefix_only:
                 filename += f"{str(self.id)[:8]}"
-            filename += f"-{i}.txt"
-
-            return self.save_voucher(filename, subfolder, voucher)
+            filename += f"-v{i}.txt"
+            self.save_voucher(filename, subfolder, voucher)
 
     def sign_voucher_as_guarantor(self, voucher=None):
         """ Signs the voucher including the guarantor's personal details. """
@@ -139,7 +138,8 @@ class Person:
 
     def list_vouchers(self):
         """prints a short list of all vouchers"""
-        print(f"### {self.name} {self.id[:6]} - Vouchers  (Full Amount: {self.get_amount_of_all_vouchers()} Min) ###")
+        full_amount = amount_precision(self.get_amount_of_all_vouchers())
+        print(f"### {self.name} {self.id[:6]} - Vouchers  (Full Amount: {full_amount} Min) ###")
         for voucher in self.vouchers:
             #dprint(voucher.get_voucher_amount(self.id))
             print(f"V-Creator: {voucher.creator_name} - Amount: {voucher.get_voucher_amount(self.id)} Min")
