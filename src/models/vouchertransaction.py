@@ -44,8 +44,8 @@ class VoucherTransaction:
         # Calculate available amount for the sender
         available_amount = self.voucher.get_voucher_amount(sender_id)
         # Check if the send amount is within the available amount
-        if send_amount > available_amount or available_amount == 0:
-            raise ValueError("Insufficient available amount for the transaction.")
+        if (send_amount > available_amount or available_amount == 0) and send_amount > 0:
+            raise ValueError(f"Insufficient available amount for the transaction. (available: {available_amount} try to send: {send_amount})")
 
         # Set transaction type and calculate remaining amount if transaction is a split
         if send_amount < available_amount:

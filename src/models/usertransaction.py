@@ -29,7 +29,8 @@ class UserTransaction:
                 continue  # Use only valid vouchers
 
             voucher_amount = voucher.get_voucher_amount(person.id)
-            dprint(type(voucher_amount),type(remaining_amount_to_send))
+            if voucher_amount == 0:  # use only vouchers with amount, ignore empty vouchers
+                continue
             if voucher_amount > remaining_amount_to_send:
                 # wähle diesen voucher und sende damit remaining_amount_to_send
                 selected_vouchers.append((voucher, remaining_amount_to_send))
@@ -44,9 +45,9 @@ class UserTransaction:
         if remaining_amount_to_send > 0:
             return self.return_transaction_failure(failure_reason="Not enough amount to send.")
 
-        for voucher, v_amount in selected_vouchers:
+        for voucher, send_amount in selected_vouchers:
             v_transaction = VoucherTransaction(voucher)
-            transaction_data = v_transaction.do_transaction(v_amount, person.id, recipient_id, person.key)
+            transaction_data = v_transaction.do_transaction(send_amount, person.id, recipient_id, person.key)
             voucher.transactions.append(transaction_data)
             user_transaction.transaction_vouchers.append(voucher)
 
