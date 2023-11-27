@@ -151,6 +151,9 @@ class SimulationHelper:
             max_send_amount = min(person_amounts[sender], 100)  # Limit the max amount for a transaction
             amount_to_send = round(random.uniform(0.01, max_send_amount), 2)
 
+            # With a 95% probability, round down amounts greater than 1 to the nearest whole number
+            if amount_to_send > 1 and random.random() < 0.95:
+                amount_to_send = int(amount_to_send)
             # Perform the transaction
             self.send_amount(sender, receiver, amount_to_send)
 

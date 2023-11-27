@@ -22,6 +22,7 @@ class Person:
 
         self.current_voucher = None  # Initialisierung von current_voucher
         self.vouchers = [] # list of vouchers
+        self.empty_vouchers = [] # list of empty vouchers after transaction
         self.usertransaction = UserTransaction()
 
     def init_empty_voucher(self):
@@ -121,7 +122,22 @@ class Person:
         :param recipient_id: The ID of the recipient.
         :return: List of vouchers used for the transaction.
         """
-        return self.usertransaction.process_transaction_to_user(self, amount, recipient_id)
+        transaction = self.usertransaction.process_transaction_to_user(self, amount, recipient_id)
+
+        # clean vouchers with empty amount (balance)
+        # Create a new list for the remaining vouchers
+        remaining_vouchers = []
+
+        for voucher in self.vouchers:
+            if voucher.get_voucher_amount(self.id) == 0:
+                self.empty_vouchers.append(voucher)  # Add empty voucher to the empty vouchers list
+            else:
+                remaining_vouchers.append(voucher)  # Keep the voucher if it's not empty
+
+        # Update the self.vouchers list with the remaining vouchers
+        self.vouchers = remaining_vouchers
+
+        return transaction
 
     def receive_amount(self, user_transaction):
         """
@@ -141,8 +157,7 @@ class Person:
         full_amount = amount_precision(self.get_amount_of_all_vouchers())
         print(f"### {self.name} {self.id[:6]} - Vouchers  (Full Amount: {full_amount} Min) ###")
         for voucher in self.vouchers:
-            #dprint(voucher.get_voucher_amount(self.id))
-            print(f"V-Creator: {voucher.creator_name} - Amount: {voucher.get_voucher_amount(self.id)} Min")
+            print(f"V-Creator: {voucher.creator_name} - \tAmount: {voucher.get_voucher_amount(self.id)} Min")
 
     def get_amount_of_all_vouchers(self):
         """calculates the full amount of all vouchers of the person"""
