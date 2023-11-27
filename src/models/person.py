@@ -155,9 +155,20 @@ class Person:
     def list_vouchers(self):
         """prints a short list of all vouchers"""
         full_amount = amount_precision(self.get_amount_of_all_vouchers())
-        print(f"### {self.name} {self.id[:6]} - Vouchers  (Full Amount: {full_amount} Min) ###")
-        for voucher in self.vouchers:
-            print(f"V-Creator: {voucher.creator_name} - \tAmount: {voucher.get_voucher_amount(self.id)} Min")
+        print(f"\033[1m{self.name} {self.id[:6]}.. - {len(self.vouchers)} Vouchers  (Full Amount: {full_amount} Min)\033[0m")
+        sorted_vouchers = sorted(self.vouchers, key=lambda voucher: voucher.creator_id)
+        creator_id = ''
+        linetext = ''
+        for voucher in sorted_vouchers:
+            if creator_id != voucher.creator_id:
+                if creator_id != '':
+                    print(linetext)
+                linetext = f"V-Creator: {voucher.creator_name} \tV-Amounts: {voucher.get_voucher_amount(self.id)}M"
+                creator_id = voucher.creator_id
+            else:
+                linetext += f"  {voucher.get_voucher_amount(self.id)}M"
+        print(linetext)
+
 
     def get_amount_of_all_vouchers(self):
         """calculates the full amount of all vouchers of the person"""
