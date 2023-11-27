@@ -1,4 +1,5 @@
 import copy
+import time
 
 from faker import Faker
 from typing import List
@@ -122,6 +123,47 @@ class SimulationHelper:
             print(f"Person[{sender}] send {amount}M to Person[{receiver}]")
         self.transaction_counter += 1
 
+    def simulate_transaction(self, number_of_transactions):
+        """
+        Simulates a specified number of transactions among the persons.
+
+        :param number_of_transactions: The number of transactions to simulate.
+        """
+        # Determine available amount for each person and store in list
+        start_time = time.time()  # Start the timer
+        person_amounts = [person.get_amount_of_all_vouchers() for person in self.persons]
+
+        transaction_counter = 0
+        for _ in range(number_of_transactions):
+            transaction_counter += 1
+            # Choose a sender with a sufficient amount
+            potential_senders = [i for i, amount in enumerate(person_amounts) if amount > 0]
+            if not potential_senders:
+                print("No more senders with sufficient funds.")
+                break
+
+            sender = random.choice(potential_senders)
+
+            # Choose a random receiver different from the sender
+            receiver = random.choice([i for i in range(len(self.persons)) if i != sender])
+
+            # Determine a random amount to send (up to two decimal places)
+            max_send_amount = min(person_amounts[sender], 100)  # Limit the max amount for a transaction
+            amount_to_send = round(random.uniform(0.01, max_send_amount), 2)
+
+            # Perform the transaction
+            self.send_amount(sender, receiver, amount_to_send)
+
+            # Update the amounts in person_amounts list
+            person_amounts[sender] -= amount_to_send
+            person_amounts[receiver] += amount_to_send
+
+            if self.print_info:
+                print(f"Transaction {transaction_counter}: Person[{sender}] sent {amount_to_send}M to Person[{receiver}]")
+
+        end_time = time.time()  # End the timer
+        duration = end_time - start_time  # Calculate the duration
+        print(f"Simulation took {duration} seconds.")
 
     def save_vouchers(self, person_number, subfolder=None):
         """
