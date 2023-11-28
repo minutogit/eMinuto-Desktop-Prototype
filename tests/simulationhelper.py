@@ -125,36 +125,32 @@ class SimulationHelper:
 
     def simulate_transaction(self, number_of_transactions):
         """
-        Simulates a specified number of transactions among the persons.
+        Simulates a specified number of transactions among persons.
 
         :param number_of_transactions: The number of transactions to simulate.
         """
-        # Determine available amount for each person and store in list
         start_time = time.time()  # Start the timer
-        person_amounts = [person.get_amount_of_all_vouchers() for person in self.persons]
 
-        transaction_counter = 0
-        for _ in range(number_of_transactions):
-            transaction_counter += 1
-            # Choose a sender with a sufficient amount
+        # Compute initial total amount across all persons
+        person_amounts = [person.get_amount_of_all_vouchers() for person in self.persons]
+        total_start_amount = sum(person_amounts)
+
+        for transaction_num in range(1, number_of_transactions + 1):
             potential_senders = [i for i, amount in enumerate(person_amounts) if amount > 0]
             if not potential_senders:
                 print("No more senders with sufficient funds.")
                 break
 
             sender = random.choice(potential_senders)
-
-            # Choose a random receiver different from the sender
             receiver = random.choice([i for i in range(len(self.persons)) if i != sender])
 
-            # Determine a random amount to send (up to two decimal places)
-            max_send_amount = min(person_amounts[sender], 100)  # Limit the max amount for a transaction
+            max_send_amount = min(person_amounts[sender], 100)
             amount_to_send = round(random.uniform(0.01, max_send_amount), 2)
 
-            # With a 95% probability, round down amounts greater than 1 to the nearest whole number
+            # Apply rounding down with 95% probability for amounts over 1
             if amount_to_send > 1 and random.random() < 0.95:
                 amount_to_send = int(amount_to_send)
-            # Perform the transaction
+
             self.send_amount(sender, receiver, amount_to_send)
 
             # Update the amounts in person_amounts list
@@ -162,11 +158,32 @@ class SimulationHelper:
             person_amounts[receiver] += amount_to_send
 
             if self.print_info:
-                print(f"Transaction {transaction_counter}: Person[{sender}] sent {amount_to_send}M to Person[{receiver}]")
+                print(f"Transaction {transaction_num}: Person[{sender}] sent {amount_to_send}M to Person[{receiver}]")
 
-        end_time = time.time()  # End the timer
-        duration = end_time - start_time  # Calculate the duration
-        print(f"Simulation took {duration} seconds.")
+        end_time = time.time()
+        if self.print_info:
+            print(f"Simulation took {end_time - start_time} seconds.")
+
+        # Verify the simulation results
+        simulation_results_correct = True
+        total_amount_after_simulation = sum(
+            self.persons[i].get_amount_of_all_vouchers() for i in range(len(self.persons)))
+
+        for i, (tracked_amount, real_amount) in enumerate(
+                zip(person_amounts, [p.get_amount_of_all_vouchers() for p in self.persons])):
+            if self.print_info:
+                print(f"Person[{i}]: {round(tracked_amount, 2)}")
+            if round(tracked_amount, 2) != round(real_amount, 2):
+                print(f"Discrepancy for Person[{i}]. Expected: {round(tracked_amount, 2)}, Actual: {real_amount}")
+                simulation_results_correct = False
+
+        if round(total_start_amount, 2) != round(total_amount_after_simulation, 2):
+            print(f"Inconsistent total amount. Start: {total_start_amount}, End: {total_amount_after_simulation}")
+            simulation_results_correct = False
+
+        return simulation_results_correct
+
+
 
     def save_vouchers(self, person_number, subfolder=None):
         """
@@ -189,7 +206,7 @@ class SimulationHelper:
     def print_all_user_vouchers(self):
         i = 0
         for person in self.persons:
-            print(f"\nPerson[{i}]")
+            print(f"\nPerson[{i}] ", end='')
             person.list_vouchers()
             i += 1
 
