@@ -1,8 +1,6 @@
 # minuto_voucher.py
-import base64
 import json
 import os
-import uuid
 from src.models.key import Key
 from src.services.utils import get_timestamp, dprint, amount_precision
 from src.services.crypto_utils import get_hash
@@ -18,6 +16,7 @@ class MinutoVoucher:
         self.creator_address = ''
         self.creator_gender = 0 # 0 for unknown, 1 for male, 2 for female
         self.amount = 0
+        self.description = ""
         self.service_offer = ''
         self.validit_until = ''
         self.region = ''
@@ -36,12 +35,13 @@ class MinutoVoucher:
         # Create a new voucher instance with provided details
         voucher = cls()
         voucher.creator_id = creator_id
-        voucher.voucher_id = str(uuid.uuid4())  # Generate a unique voucher ID
+        voucher.voucher_id = ""  # voucher ID will be generated from hash when creator signs the voucher
         voucher.creation_date = get_timestamp()
         voucher.creator_name = creator_name
         voucher.creator_address = creator_address
         voucher.creator_gender = creator_gender
         voucher.amount = amount_precision(amount)
+        voucher.description = f"Voucher for goods or services worth {amount_precision(amount)} minutes of quality work."
         voucher.service_offer = service_offer
         voucher.validit_until = get_timestamp(validity, end_of_year=True)
         voucher.region = region
@@ -51,10 +51,10 @@ class MinutoVoucher:
         voucher.is_test_voucher = is_test_voucher
         return voucher
 
-    def get_voucher_data_for_signing(self, include_guarantor_signatures=False, creator_signature= False):
-        # Dynamically generate the data, including optional guarantor signatures
+    def get_voucher_data(self, type):
+        # Dynamically generate the data for signing and hashing, including optional guarantor signatures
+
         data = {
-            "voucher_id": self.voucher_id,
             "creator_id": self.creator_id,
             "creator_name": self.creator_name,
             "creator_address": self.creator_address,
@@ -63,21 +63,34 @@ class MinutoVoucher:
             "phone": self.phone,
             "service_offer": self.service_offer,
             "amount": self.amount,
+            "description": self.description,
             "validit_until": self.validit_until,
             "region": self.region,
             "coordinates": self.coordinates,
             "creation_date": self.creation_date,
             "is_test_voucher": self.is_test_voucher
         }
+        # if guarantor_signature then this is all needed data for signing
+        if type == "guarantor_signature":
+            return json.dumps(data, sort_keys=True, ensure_ascii=False)
 
-        if include_guarantor_signatures:
-            data["guarantor_signatures"] = self.guarantor_signatures
+        # for voucher_id_hashing add guarantor_signatures
+        data["guarantor_signatures"] = self.guarantor_signatures
+        if type == "voucher_id_hashing":
+            return json.dumps(data, sort_keys=True, ensure_ascii=False)
 
-        if creator_signature:
-            data["creator_signature"] = self.creator_signature
+        # for creator_signing add voucher_id
+        data["voucher_id"] = self.voucher_id
+        if type == "creator_signing":
+            return json.dumps(data, sort_keys=True, ensure_ascii=False)
 
+        # for initial_transaction_hash add creator_signature
+        data["creator_signature"] = self.creator_signature
+        if type == "initial_transaction_hash":
+            return json.dumps(data, sort_keys=True, ensure_ascii=False)
 
-        return json.dumps(data, sort_keys=True, ensure_ascii=False)
+        # if unknown type raise error
+        raise ValueError("Unknown type")
 
     def is_valid(self):
         """
@@ -184,14 +197,29 @@ class MinutoVoucher:
                  return False
             pubkey_short = Key.get_pubkey_from_id(guarantor_info["id"])
 
-            data_to_verify = voucher.get_voucher_data_for_signing() + json.dumps(guarantor_info, sort_keys=True)
+            data_to_verify = voucher.get_voucher_data(type="guarantor_signature") + json.dumps(guarantor_info, sort_keys=True)
             if not Key.verify_signature(data_to_verify, signature, pubkey_short):
                 return False
 
         return True
 
+    def calculate_voucher_id(self, voucher=None):
+        """calculate hash from voucher as voucher_id
+
+        :return: voucher_id
+        """
+        if voucher is None:
+            voucher = self
+        data = self.get_voucher_data(type="voucher_id_hashing").encode()
+        return get_hash(data)
+
     def verify_creator_signature(self, voucher):
-        """ Verifies the creator's signature on the given voucher. """
+        """ Verifies the creator's signature and voucher_id from voucher. """
+
+        # check if voucher_id is correct calculated
+        if voucher.voucher_id != self.calculate_voucher_id(voucher):
+            return False
+
         signature = voucher.creator_signature
         if not signature:
             return False
@@ -199,7 +227,7 @@ class MinutoVoucher:
             return False
         pubkey_short = Key.get_pubkey_from_id(voucher.creator_id)
 
-        data_to_verify = voucher.get_voucher_data_for_signing(include_guarantor_signatures=True)
+        data_to_verify = voucher.get_voucher_data(type="creator_signing")
         return Key.verify_signature(data_to_verify, signature, pubkey_short)
 
     def verify_initial_transaction(self):
@@ -223,8 +251,7 @@ class MinutoVoucher:
             return False
 
         # Verify the linkage to the voucher - verify hash from complete voucher data
-        data_for_prev_hash = self.get_voucher_data_for_signing(include_guarantor_signatures=True,
-                                                               creator_signature=True).encode()
+        data_for_prev_hash = self.get_voucher_data(type="initial_transaction_hash").encode()
         if get_hash(data_for_prev_hash) != initial_transaction['previous_hash']:
             return False
 

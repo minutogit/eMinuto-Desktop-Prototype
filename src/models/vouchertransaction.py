@@ -22,7 +22,7 @@ class VoucherTransaction:
         self.sender_id = self.voucher.creator_id
         self.amount = self.voucher.amount
         self.t_type = 'init'  # type for the initial transaction
-        data = self.voucher.get_voucher_data_for_signing(include_guarantor_signatures=True, creator_signature=True).encode()
+        data = self.voucher.get_voucher_data(type="initial_transaction_hash").encode()
         self.previous_hash = get_hash(data)
         self.t_time = get_timestamp()
         transaction_data = self._assemble_transaction_data()

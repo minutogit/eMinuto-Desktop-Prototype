@@ -1,6 +1,4 @@
 # person.py
-import base64
-
 from src.models.key import Key
 from src.models.vouchertransaction import VoucherTransaction
 from src.models.usertransaction import UserTransaction
@@ -83,7 +81,7 @@ class Person:
         }
 
         # Combine voucher data with guarantor information to create data for signing
-        data_to_sign = voucher.get_voucher_data_for_signing() + json.dumps(guarantor_info, sort_keys=True)
+        data_to_sign = voucher.get_voucher_data(type="guarantor_signature") + json.dumps(guarantor_info, sort_keys=True)
         signature = self.key.sign(data_to_sign, base64_encode=True)
 
         # Append the signed guarantor information to the voucher
@@ -95,14 +93,15 @@ class Person:
         return voucher.verify_all_guarantor_signatures(voucher)
 
     def sign_voucher_as_creator(self, voucher=None):
-        """ Signs the voucher as its creator and initialize the transaction list"""
+        """ Calculates voucher_id signs the voucher as its creator and initialize the transaction list"""
         voucher = voucher or self.current_voucher
+        voucher.voucher_id = voucher.calculate_voucher_id()  # set voucher_id
 
         if voucher.creator_id != self.id:
             print("Can only sign own voucher as creator!")
             return
-        # Schöpfer signiert den Gutschein, inklusive der Bürgen-Signaturen
-        data_to_sign = voucher.get_voucher_data_for_signing(include_guarantor_signatures=True)
+
+        data_to_sign = voucher.get_voucher_data(type="creator_signing")
         voucher.creator_signature = (self.key.sign(data_to_sign, base64_encode=True))
         # Initialize first transaction
         transaction = VoucherTransaction(voucher)
