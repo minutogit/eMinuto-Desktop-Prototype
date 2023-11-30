@@ -204,6 +204,7 @@ class SimulationHelper:
             self.save_vouchers(i, subfolder)
 
     def print_all_user_vouchers(self):
+        """prints all vouchers of all persons to terminal"""
         i = 0
         for person in self.persons:
             print(f"\nPerson[{i}] ", end='')
