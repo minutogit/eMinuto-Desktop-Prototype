@@ -1,6 +1,7 @@
 import unittest
 import os
 from tests.models.simulationhelper import SimulationHelper
+from tests.services.utils import modify_voucher
 
 
 class TestPerson(unittest.TestCase):
@@ -77,6 +78,60 @@ class TestPerson(unittest.TestCase):
         # Simulate transactions and assert the result is True
         result = sim.simulate_transaction(20)
         self.assertTrue(result, "Transaction simulation returned True.")
+
+    def test_corruption_of_vouchers(self):
+        # Testing the corruption of vouchers in different scenarios to ensure robustness
+        from src.models.minuto_voucher import MinutoVoucher
+        sim = SimulationHelper(print_info=False)
+        sim.simulation_folder = 'simulation'  # speicherort
+        sim.generate_persons(3)  # anzahl der personen die erstellt werden
+        sim.generate_voucher_for_person(0, 1, 2, 100, 5)
+
+        sim.send_amount(0, 1, 50)
+        sim.send_amount(1, 2, 50)
+        sim.send_amount(2, 1, 50)
+        sim.send_amount(1, 2, 22.2)
+
+        original_voucher_dict = sim.persons[2].vouchers[0].save_to_disk(simulation=True)
+
+        # complete random voucher modification of one single char
+        for i in range(20):
+            modified_voucher_dict = modify_voucher(original_voucher_dict, "all")
+            corrupt_voucher = MinutoVoucher()
+            corrupt_voucher = corrupt_voucher.read_from_file(modified_voucher_dict, simulation=True)
+            assert corrupt_voucher.verify_complete_voucher() == False
+
+        # random modification only voucher part (one single char)
+        for i in range(20):
+            modified_voucher_dict = modify_voucher(original_voucher_dict, "voucher")
+            corrupt_voucher = MinutoVoucher()
+            corrupt_voucher = corrupt_voucher.read_from_file(modified_voucher_dict, simulation=True)
+
+            assert corrupt_voucher.verify_creator_signature() == False
+            assert corrupt_voucher.verify_all_transactions() == False
+            assert corrupt_voucher.verify_complete_voucher() == False
+
+        # random modification only guarantor_signatures part (one single char), all tests should fail
+        for i in range(20):
+            modified_voucher_dict = modify_voucher(original_voucher_dict, "guarantor")
+            corrupt_voucher = MinutoVoucher()
+            corrupt_voucher = corrupt_voucher.read_from_file(modified_voucher_dict, simulation=True)
+            assert corrupt_voucher.verify_all_guarantor_signatures() == False
+            assert corrupt_voucher.verify_creator_signature() == False
+            assert corrupt_voucher.verify_all_transactions() == False
+            assert corrupt_voucher.verify_complete_voucher() == False
+
+        # random modification only transactions part (one single char), all tests should fail
+        for i in range(20):
+            modified_voucher_dict = modify_voucher(original_voucher_dict, "transactions")
+            corrupt_voucher = MinutoVoucher()
+            corrupt_voucher = corrupt_voucher.read_from_file(modified_voucher_dict, simulation=True)
+            assert corrupt_voucher.verify_all_guarantor_signatures() == True
+            assert corrupt_voucher.verify_creator_signature() == True
+            assert corrupt_voucher.verify_all_transactions() == False
+            assert corrupt_voucher.verify_complete_voucher() == False
+
+
 
     # def tearDown(self):
     #     # Cleanup: Remove test files
