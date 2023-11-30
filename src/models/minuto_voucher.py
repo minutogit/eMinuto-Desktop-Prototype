@@ -54,22 +54,12 @@ class MinutoVoucher:
     def get_voucher_data(self, type):
         # Dynamically generate the data for signing and hashing, including optional guarantor signatures
 
-        data = {
-            "creator_id": self.creator_id,
-            "creator_name": self.creator_name,
-            "creator_address": self.creator_address,
-            "creator_gender": self.creator_gender,
-            "email": self.email,
-            "phone": self.phone,
-            "service_offer": self.service_offer,
-            "amount": self.amount,
-            "description": self.description,
-            "validit_until": self.validit_until,
-            "region": self.region,
-            "coordinates": self.coordinates,
-            "creation_date": self.creation_date,
-            "is_test_voucher": self.is_test_voucher
-        }
+        # Initially, these keys are excluded from the hashing process.
+        excluded_keys = ['guarantor_signatures', 'voucher_id', 'creator_signature',
+                         'transactions']
+        # By doing this, unknown keys are also dynamically included in the hash, enabling older versions to correctly verify hashes of newer versions with additional parameters.
+        data = {key: value for key, value in self.__dict__.items() if key not in excluded_keys}
+
         # if guarantor_signature then this is all needed data for signing
         if type == "guarantor_signature":
             return json.dumps(data, sort_keys=True, ensure_ascii=False)
