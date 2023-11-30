@@ -188,8 +188,10 @@ class MinutoVoucher:
         # Default case for other scenarios
         return 0  # or a suitable error message or logic
 
-    def verify_all_guarantor_signatures(self, voucher):
+    def verify_all_guarantor_signatures(self, voucher=None):
         """ Validates all guarantor signatures on the given voucher. """
+        if voucher is None:
+            voucher = self
         if not voucher.guarantor_signatures:
             return False
         for guarantor_info, signature in voucher.guarantor_signatures:
@@ -213,9 +215,10 @@ class MinutoVoucher:
         data = self.get_voucher_data(type="voucher_id_hashing").encode()
         return get_hash(data)
 
-    def verify_creator_signature(self, voucher):
+    def verify_creator_signature(self, voucher=None):
         """ Verifies the creator's signature and voucher_id from voucher. """
-
+        if voucher is None:
+            voucher = self
         # check if voucher_id is correct calculated
         if voucher.voucher_id != self.calculate_voucher_id(voucher):
             return False
