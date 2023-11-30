@@ -195,9 +195,13 @@ class MinutoVoucher:
         if not voucher.guarantor_signatures:
             return False
         for guarantor_info, signature in voucher.guarantor_signatures:
-            if Key.check_user_id(guarantor_info["id"]) == False:
-                 return False
-            pubkey_short = Key.get_pubkey_from_id(guarantor_info["id"])
+            # to catch key erros when corrupt file
+            try:
+                if Key.check_user_id(guarantor_info["id"]) == False:
+                     return False
+                pubkey_short = Key.get_pubkey_from_id(guarantor_info["id"])
+            except:
+                return False
 
             data_to_verify = voucher.get_voucher_data(type="guarantor_signature") + json.dumps(guarantor_info, sort_keys=True)
             if not Key.verify_signature(data_to_verify, signature, pubkey_short):
@@ -215,23 +219,34 @@ class MinutoVoucher:
         data = self.get_voucher_data(type="voucher_id_hashing").encode()
         return get_hash(data)
 
-    def verify_creator_signature(self, voucher=None):
+    def verify_creator_signature(self, voucher=None, verbose=False):
         """ Verifies the creator's signature and voucher_id from voucher. """
         if voucher is None:
             voucher = self
         # check if voucher_id is correct calculated
         if voucher.voucher_id != self.calculate_voucher_id(voucher):
+            if verbose:
+                print("voucher_id is incorrect")
             return False
 
         signature = voucher.creator_signature
         if not signature:
+            if verbose:
+                print("missing signature")
             return False
         if Key.check_user_id(voucher.creator_id) == False:
+            if verbose:
+                print("creator id incorrect. wrong checksum")
             return False
         pubkey_short = Key.get_pubkey_from_id(voucher.creator_id)
 
         data_to_verify = voucher.get_voucher_data(type="creator_signing")
-        return Key.verify_signature(data_to_verify, signature, pubkey_short)
+        signature_valid = Key.verify_signature(data_to_verify, signature, pubkey_short)
+        if not signature_valid:
+            if verbose:
+                print("invalid creator signature")
+            return False
+        return signature_valid
 
     def verify_initial_transaction(self):
         """
@@ -246,22 +261,25 @@ class MinutoVoucher:
         # Retrieve the initial transaction from the transaction list
         initial_transaction = self.transactions[0]
 
-        # Validate that the initial transaction meets expected conditions
-        if initial_transaction['t_type'] != 'init' or \
-                initial_transaction['recipient_id'] != self.creator_id or \
-                initial_transaction['amount'] != self.amount or \
-                initial_transaction['sender_id'] != self.creator_id:
-            return False
+        # to catch key erros when corrupt file
+        try:
+            # Validate that the initial transaction meets expected conditions
+            if initial_transaction['t_type'] != 'init' or \
+                    initial_transaction['recipient_id'] != self.creator_id or \
+                    initial_transaction['amount'] != self.amount or \
+                    initial_transaction['sender_id'] != self.creator_id:
+                return False
 
-        # Verify the linkage to the voucher - verify hash from complete voucher data
-        data_for_prev_hash = self.get_voucher_data(type="initial_transaction_hash").encode()
-        if get_hash(data_for_prev_hash) != initial_transaction['previous_hash']:
-            return False
+            # Verify the linkage to the voucher - verify hash from complete voucher data
+            data_for_prev_hash = self.get_voucher_data(type="initial_transaction_hash").encode()
+            if get_hash(data_for_prev_hash) != initial_transaction['previous_hash']:
+                return False
 
-        # Verify transaction ID and the correct signature of the sender (creator)
-        if VoucherTransaction.calculate_transaction_id(initial_transaction) != initial_transaction['t_id']:
-            return False
-
+            # Verify transaction ID and the correct signature of the sender (creator)
+            if VoucherTransaction.calculate_transaction_id(initial_transaction) != initial_transaction['t_id']:
+                return False
+        except:
+             return False
         # Verify the signature of the transaction ID
         is_signature_valid = self.verify_transaction_ids_signature(initial_transaction)
 
@@ -306,59 +324,65 @@ class MinutoVoucher:
                 print("Initial transaction verification failed.")
             return False
 
-        # Loop through and verify each subsequent transaction
-        for i in range(1, len(self.transactions)):
-            current_transaction = self.transactions[i]
-            previous_transaction = self.transactions[i - 1]
+        # to catch key erros when corrupt file
+        try:
 
-            if verbose:
-                print(f"Verifying transaction: {i} - ID: {current_transaction['t_id'][:6]}...")
+            # Loop through and verify each subsequent transaction
+            for i in range(1, len(self.transactions)):
+                current_transaction = self.transactions[i]
+                previous_transaction = self.transactions[i - 1]
 
-            # Verify the transaction ID and the sender's signature
-            if not self.verify_transaction_ids_signature(current_transaction):
                 if verbose:
-                    print("VoucherTransaction ID or sender's signature verification failed.")
-                return False
+                    print(f"Verifying transaction: {i} - ID: {current_transaction['t_id'][:6]}...")
 
-            if verbose:
-                print("VoucherTransaction ID and Signature are okay")
+                # Verify the transaction ID and the sender's signature
+                if not self.verify_transaction_ids_signature(current_transaction):
+                    if verbose:
+                        print("VoucherTransaction ID or sender's signature verification failed.")
+                    return False
 
-            # Verify if the sender was authorized to send
-            allowed_senders = [previous_transaction['recipient_id']]
-            if previous_transaction.get('t_type', '') == 'split':
-                allowed_senders.append(previous_transaction['sender_id'])
-            if current_transaction['sender_id'] not in allowed_senders:
                 if verbose:
-                    print(f"Sender {current_transaction['sender_id'][:6]}... was not authorized to send.")
-                return False
+                    print("VoucherTransaction ID and Signature are okay")
 
-            if verbose:
-                print(f"Sender {current_transaction['sender_id'][:6]}... was allowed to send")
+                # Verify if the sender was authorized to send
+                allowed_senders = [previous_transaction['recipient_id']]
+                if previous_transaction.get('t_type', '') == 'split':
+                    allowed_senders.append(previous_transaction['sender_id'])
+                if current_transaction['sender_id'] not in allowed_senders:
+                    if verbose:
+                        print(f"Sender {current_transaction['sender_id'][:6]}... was not authorized to send.")
+                    return False
 
-            # Verify if the sent amount was permissible
-            # Typically, the recipient of the last transaction is the sender of the current transaction
-            allowed_amount = float(previous_transaction['amount'])
-            if previous_transaction.get('t_type', '') == 'split' and current_transaction['sender_id'] == \
-                    previous_transaction['sender_id']:
-                # when after split transaction the sender will send again, the remaining amount of the prev. transaction is the allowed amount
-                allowed_amount = float(previous_transaction['sender_remaining_amount'])
-            if float(current_transaction['amount']) > allowed_amount:
                 if verbose:
-                    print(f"Too much sent! {float(current_transaction['amount'])} Minuto (max allowed {allowed_amount})")
-                return False
+                    print(f"Sender {current_transaction['sender_id'][:6]}... was allowed to send")
 
-            if verbose:
-                print(f"Received {float(current_transaction['amount'])} Minuto (max allowed {allowed_amount})")
+                # Verify if the sent amount was permissible
+                # Typically, the recipient of the last transaction is the sender of the current transaction
+                allowed_amount = float(previous_transaction['amount'])
+                if previous_transaction.get('t_type', '') == 'split' and current_transaction['sender_id'] == \
+                        previous_transaction['sender_id']:
+                    # when after split transaction the sender will send again, the remaining amount of the prev. transaction is the allowed amount
+                    allowed_amount = float(previous_transaction['sender_remaining_amount'])
+                if float(current_transaction['amount']) > allowed_amount:
+                    if verbose:
+                        print(f"Too much sent! {float(current_transaction['amount'])} Minuto (max allowed {allowed_amount})")
+                    return False
 
-            # Verify the linkage to the previous transaction
-            previous_transaction_hash = get_hash(json.dumps(previous_transaction, sort_keys=True).encode())
-            if current_transaction['previous_hash'] != previous_transaction_hash:
                 if verbose:
-                    print("Linkage to the previous transaction failed.")
-                return False
+                    print(f"Received {float(current_transaction['amount'])} Minuto (max allowed {allowed_amount})")
 
-            if verbose:
-                print("Linkage (Hash of the previous transaction) is correct\n")
+                # Verify the linkage to the previous transaction
+                previous_transaction_hash = get_hash(json.dumps(previous_transaction, sort_keys=True).encode())
+                if current_transaction['previous_hash'] != previous_transaction_hash:
+                    if verbose:
+                        print("Linkage to the previous transaction failed.")
+                    return False
+
+                if verbose:
+                    print("Linkage (Hash of the previous transaction) is correct\n")
+
+        except:
+            return False
 
         if verbose:
             print("All transactions are okay")
@@ -372,17 +396,20 @@ class MinutoVoucher:
         """
         # Verify guarantor signatures
         if not self.verify_all_guarantor_signatures(self):
-            print("Guarantor signature verification failed.")
+            if verbose:
+                print("Guarantor signature verification failed.")
             return False
 
         # Verify creator's signature
         if not self.verify_creator_signature(self):
-            print("Creator signature verification failed.")
+            if verbose:
+                print("Creator signature verification failed.")
             return False
 
         # Verify all transactions
         if not self.verify_all_transactions(verbose):
-            print("Voucher Transaction verification failed.")
+            if verbose:
+                print("Voucher Transaction verification failed.")
             return False
 
         return True
