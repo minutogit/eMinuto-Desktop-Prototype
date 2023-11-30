@@ -1,7 +1,6 @@
 import unittest
 import os
-from simulationhelper import SimulationHelper
-from src.services.utils import dprint
+from tests.models.simulationhelper import SimulationHelper
 
 
 class TestPerson(unittest.TestCase):
@@ -64,6 +63,20 @@ class TestPerson(unittest.TestCase):
 
         self.test_person[3].read_voucher_and_save_voucher(complete_voucher_file_name, self.temp_subfolder)
         self.assertTrue(self.test_person[3].verify_creator_signature(), "Creator's signature successfully verified.")
+
+    def test_transaction(self):
+        """
+        Test the transaction simulation.
+        """
+        sim = SimulationHelper()
+        sim.simulation_folder = 'simulation'
+        sim.generate_persons(5)
+        sim.generate_voucher_for_person(0, 1, 2, 1000, 5)
+        sim.generate_voucher_for_person(1, 3, 4, 1000, 5)
+
+        # Simulate transactions and assert the result is True
+        result = sim.simulate_transaction(20)
+        self.assertTrue(result, "Transaction simulation returned True.")
 
     # def tearDown(self):
     #     # Cleanup: Remove test files
