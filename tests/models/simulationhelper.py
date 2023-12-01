@@ -154,8 +154,8 @@ class SimulationHelper:
         self.persons[sender].vouchers = used_vouchers + self.persons[sender].vouchers
 
         # Filter out vouchers that have been double spent
-        self.persons[sender].empty_vouchers = [
-            voucher for voucher in self.persons[sender].empty_vouchers
+        self.persons[sender].used_vouchers = [
+            voucher for voucher in self.persons[sender].used_vouchers
             if voucher.transactions[-1]['t_id'] not in last_transaction_ids_of_used_vouchers
         ]
 

@@ -19,8 +19,8 @@ class Person:
         self.coordinates = coordinates
 
         self.current_voucher = None  # Initialisierung von current_voucher
-        self.vouchers = [] # list of vouchers
-        self.empty_vouchers = [] # list of empty vouchers after transaction
+        self.vouchers = [] # list of vouchers with amount
+        self.used_vouchers = [] # list of used vouchers after transaction with no amount
         self.usertransaction = UserTransaction()
 
     def init_empty_voucher(self):
@@ -129,7 +129,7 @@ class Person:
 
         for voucher in self.vouchers:
             if voucher.get_voucher_amount(self.id) == 0:
-                self.empty_vouchers.append(voucher)  # Add empty voucher to the empty vouchers list
+                self.used_vouchers.append(voucher)  # Add empty voucher to the empty vouchers list
             else:
                 remaining_vouchers.append(voucher)  # Keep the voucher if it's not empty
 
