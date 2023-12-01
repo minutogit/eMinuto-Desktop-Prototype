@@ -123,6 +123,62 @@ class SimulationHelper:
             print(f"Person[{sender}] send {amount}M to Person[{receiver}]")
         self.transaction_counter += 1
 
+    def send_amount_double_spend(self, sender, receiver, amount, receiver2, amount2):
+        """
+        Performs a double spending transaction by sending an amount from the sender to two different receivers.
+        This method first sends the specified amount to the first receiver, then reuses the same vouchers to send
+        a different amount to the second receiver, simulating a double spend scenario.
+
+        Args:
+        sender (int): The index of the sender in the persons list.
+        receiver (int): The index of the first receiver in the persons list.
+        amount (float): The amount to be sent to the first receiver.
+        receiver2 (int): The index of the second receiver in the persons list.
+        amount2 (float): The amount to be sent to the second receiver.
+        :return: A string representing the user ID that has performed a double spend.
+        """
+        transaction = self.persons[sender].send_amount(amount, self.persons[receiver].id)
+        transaction_copy = copy.deepcopy(transaction)
+
+        # Save transaction IDs for later removal from used_vouchers
+        last_transaction_ids_of_used_vouchers = [
+            voucher.transactions[-2]['t_id'] for voucher in transaction.transaction_vouchers
+        ]
+
+        # Cleaning vouchers for reuse
+        used_vouchers = [voucher for voucher in transaction.transaction_vouchers]
+        for voucher in used_vouchers:
+            voucher.transactions.pop()  # Remove the latest transaction
+
+        # Re-add vouchers to available list for reuse (to enable double spending)
+        self.persons[sender].vouchers = used_vouchers + self.persons[sender].vouchers
+
+        # Filter out vouchers that have been double spent
+        self.persons[sender].empty_vouchers = [
+            voucher for voucher in self.persons[sender].empty_vouchers
+            if voucher.transactions[-1]['t_id'] not in last_transaction_ids_of_used_vouchers
+        ]
+
+        self.persons[receiver].receive_amount(transaction_copy)
+        if not transaction_copy.transaction_successful:
+            return
+        if self.print_info:
+            print(f"Person[{sender}] sent {amount}M to Person[{receiver}]")
+        self.transaction_counter += 1
+
+        # Execute the double spending here (reusing vouchers that were reset above; if vouchers are selected deterministically, they will be reused, otherwise, they might be reused later.)
+        transaction = self.persons[sender].send_amount(amount, self.persons[receiver2].id)
+        transaction_copy = copy.deepcopy(transaction)
+        self.persons[receiver2].receive_amount(transaction_copy)
+        if not transaction_copy.transaction_successful:
+            return
+        if self.print_info:
+            print(f"Person[{sender}] send (double spend) {amount}M to Person[{receiver2}]")
+        self.transaction_counter += 1
+
+        # returns user ID of double spending user
+        return self.persons[sender].id
+
     def simulate_transaction(self, number_of_transactions):
         """
         Simulates a specified number of transactions among persons.
