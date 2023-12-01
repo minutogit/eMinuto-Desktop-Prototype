@@ -2,7 +2,7 @@
 from src.models.key import Key
 from src.models.vouchertransaction import VoucherTransaction
 from src.models.usertransaction import UserTransaction
-from src.services.utils import get_timestamp, dprint, amount_precision
+from src.services.utils import get_timestamp, dprint, amount_precision, get_double_spending_vtransaction_ids
 import json
 
 class Person:
@@ -31,6 +31,49 @@ class Person:
         """ Erstellt einen neuen MinutoVoucher. """
         from src.models.minuto_voucher import MinutoVoucher
         self.current_voucher = MinutoVoucher.create(self.id, self.name, self.address, self.gender, self.email, self.phone, self.service_offer, self.coordinates, amount, region, validity)
+
+    def check_double_spending(self):
+        """
+        Identifies and returns information about double spending incidents on all available vouchers.
+
+        This function checks for transactions that have the same previous_hash across all vouchers,
+        indicating potential double spending. For each set of such transactions, it extracts the user_id
+        of the double spender, the transaction_ids involved, and the affected voucher_id.
+
+        Returns:
+        list of dict: A list where each dictionary contains the following keys:
+                      'double_spender_id': The user ID of the person who double spent,
+                      'transaction_ids': A list of transaction IDs involved in the double spending,
+                      'voucher_id': The ID of the voucher on which double spending occurred.
+                      Returns an empty list if no double spending is detected.
+        """
+        all_vouchers = self.vouchers + self.used_vouchers
+        double_spends = get_double_spending_vtransaction_ids(all_vouchers)
+        number_of_double_spends = len(double_spends)
+        if number_of_double_spends == 0:
+            return []
+
+        # If double spends, then detect user id that double spends
+        double_spend_info = []
+        for dspend in double_spends:
+            # Convert the set to a list to access its elements
+            v_transaction_id = dspend[0]  # Get the first transaction id from the list
+            user_id = None
+            for voucher in all_vouchers:
+                for transaction in voucher.transactions:
+                    if transaction["t_id"] == v_transaction_id:
+                        user_id = transaction["sender_id"]  # the sender is the double spender
+                        break
+                if user_id is not None:
+                    # Collect information about the double spender
+                    double_spend_info.append({
+                        "double_spender_id": user_id,
+                        "transaction_ids": dspend,
+                        "voucher_id": voucher.voucher_id
+                    })
+                    break
+
+        return double_spend_info
 
     def read_voucher_and_save_voucher(self, filename, subfolder=None, simulation = False):
         """read the voucher and stores it to persons voucher list"""
