@@ -55,23 +55,35 @@ class Person:
 
         # If double spends, then detect user id that double spends
         double_spend_info = []
-        for dspend in double_spends:
-            # Convert the set to a list to access its elements
-            v_transaction_id = dspend[0]  # Get the first transaction id from the list
-            user_id = None
+        for dspend_t_ids in double_spends:
             for voucher in all_vouchers:
                 for transaction in voucher.transactions:
-                    if transaction["t_id"] == v_transaction_id:
-                        user_id = transaction["sender_id"]  # the sender is the double spender
-                        break
-                if user_id is not None:
-                    # Collect information about the double spender
-                    double_spend_info.append({
-                        "double_spender_id": user_id,
-                        "transaction_ids": dspend,
-                        "voucher_id": voucher.voucher_id
-                    })
-                    break
+                    if transaction["t_id"] not in dspend_t_ids:
+                        continue
+
+                    user_id = transaction["sender_id"]  # The sender is the double spender
+
+                    # Find the user's info if it exists
+                    user_info = next((info for info in double_spend_info if info['double_spender_id'] == user_id), None)
+
+                    if not user_info:
+                        # If user info doesn't exist, add it with the current voucher and transaction
+                        double_spend_info.append({
+                            "double_spender_id": user_id,
+                            "voucher": [{"voucher_id": voucher.voucher_id, "transaction_ids": [transaction["t_id"]]}],
+                        })
+                    else:
+                        # Find the voucher info if it exists
+                        voucher_info = next((v for v in user_info['voucher'] if v['voucher_id'] == voucher.voucher_id),
+                                            None)
+
+                        if not voucher_info:
+                            # If voucher info doesn't exist, add it with the current transaction
+                            user_info['voucher'].append(
+                                {"voucher_id": voucher.voucher_id, "transaction_ids": [transaction["t_id"]]})
+                        else:
+                            # If voucher exists, append transaction_id
+                            voucher_info['transaction_ids'].append(transaction["t_id"])
 
         return double_spend_info
 
