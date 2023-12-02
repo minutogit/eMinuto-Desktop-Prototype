@@ -70,7 +70,7 @@ class Person:
                         # If user info doesn't exist, add it with the current voucher and transaction
                         double_spend_info.append({
                             "double_spender_id": user_id,
-                            "voucher": [{"voucher_id": voucher.voucher_id, "transaction_ids": [transaction["t_id"]]}],
+                            "voucher": [{"voucher_id": voucher.voucher_id, "transaction_ids": [transaction["t_id"]], 'tid_amount': [transaction["amount"]]}],
                         })
                     else:
                         # Find the voucher info if it exists
@@ -80,10 +80,14 @@ class Person:
                         if not voucher_info:
                             # If voucher info doesn't exist, add it with the current transaction
                             user_info['voucher'].append(
-                                {"voucher_id": voucher.voucher_id, "transaction_ids": [transaction["t_id"]]})
+                                {"voucher_id": voucher.voucher_id, "transaction_ids": [transaction["t_id"]], 'tid_amount': [transaction["amount"]]})
                         else:
                             # If voucher exists, append transaction_id
                             voucher_info['transaction_ids'].append(transaction["t_id"])
+                            voucher_info['tid_amount'].append(transaction["amount"])
+
+                    # berechnene den amount der gesendet werden durfte und das was tatsächlich durch das double spending gesendet wurde
+
 
         return double_spend_info
 
