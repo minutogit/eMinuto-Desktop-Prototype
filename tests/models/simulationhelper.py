@@ -167,13 +167,13 @@ class SimulationHelper:
         self.transaction_counter += 1
 
         # Execute the double spending here (reusing vouchers that were reset above; if vouchers are selected deterministically, they will be reused, otherwise, they might be reused later.)
-        transaction = self.persons[sender].send_amount(amount, self.persons[receiver2].id)
+        transaction = self.persons[sender].send_amount(amount2, self.persons[receiver2].id)
         transaction_copy = copy.deepcopy(transaction)
         self.persons[receiver2].receive_amount(transaction_copy)
         if not transaction_copy.transaction_successful:
             return
         if self.print_info:
-            print(f"Person[{sender}] send (double spend) {amount}M to Person[{receiver2}]")
+            print(f"Person[{sender}] send (double spend) {amount2}M to Person[{receiver2}]")
         self.transaction_counter += 1
 
         # returns user ID of double spending user
