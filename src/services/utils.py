@@ -44,15 +44,15 @@ def amount_precision(amount, precision=2):
 
 def get_double_spending_vtransaction_ids(all_vouchers):
     """
-    Extracts transaction IDs (t_id) from voucher transactions that have the same previous_hash
-    across all provided vouchers, avoiding duplicates. If multiple t_ids have the same previous_hash,
+    Extracts transaction IDs (t_id) from voucher transactions that have the same previous_hash and same sender_id
+    across all provided vouchers, avoiding duplicates. If multiple t_ids have the same previous_hash and same sender_id
     it is evidence that double spending has occurred.
 
     Args:
     all_vouchers (list): A list of vouchers, each containing a list of transactions.
 
     Returns:
-    list: A list of lists, where each inner list contains t_ids that share the same previous_hash.
+    list: A list of lists, where each inner list contains t_ids that share the same previous_hash.and the same sender_id
           Returns an empty list if no t_ids share the same previous_hash.
     """
 
@@ -63,10 +63,13 @@ def get_double_spending_vtransaction_ids(all_vouchers):
     for voucher in all_vouchers:
         for transaction in voucher.transactions:
             prev_hash = transaction['previous_hash']
+            sender_id = transaction['sender_id']
+            prev_hash_senders = prev_hash + sender_id
             t_id = transaction['t_id']
-            hash_groups.setdefault(prev_hash, set()).add(t_id)
+            hash_groups.setdefault(prev_hash_senders, set()).add(t_id)
 
     # Extract groups of t_ids with more than one element and convert each set to a list
+    # This groups with 2 or more transactions are double spends!
     return [list(group) for group in hash_groups.values() if len(group) > 1]
 
 
