@@ -47,6 +47,7 @@ class Person:
                       'voucher_id': The ID of the voucher on which double spending occurred.
                       Returns an empty list if no double spending is detected.
         """
+        from src.models.minuto_voucher import MinutoVoucher
         all_vouchers = self.vouchers + self.used_vouchers
         double_spends = get_double_spending_vtransaction_ids(all_vouchers)
         number_of_double_spends = len(double_spends)
@@ -62,6 +63,7 @@ class Person:
                         continue
 
                     user_id = transaction["sender_id"]  # The sender is the double spender
+                    max_allowed_amount = MinutoVoucher.get_transaction_amount(voucher, user_id, transaction["t_id"])
 
                     # Find the user's info if it exists
                     user_info = next((info for info in double_spend_info if info['double_spender_id'] == user_id), None)
@@ -70,8 +72,8 @@ class Person:
                         # If user info doesn't exist, add it with the current voucher and transaction
                         double_spend_info.append({
                             "double_spender_id": user_id,
-                            "voucher": [{"voucher_id": voucher.voucher_id, "transaction_ids": [transaction["t_id"]], 'tid_amount': [transaction["amount"]]}],
-                        })
+                            "voucher": [{"voucher_id": voucher.voucher_id, "max_allowed_amount": max_allowed_amount, "send_amount" : str(transaction["amount"]),
+                                         "transactions": [transaction]}]})
                     else:
                         # Find the voucher info if it exists
                         voucher_info = next((v for v in user_info['voucher'] if v['voucher_id'] == voucher.voucher_id),
@@ -80,14 +82,14 @@ class Person:
                         if not voucher_info:
                             # If voucher info doesn't exist, add it with the current transaction
                             user_info['voucher'].append(
-                                {"voucher_id": voucher.voucher_id, "transaction_ids": [transaction["t_id"]], 'tid_amount': [transaction["amount"]]})
+                                {"voucher_id": voucher.voucher_id, "max_allowed_amount": max_allowed_amount, "send_amount" : str(transaction["amount"]),
+                                 "transactions": [transaction]})
                         else:
                             # If voucher exists, append transaction_id
-                            voucher_info['transaction_ids'].append(transaction["t_id"])
-                            voucher_info['tid_amount'].append(transaction["amount"])
-
-                    # berechnene den amount der gesendet werden durfte und das was tatsächlich durch das double spending gesendet wurde
-
+                            voucher_info['transactions'].append(transaction)
+                            dprint(f"str({float(voucher_info['send_amount'])} + {float(transaction['amount'])})")
+                            voucher_info["send_amount"] = str(float(voucher_info["send_amount"]) + float(transaction["amount"]))
+                            dprint(voucher_info["send_amount"])
 
         return double_spend_info
 

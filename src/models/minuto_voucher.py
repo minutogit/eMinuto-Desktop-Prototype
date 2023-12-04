@@ -180,6 +180,31 @@ class MinutoVoucher:
         # Default case for other scenarios
         return 0  # or a suitable error message or logic
 
+    @staticmethod
+    def get_transaction_amount(voucher, dspender_id, trans_id):
+        """bestimmt den maximal menge für einen voucher wie viele minuto für eine bestimmte transaktion hätten gesendet werden dürfen. Wird benötigt für double spending benötig um zu ermitteln ob auch tatsächlich mehr als erlaubt gesendet wurde."""
+        previous_trans = None
+        for trans in voucher.transactions:
+            if trans["t_id"] == trans_id:
+                if previous_trans == None:
+                    # if initial transaction then there is no transaction before, voucher
+                    return float(voucher.amount)
+                else:
+                    if previous_trans.get('t_type') == 'split':
+                        if dspender_id == previous_trans['sender_id']:
+                            return float(previous_trans['sender_remaining_amount'])
+                        elif dspender_id == previous_trans['recipient_id']:
+                            return float(previous_trans['amount'])
+
+                    # For non-split or undefined t_type, return amount if sender_id matches recipient of the last transaction
+                    elif dspender_id == previous_trans['recipient_id']:
+                        return float(previous_trans['amount'])
+
+            previous_trans = trans
+
+        # Default case for other scenarios
+        return 0
+
     def verify_all_guarantor_signatures(self, voucher=None):
         """ Validates all guarantor signatures on the given voucher. """
         if voucher is None:
