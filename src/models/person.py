@@ -129,6 +129,11 @@ class Person:
             print("Guarantors cannot sign their own vouchers.")
             return
 
+        for g_sign in voucher.guarantor_signatures:
+            if g_sign[0]["id"] == self.id:
+                print("Vouchers cannot be signed by the same guarantor more than once.")
+                return
+
         # Prepare guarantor information for signature
         guarantor_info = {
             "id": self.id,
