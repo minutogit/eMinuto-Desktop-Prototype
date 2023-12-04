@@ -120,7 +120,7 @@ class TestPerson(unittest.TestCase):
             assert corrupt_voucher.verify_all_transactions() == False
             assert corrupt_voucher.verify_complete_voucher() == False
 
-        # random modification only transactions part (one single char), all tests should fail
+        # random modification only transactions part (one single char)
         for i in range(20):
             modified_voucher_dict = modify_voucher(original_voucher_dict, "transactions")
             corrupt_voucher = MinutoVoucher()
