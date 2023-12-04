@@ -141,8 +141,8 @@ class Person:
             "signature_time": get_timestamp()
         }
 
-        # Combine voucher data with guarantor information to create data for signing
-        data_to_sign = voucher.get_voucher_data(type="guarantor_signature") + json.dumps(guarantor_info, sort_keys=True)
+        # get voucher data for signing
+        data_to_sign = voucher.get_voucher_data(type="guarantor_signature", guarantor_info=guarantor_info)
         signature = self.key.sign(data_to_sign, base64_encode=True)
 
         # Append the signed guarantor information to the voucher

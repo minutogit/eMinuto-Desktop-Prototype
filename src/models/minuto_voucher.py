@@ -51,7 +51,7 @@ class MinutoVoucher:
         voucher.is_test_voucher = is_test_voucher
         return voucher
 
-    def get_voucher_data(self, type):
+    def get_voucher_data(self, type, guarantor_info = "", guarantor_verify = -1):
         # Dynamically generate the data for signing and hashing, including optional guarantor signatures
 
         # Initially, these keys are excluded from the hashing process.
@@ -60,9 +60,27 @@ class MinutoVoucher:
         # By doing this, unknown keys are also dynamically included in the hash, enabling older versions to correctly verify hashes of newer versions with additional parameters.
         data = {key: value for key, value in self.__dict__.items() if key not in excluded_keys}
 
-        # if guarantor_signature then this is all needed data for signing
+        # if guarantor_signature then also guarantor_signatures is included. So the voucher has to be signed
+        # by the first guarantor and then by the second guarantor (with included first guarantor sign)
+        # this step by step signing by guarantors is needed to prevent double create valid vouchers with different
+        # orders of the guarantors signs by the creator
+        guarantor_signs = ''
+        guarantor_data = json.dumps(data, sort_keys=True, ensure_ascii=False)
         if type == "guarantor_signature":
-            return json.dumps(data, sort_keys=True, ensure_ascii=False)
+            if guarantor_verify == -1: # this part is used when signing
+                for g_sign in self.guarantor_signatures:
+                    guarantor_signs += json.dumps(g_sign, sort_keys=True, ensure_ascii=False)
+
+                guarantor_data += guarantor_signs + json.dumps(guarantor_info, sort_keys=True, ensure_ascii=False)
+            else: # this part is used when verifing signature
+                for sign_number in range(guarantor_verify + 1):
+                    if sign_number == guarantor_verify:
+                        guarantor_data += json.dumps(self.guarantor_signatures[sign_number][0], sort_keys=True, ensure_ascii=False)
+                    else:
+                        guarantor_data += json.dumps(self.guarantor_signatures[sign_number], sort_keys=True,
+                                                     ensure_ascii=False)
+
+            return guarantor_data
 
         # for voucher_id_hashing add guarantor_signatures
         data["guarantor_signatures"] = self.guarantor_signatures
@@ -211,6 +229,8 @@ class MinutoVoucher:
             voucher = self
         if not voucher.guarantor_signatures:
             return False
+        sign_number = 0
+        #dprint(voucher)
         for guarantor_info, signature in voucher.guarantor_signatures:
             # to catch key erros when corrupt file
             try:
@@ -220,9 +240,11 @@ class MinutoVoucher:
             except:
                 return False
 
-            data_to_verify = voucher.get_voucher_data(type="guarantor_signature") + json.dumps(guarantor_info, sort_keys=True)
+            data_to_verify = voucher.get_voucher_data(type="guarantor_signature", guarantor_verify=sign_number)# + json.dumps(guarantor_info, sort_keys=True)
+            #dprint("data_to_verify\n",data_to_verify, "\n")
             if not Key.verify_signature(data_to_verify, signature, pubkey_short):
                 return False
+            sign_number += 1
 
         return True
 
