@@ -163,6 +163,12 @@ class Person:
         voucher = voucher or self.current_voucher
         voucher.voucher_id = voucher.calculate_voucher_id()  # set voucher_id
 
+        # Check if male and female guarantor exist
+        guarantor_genders = {str(g_sign[0]['gender']) for g_sign in voucher.guarantor_signatures}
+        if '1' not in guarantor_genders or '2' not in guarantor_genders:
+            print("male and female guarantor needed before signing as creator")
+            return
+
         if voucher.creator_id != self.id:
             print("Can only sign own voucher as creator!")
             return

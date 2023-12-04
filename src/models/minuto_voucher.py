@@ -268,10 +268,16 @@ class MinutoVoucher:
                 print("voucher_id is incorrect")
             return False
 
+        # Check if both male and female guarantor exist
+        guarantor_genders = {str(g_sign[0]['gender']) for g_sign in voucher.guarantor_signatures}
+        if '1' not in guarantor_genders or '2' not in guarantor_genders:
+            print("male and female guarantor needed")
+            return False
+
         signature = voucher.creator_signature
         if not signature:
             if verbose:
-                print("missing signature")
+                print("missing creator signature")
             return False
         if Key.check_user_id(voucher.creator_id) == False:
             if verbose:
