@@ -74,8 +74,10 @@ class MinutoVoucher:
         if type == "creator_signing":
             return json.dumps(data, sort_keys=True, ensure_ascii=False)
 
-        # for initial_transaction_hash add creator_signature
-        data["creator_signature"] = self.creator_signature
+        # Important: For the initial_transaction_hash, exclude the creator_signature (which changes with each signing)
+        # from the hashing process. This ensures a consistent previous_hash for the initial transaction.
+        # A consistent previous_hash is necessary to detect double spending, particularly in cases of multiple
+        # initializations of the initial transaction.
         if type == "initial_transaction_hash":
             return json.dumps(data, sort_keys=True, ensure_ascii=False)
 
