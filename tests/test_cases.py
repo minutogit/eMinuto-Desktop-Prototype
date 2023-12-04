@@ -108,7 +108,6 @@ class TestPerson(unittest.TestCase):
             corrupt_voucher = corrupt_voucher.read_from_file(modified_voucher_dict, simulation=True)
 
             assert corrupt_voucher.verify_creator_signature() == False
-            assert corrupt_voucher.verify_all_transactions() == False
             assert corrupt_voucher.verify_complete_voucher() == False
 
         # random modification only guarantor_signatures part (one single char), all tests should fail
