@@ -166,7 +166,11 @@ class Person:
         # Check if male and female guarantor exist
         guarantor_genders = {str(g_sign[0]['gender']) for g_sign in voucher.guarantor_signatures}
         if '1' not in guarantor_genders or '2' not in guarantor_genders:
-            print("male and female guarantor needed before signing as creator")
+            print("One male and one female guarantor required before signing as creator.")
+            return
+
+        if not self.verify_guarantor_signatures():
+            print("Signatures of guarantors are invalid.")
             return
 
         if voucher.creator_id != self.id:

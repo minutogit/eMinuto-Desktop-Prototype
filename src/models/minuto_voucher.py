@@ -17,6 +17,7 @@ class MinutoVoucher:
         self.creator_gender = 0 # 0 for unknown, 1 for male, 2 for female
         self.amount = 0
         self.description = ""
+        self.footnote = ""
         self.service_offer = ''
         self.validit_until = ''
         self.region = ''
@@ -42,6 +43,7 @@ class MinutoVoucher:
         voucher.creator_gender = creator_gender
         voucher.amount = amount_precision(amount)
         voucher.description = f"Voucher for goods or services worth {amount_precision(amount)} minutes of quality work."
+        voucher.footnote = "Voucher redemption for Minuto players only."
         voucher.service_offer = service_offer
         voucher.validit_until = get_timestamp(validity, end_of_year=True)
         voucher.region = region
