@@ -1,0 +1,22 @@
+<DashboardScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        MDLabel:
+            text: 'Dashboard'
+        MDRaisedButton:
+            text: 'Zu Einstellungen'
+            size_hint: (0.5,0.5)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            on_release: app.root.current = 'settings'
+
+<SettingsScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        MDLabel:
+            text: 'Einstellungen'
+        MDRaisedButton:
+            text: 'Zurück zum Dashboard'
+            on_release: app.root.current = 'dashboard'
+
+
+# Füge ähnliche Layouts für die anderen Bildschirme hinzu
