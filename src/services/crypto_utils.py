@@ -6,6 +6,11 @@ from mnemonic import Mnemonic
 from ecdsa import SigningKey, SECP256k1
 import hashlib
 import base58
+from Crypto.Cipher import AES
+from Crypto.Protocol.KDF import scrypt
+from Crypto.Random import get_random_bytes
+import json
+from ecdsa.util import randrange_from_seed__trytryagain
 
 def generate_seed():
     """ Generates a random seed of 12 words. """
@@ -129,4 +134,77 @@ def get_hash(data):
     hash_base58 = base58.b58encode(hash_digest)
     return hash_base58.decode()
 
+
+
+def generate_symmetric_key(password, salt=None):
+    """
+    Generates a symmetric key using a password and an optional salt.
+    """
+    if salt is None:
+        salt = get_random_bytes(16)
+    key = scrypt(password, salt, key_len=32, N=2**14, r=8, p=1)
+    return key, salt
+
+
+def symmetric_encrypt(data, password):
+    """
+    Encrypts data symmetrically using AES with a password.
+    Converts byte objects to Base64 strings for JSON serialization.
+    """
+    key, salt = generate_symmetric_key(password)
+    cipher = AES.new(key, AES.MODE_GCM)
+    ciphertext, tag = cipher.encrypt_and_digest(json.dumps(data).encode())
+    return {
+        'ciphertext': base64.b64encode(ciphertext).decode(),  # Konvertiert zu Base64 String
+        'tag': base64.b64encode(tag).decode(),
+        'nonce': base64.b64encode(cipher.nonce).decode(),
+        'salt': base64.b64encode(salt).decode()
+    }
+
+
+def symmetric_decrypt(encrypted_data, password):
+    """
+    Decrypts data that was encrypted symmetrically using AES with a password.
+    Converts Base64 strings back to byte objects before decryption.
+    """
+    key, _ = generate_symmetric_key(password, salt=base64.b64decode(encrypted_data['salt']))
+    cipher = AES.new(key, AES.MODE_GCM, nonce=base64.b64decode(encrypted_data['nonce']))
+    plaintext = cipher.decrypt_and_verify(base64.b64decode(encrypted_data['ciphertext']), base64.b64decode(encrypted_data['tag']))
+    return json.loads(plaintext.decode())
+
+
+
+import secrets
+
+def hybrid_encrypt(data, public_IDs, password=None):
+    """
+    Encrypts data using a hybrid approach - symmetric encryption with AES and asymmetric for the key.
+    Generates a secure random password if none is provided.
+    """
+    if password is None:
+        password = secrets.token_bytes(32)  # Generiert ein sicheres zufälliges 32-Byte Passwort
+
+    encrypted_passwords = []
+    for public_ID in public_IDs:
+        compressed_pubkey = extract_compressed_pubkey_from_public_ID(public_ID)
+        public_key = decompress_public_key(compressed_pubkey)
+        encrypted_password = public_key.encrypt(password)
+        encrypted_passwords.append(base64.b64encode(encrypted_password).decode())  # Konvertiert zu Base64 String
+
+    encrypted_data = symmetric_encrypt(data, password)
+    return {'encrypted_passwords': encrypted_passwords, 'encrypted_data': encrypted_data}
+
+
+
+def hybrid_decrypt(encrypted_file, private_key):
+    """
+    Decrypts data that was encrypted using the hybrid method.
+    """
+    for encrypted_password in encrypted_file['encrypted_passwords']:
+        try:
+            password = private_key.decrypt(encrypted_password)
+            return symmetric_decrypt(encrypted_file['encrypted_data'], password)
+        except Exception:
+            continue
+    raise Exception("Decryption failed with the provided private key.")
 
