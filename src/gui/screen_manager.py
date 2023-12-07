@@ -1,13 +1,14 @@
+# screenmanager.py
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 
 
 # for hot reload
-from kivymd.app import MDApp
-#from kivymd.tools.hotreload.app import MDApp
+#from kivymd.app import MDApp
+from kivymd.tools.hotreload.app import MDApp
 
 
-Builder.load_file('gui_layout.kv')
+Builder.load_file('gui/gui_layout.kv')
 
 # Definiere die verschiedenen Bildschirme
 class DashboardScreen(Screen):
@@ -30,11 +31,14 @@ class VoucherListScreen(Screen):
 
 # Hauptanwendung
 class MyApp(MDApp):
-    def build(self):
+    DEBUG = 1 # activate hot reload
+    KV_FILES = ["gui/gui_layout.kv"]
+    def build_app(self, first=False):
         self.theme_cls.primary_palette = "Blue"  # Setze das Farbschema
 
         # Erstelle den Screen Manager
         sm = ScreenManager()
+
         sm.add_widget(DashboardScreen(name='dashboard'))
         sm.add_widget(SettingsScreen(name='settings'))
         sm.add_widget(CreateVoucherScreen(name='create_voucher'))

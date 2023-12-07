@@ -1,12 +1,29 @@
+# gui_layout.kv
+
 <DashboardScreen>:
     BoxLayout:
         orientation: 'vertical'
+        BoxLayout:
+            orientation: 'horizontal'
+            MDLabel:
+                text: 'Dashboard'
+                halign: 'center'
+            MDLabel:
+                text: 'Dashboard'
+                halign: 'center'
+            MDLabel:
+                text: 'Dashboard'
+                halign: 'center'
+
         MDLabel:
-            text: 'Dashboard'
+            text: 'Dashboard2'
+
         MDRaisedButton:
             text: 'Zu Einstellungen'
-            size_hint: (0.5,0.5)
-            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            size_hint: (1,1)
+
+            pos_hint: {'center_x': 0.5, 'center_y': 1}
+
             on_release: app.root.current = 'settings'
 
 <SettingsScreen>:
