@@ -151,7 +151,21 @@ def get_hash(data):
     hash_base58 = base58.b58encode(hash_digest)
     return hash_base58.decode()
 
+def generate_shared_secret(private_key, peer_compressed_public_key):
+    """
+    Generates a shared secret using Elliptic Curve Diffie-Hellman Key Exchange (ECDH).
 
+    Parameters:
+    private_key (EllipticCurvePrivateKey): The private key for ECDH exchange.
+    peer_public_key (EllipticCurvePublicKey): The compressed public key of the peer for ECDH exchange.
+
+    Returns:
+    bytes: The generated shared secret.
+    """
+    # Perform the ECDH exchange to generate the shared secret
+    peer_public_key = decompress_public_key(peer_compressed_public_key)
+    shared_secret = private_key.exchange(ec.ECDH(), peer_public_key)
+    return shared_secret
 
 def generate_symmetric_key(password, salt=None):
     """
@@ -188,40 +202,3 @@ def symmetric_decrypt(encrypted_data, password):
     cipher = AES.new(key, AES.MODE_GCM, nonce=base64.b64decode(encrypted_data['nonce']))
     plaintext = cipher.decrypt_and_verify(base64.b64decode(encrypted_data['ciphertext']), base64.b64decode(encrypted_data['tag']))
     return json.loads(plaintext.decode())
-
-
-
-import secrets
-
-def hybrid_encrypt(data, public_IDs, password=None):
-    """
-    Encrypts data using a hybrid approach - symmetric encryption with AES and asymmetric for the key.
-    Generates a secure random password if none is provided.
-    """
-    if password is None:
-        password = secrets.token_bytes(32)  # Generiert ein sicheres zufälliges 32-Byte Passwort
-
-    encrypted_passwords = []
-    for public_ID in public_IDs:
-        compressed_pubkey = extract_compressed_pubkey_from_public_ID(public_ID)
-        public_key = decompress_public_key(compressed_pubkey)
-        encrypted_password = public_key.encrypt(password)
-        encrypted_passwords.append(base64.b64encode(encrypted_password).decode())  # Konvertiert zu Base64 String
-
-    encrypted_data = symmetric_encrypt(data, password)
-    return {'encrypted_passwords': encrypted_passwords, 'encrypted_data': encrypted_data}
-
-
-
-def hybrid_decrypt(encrypted_file, private_key):
-    """
-    Decrypts data that was encrypted using the hybrid method.
-    """
-    for encrypted_password in encrypted_file['encrypted_passwords']:
-        try:
-            password = private_key.decrypt(encrypted_password)
-            return symmetric_decrypt(encrypted_file['encrypted_data'], password)
-        except Exception:
-            continue
-    raise Exception("Decryption failed with the provided private key.")
-

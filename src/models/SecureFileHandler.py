@@ -1,5 +1,5 @@
 import json
-from src.services.crypto_utils import symmetric_decrypt, symmetric_encrypt, hybrid_decrypt, hybrid_encrypt
+from src.services.crypto_utils import symmetric_decrypt, symmetric_encrypt, generate_shared_secret, extract_compressed_pubkey_from_public_ID
 
 class SecureFileHandler:
     def encrypt_and_save(self, obj, password, file_path):
@@ -26,27 +26,33 @@ class SecureFileHandler:
             encrypted_data = json.load(file)
         return symmetric_decrypt(encrypted_data, password)
 
-    def hybrid_encrypt_and_save(self, obj, public_IDs, file_path):
+    def encrypt_with_shared_secret_and_save(self, obj, file_path, private_key, peer_user_id):
         """
-        Encrypts an object using hybrid encryption and saves it to a file.
+        Encrypts an object with a shared secret derived from ECDH using symmetric encryption and saves it to a file,
+        using the encrypt_and_save method.
 
         :param obj: The object to encrypt.
-        :param public_IDs: A list of public IDs used for the hybrid encryption.
         :param file_path: Path to the file where the encrypted data will be saved.
-        """
-        encrypted_file = hybrid_encrypt(obj, public_IDs)
-        with open(file_path, 'w') as file:
-            json.dump(encrypted_file, file)
+        :param private_key: The private key used in ECDH to generate the shared secret.
+        :param peer_user_id: The user ID of the peer with whom communication is intended.
 
-    def hybrid_decrypt_and_load(self, file_path, private_key):
         """
-        Decrypts data from a file using hybrid encryption.
+        peer_compressed_public_key = extract_compressed_pubkey_from_public_ID(peer_user_id)
+        shared_secret = generate_shared_secret(private_key, peer_compressed_public_key)
+        self.encrypt_and_save(obj, shared_secret, file_path)
+
+    def decrypt_with_shared_secret_and_load(self, file_path, private_key, peer_user_id):
+        """
+        Decrypts data from a file using a shared secret derived from ECDH with symmetric encryption,
+        using the decrypt_and_load method.
 
         :param file_path: Path to the file containing the encrypted data.
-        :param private_key: The private key used for decryption.
+        :param private_key: The private key used in ECDH to generate the shared secret.
+        :param peer_user_id: The user ID of the peer with whom communication is intended.
+
         :return: The decrypted object.
         """
-        with open(file_path, 'r') as file:
-            encrypted_file = json.load(file)
-        return hybrid_decrypt(encrypted_file, private_key)
+        peer_compressed_public_key = extract_compressed_pubkey_from_public_ID(peer_user_id)
+        shared_secret = generate_shared_secret(private_key, peer_compressed_public_key)
+        return self.decrypt_and_load(file_path, shared_secret)
 
