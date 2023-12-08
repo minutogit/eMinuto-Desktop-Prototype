@@ -1,18 +1,18 @@
 #crypto_utils.py
 import base64
+import gzip
+import secrets
 
-from cryptography.exceptions import InvalidSignature
 from mnemonic import Mnemonic
 import hashlib
 import base58
-from Crypto.Cipher import AES
-from Crypto.Protocol.KDF import scrypt
-from Crypto.Random import get_random_bytes
 import json
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 # Elliptic curve cryptography from:
 #https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ec/#
@@ -168,37 +168,54 @@ def generate_shared_secret(private_key, peer_compressed_public_key):
     return shared_secret
 
 def generate_symmetric_key(password, salt=None):
-    """
-    Generates a symmetric key using a password and an optional salt.
-    """
     if salt is None:
-        salt = get_random_bytes(16)
-    key = scrypt(password, salt, key_len=32, N=2**14, r=8, p=1)
+        salt = os.urandom(16)
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=480000,
+    )
+    key = base64.urlsafe_b64encode(kdf.derive(password))
     return key, salt
 
 
-def symmetric_encrypt(data, password):
-    """
-    Encrypts data symmetrically using AES with a password.
-    Converts byte objects to Base64 strings for JSON serialization.
-    """
+def generate_symmetric_key(password, salt=None):
+
+    if isinstance(password, str):
+        password = password.encode()
+    if salt is None:
+        salt = secrets.token_bytes(16)
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=480000,
+    )
+    key = base64.urlsafe_b64encode(kdf.derive(password))
+    return key, salt
+
+def symmetric_encrypt(obj, password):
     key, salt = generate_symmetric_key(password)
-    cipher = AES.new(key, AES.MODE_GCM)
-    ciphertext, tag = cipher.encrypt_and_digest(json.dumps(data).encode())
+    f = Fernet(key)
+
+    # Serializing the object using json and compressing it using gzip
+    serialized_data = json.dumps(obj).encode('utf-8')
+    compressed_data = gzip.compress(serialized_data)
+
+    encrypted_data = f.encrypt(compressed_data)
     return {
-        'ciphertext': base64.b64encode(ciphertext).decode(),  # Konvertiert zu Base64 String
-        'tag': base64.b64encode(tag).decode(),
-        'nonce': base64.b64encode(cipher.nonce).decode(),
+        'encrypted_data': base64.b64encode(encrypted_data).decode(),
         'salt': base64.b64encode(salt).decode()
     }
 
-
 def symmetric_decrypt(encrypted_data, password):
-    """
-    Decrypts data that was encrypted symmetrically using AES with a password.
-    Converts Base64 strings back to byte objects before decryption.
-    """
-    key, _ = generate_symmetric_key(password, salt=base64.b64decode(encrypted_data['salt']))
-    cipher = AES.new(key, AES.MODE_GCM, nonce=base64.b64decode(encrypted_data['nonce']))
-    plaintext = cipher.decrypt_and_verify(base64.b64decode(encrypted_data['ciphertext']), base64.b64decode(encrypted_data['tag']))
-    return json.loads(plaintext.decode())
+    salt = base64.b64decode(encrypted_data['salt'])
+    key, _ = generate_symmetric_key(password, salt=salt)
+    f = Fernet(key)
+
+    decrypted_data = f.decrypt(base64.b64decode(encrypted_data['encrypted_data']))
+
+    # Decompressing and then deserializing the object
+    decompressed_data = gzip.decompress(decrypted_data)
+    return json.loads(decompressed_data.decode('utf-8'))
