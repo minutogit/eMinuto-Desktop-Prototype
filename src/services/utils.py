@@ -73,6 +73,32 @@ def get_double_spending_vtransaction_ids(all_vouchers):
     return [list(group) for group in hash_groups.values() if len(group) > 1]
 
 
+class Serializable:
+    """
+    A base class that provides methods to convert an object to a dictionary and vice versa,
+    facilitating JSON serialization and deserialization of objects derived from this class.
+
+    The `to_dict` method converts the attributes of the class instance into a dictionary,
+    excluding any private attributes (those starting with an underscore).
+    This is useful for converting the object into a format that can be easily serialized into JSON.
+
+    The `from_dict` class method creates a new instance of the class from a dictionary,
+    typically used for deserializing a JSON object back into an instance of the class.
+    It assumes that the dictionary keys correspond to the names of the arguments in the class constructor.
+    """
+
+    def to_dict(self):
+        """
+        Converts the attributes of the class into a dictionary.
+        """
+        return {key: value for key, value in self.__dict__.items() if not key.startswith('_')}
+
+    @classmethod
+    def from_dict(cls, dict_):
+        constructor_args = inspect.signature(cls.__init__).parameters
+        relevant_data = {key: dict_[key] for key in dict_ if key in constructor_args}
+        print("Relevante Daten für from_dict:", relevant_data)
+        return cls(**relevant_data)
 
 
 def dprint(*args, sep=' ', end='\n'):

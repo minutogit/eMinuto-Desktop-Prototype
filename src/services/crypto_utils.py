@@ -2,6 +2,7 @@
 import base64
 import gzip
 import secrets
+from src.services.utils import Serializable
 
 from mnemonic import Mnemonic
 import hashlib
@@ -199,8 +200,10 @@ def symmetric_encrypt(obj, password):
     key, salt = generate_symmetric_key(password)
     f = Fernet(key)
 
-    # Serializing the object using json and compressing it using gzip
-    serialized_data = json.dumps(obj).encode('utf-8')
+    # Verwenden Sie die to_dict-Methode, um das Objekt in ein Dictionary umzuwandeln
+    # und dann mit json.dumps zu serialisieren
+    obj_dict = obj.to_dict() if isinstance(obj, Serializable) else obj
+    serialized_data = json.dumps(obj_dict).encode('utf-8')
     compressed_data = gzip.compress(serialized_data)
 
     encrypted_data = f.encrypt(compressed_data)
@@ -209,7 +212,19 @@ def symmetric_encrypt(obj, password):
         'salt': base64.b64encode(salt).decode()
     }
 
-def symmetric_decrypt(encrypted_data, password):
+def symmetric_decrypt(encrypted_data, password, cls=None):
+    """
+    Decrypts and decompresses the given encrypted data using the provided password.
+    Optionally instantiates and initializes an object of the specified class with the decrypted data.
+    If no class is provided, returns the decrypted data as a dictionary.
+
+    :param encrypted_data: The encrypted data as a dictionary containing the encrypted payload and salt.
+    :param password: The password used for generating the decryption key.
+    :param cls: Optional. The class to instantiate and initialize with the decrypted data.
+                Should be a subclass of Serializable and have a no-argument constructor.
+    :return: An instance of the specified class initialized with the decrypted data if a class is provided;
+             otherwise, a dictionary of the decrypted data.
+    """
     salt = base64.b64decode(encrypted_data['salt'])
     key, _ = generate_symmetric_key(password, salt=salt)
     f = Fernet(key)
@@ -218,4 +233,18 @@ def symmetric_decrypt(encrypted_data, password):
 
     # Decompressing and then deserializing the object
     decompressed_data = gzip.decompress(decrypted_data)
-    return json.loads(decompressed_data.decode('utf-8'))
+    deserialized_data = json.loads(decompressed_data.decode('utf-8'))
+
+    if cls:
+        # Instantiate an object of the provided class
+        obj = cls()
+        for key, value in deserialized_data.items():
+            setattr(obj, key, value)  # Set each attribute from the deserialized data
+        return obj
+    else:
+        # Return the deserialized dictionary if no class was provided
+        return deserialized_data
+
+
+
+

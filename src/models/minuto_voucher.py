@@ -2,12 +2,12 @@
 import json
 import os
 from src.models.key import Key
-from src.services.utils import get_timestamp, dprint, amount_precision
+from src.services.utils import get_timestamp, dprint, amount_precision, Serializable
 from src.services.crypto_utils import get_hash
 from src.models.vouchertransaction import VoucherTransaction
 
 
-class MinutoVoucher:
+class MinutoVoucher(Serializable):
     def __init__(self):
         # Initialize default values for voucher attributes
         self.voucher_id = ''
