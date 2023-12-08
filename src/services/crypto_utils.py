@@ -1,16 +1,21 @@
 #crypto_utils.py
 import base64
 
-from ecdsa import VerifyingKey, BadSignatureError
+from cryptography.exceptions import InvalidSignature
 from mnemonic import Mnemonic
-from ecdsa import SigningKey, SECP256k1
 import hashlib
 import base58
 from Crypto.Cipher import AES
 from Crypto.Protocol.KDF import scrypt
 from Crypto.Random import get_random_bytes
 import json
-from ecdsa.util import randrange_from_seed__trytryagain
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
+
+# Elliptic curve cryptography from:
+#https://cryptography.io/en/latest/hazmat/primitives/asymmetric/ec/#
 
 def generate_seed():
     """ Generates a random seed of 12 words. """
@@ -21,8 +26,9 @@ def create_key_pair(seed_words):
     """ Creates a key pair from the seed. """
     mnemo = Mnemonic("english")
     seed_bytes = mnemo.to_seed(seed_words, passphrase="")
-    private_key = SigningKey.from_string(seed_bytes[:32], curve=SECP256k1)
-    return private_key, private_key.verifying_key
+    seed_int = int.from_bytes(seed_bytes[:32], byteorder='big')
+    private_key = ec.derive_private_key(seed_int, ec.SECP384R1())
+    return private_key, private_key.public_key()
 
 def is_base64(s):
     try:
@@ -33,7 +39,8 @@ def is_base64(s):
 
 def sign_message(private_key, message):
     """ Signs a message using the private key. """
-    return private_key.sign(message.encode('utf-8'))
+    return private_key.sign(message.encode('utf-8'),ec.ECDSA(hashes.SHA256()))
+
 
 def verify_message_signature(compressed_public_key, message, signature):
     """
@@ -44,8 +51,14 @@ def verify_message_signature(compressed_public_key, message, signature):
         # Check if signature is base64 encoded and decode if necessary
         if is_base64(signature):
             signature = base64.b64decode(signature)
-        return public_key.verify(signature, message.encode('utf-8'))
-    except (BadSignatureError, ValueError, TypeError):
+
+        # Attempt to verify the signature
+        public_key.verify(signature, message.encode('utf-8'), ec.ECDSA(hashes.SHA256()))
+
+        # If no exception occurs, the signature is valid
+        return True
+    except Exception:
+        # If an InvalidSignature error occurs, the signature is invalid
         return False
 
 def create_user_ID(public_key):
@@ -105,8 +118,12 @@ def compress_public_key(public_key):
     :param public_key: The public key to be compressed and encoded.
     :return: A Base58 encoded string of the compressed public key.
     """
-    public_key_bytes = public_key.to_string("compressed")  # compressed format
+    public_key_bytes = public_key.public_bytes(
+        encoding=serialization.Encoding.X962,
+        format=serialization.PublicFormat.CompressedPoint
+    )
     return base58.b58encode(public_key_bytes).decode()
+
 
 def decompress_public_key(compressed_public_key):
     """
@@ -116,7 +133,7 @@ def decompress_public_key(compressed_public_key):
     :return: A VerifyingKey object.
     """
     public_key_bytes = base58.b58decode(compressed_public_key)
-    return VerifyingKey.from_string(public_key_bytes, curve=SECP256k1)
+    return EllipticCurvePublicKey.from_encoded_point(ec.SECP384R1(), public_key_bytes)
 
 
 def get_hash(data):
