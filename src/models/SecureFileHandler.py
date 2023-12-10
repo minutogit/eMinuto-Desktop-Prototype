@@ -14,7 +14,7 @@ class SecureFileHandler:
         with open(file_path, 'w') as file:
             json.dump(encrypted_data, file)
 
-    def decrypt_and_load(self, file_path, password):
+    def decrypt_and_load(self, file_path, password, obj=None):
         """
         Decrypts data from a file using symmetric encryption.
 
@@ -24,7 +24,7 @@ class SecureFileHandler:
         """
         with open(file_path, 'r') as file:
             encrypted_data = json.load(file)
-        return symmetric_decrypt(encrypted_data, password)
+        return symmetric_decrypt(encrypted_data, password, obj)
 
     def encrypt_with_shared_secret_and_save(self, obj, file_path, private_key, peer_user_id):
         """
@@ -41,7 +41,7 @@ class SecureFileHandler:
         shared_secret = generate_shared_secret(private_key, peer_compressed_public_key)
         self.encrypt_and_save(obj, shared_secret, file_path)
 
-    def decrypt_with_shared_secret_and_load(self, file_path, private_key, peer_user_id):
+    def decrypt_with_shared_secret_and_load(self, file_path, private_key, peer_user_id, obj=None):
         """
         Decrypts data from a file using a shared secret derived from ECDH with symmetric encryption,
         using the decrypt_and_load method.
@@ -54,5 +54,5 @@ class SecureFileHandler:
         """
         peer_compressed_public_key = extract_compressed_pubkey_from_public_ID(peer_user_id)
         shared_secret = generate_shared_secret(private_key, peer_compressed_public_key)
-        return self.decrypt_and_load(file_path, shared_secret)
+        return self.decrypt_and_load(file_path, shared_secret, obj)
 
