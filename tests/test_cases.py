@@ -174,7 +174,7 @@ class TestPerson(unittest.TestCase):
         from src.models.minuto_voucher import MinutoVoucher
         from src.models.SecureFileHandler import SecureFileHandler
 
-        sim = SimulationHelper(print_info=True)
+        sim = SimulationHelper()
         sim.simulation_folder = 'simulation'  # Storage location
         sim.generate_persons(7)  # Create 7 persons
         sim.generate_voucher_for_person(0, 1, 2, 100, 5)
@@ -182,16 +182,24 @@ class TestPerson(unittest.TestCase):
         sim.send_amount(0, 1, 50)
 
         filehandler = SecureFileHandler()
+
+        # Test encryption with password
+        filehandler.encrypt_and_save(sim.persons[1].vouchers[0], "mypassword", "secure_voucher.txt")
+        decrypted_data = filehandler.decrypt_and_load("secure_voucher.txt", "mypassword", MinutoVoucher)
+        self.assertTrue(decrypted_data.verify_complete_voucher())
+        self.assertEqual(sim.persons[1].vouchers[0], decrypted_data)
+
+
         # Test encryption with Diffie-Hellman key exchange
-        encrypted = filehandler.encrypt_with_shared_secret_and_save(
+        filehandler.encrypt_with_shared_secret_and_save(
             sim.persons[1].vouchers[0],
-            "secure_voucher.txt",
+            "secure_voucher2.txt",
             sim.persons[1].key.private_key,
             sim.persons[2].id
         )
 
         decrypted_data = filehandler.decrypt_with_shared_secret_and_load(
-            "secure_voucher.txt",
+            "secure_voucher2.txt",
             sim.persons[2].key.private_key,
             sim.persons[1].id,
             MinutoVoucher
