@@ -165,6 +165,51 @@ class TestPerson(unittest.TestCase):
         self.assertEqual(sorted(dspender_ids), sorted(sim_dspender_ids),
                          "Detected double spenders should match expected ones.")
 
+    def test_encryption_decryption(self):
+        """
+        Test the encryption and decryption process of vouchers using Diffie-Hellman key exchange.
+        This includes generating persons and vouchers, encrypting a voucher, saving it to a file,
+        then decrypting it and verifying the integrity of the decrypted data.
+        """
+        from src.models.minuto_voucher import MinutoVoucher
+        from src.models.SecureFileHandler import SecureFileHandler
+
+        sim = SimulationHelper(print_info=True)
+        sim.simulation_folder = 'simulation'  # Storage location
+        sim.generate_persons(7)  # Create 7 persons
+        sim.generate_voucher_for_person(0, 1, 2, 100, 5)
+
+        sim.send_amount(0, 1, 50)
+
+        filehandler = SecureFileHandler()
+        # Test encryption with Diffie-Hellman key exchange
+        encrypted = filehandler.encrypt_with_shared_secret_and_save(
+            sim.persons[1].vouchers[0],
+            "secure_voucher.txt",
+            sim.persons[1].key.private_key,
+            sim.persons[2].id
+        )
+
+        decrypted_data = filehandler.decrypt_with_shared_secret_and_load(
+            "secure_voucher.txt",
+            sim.persons[2].key.private_key,
+            sim.persons[1].id,
+            MinutoVoucher
+        )
+
+        # Verify the integrity of the decrypted data
+        self.assertTrue(
+            decrypted_data.verify_complete_voucher(),
+            "Decrypted data should be verified as complete."
+        )
+
+        # Assert that the original data and decrypted data are equal
+        self.assertEqual(
+            sim.persons[1].vouchers[0],
+            decrypted_data,
+            "Original and decrypted vouchers should be identical."
+        )
+
     # def tearDown(self):
     #     # Cleanup: Remove test files
     #     for file_name in [self.voucher_file_name, self.male_signed_voucher_file_name, self.male_female_signed_voucher_file_name, "minutoschein-complete.txt"]:
