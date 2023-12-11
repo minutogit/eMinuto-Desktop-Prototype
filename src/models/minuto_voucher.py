@@ -462,32 +462,11 @@ class MinutoVoucher(Serializable):
         return True
 
     def __str__(self):
-        # String representation of the voucher for easy debugging and comparison
-        guarantor_signatures_str = ', '.join([f"{g[0]}: {g[1]}" for g in self.guarantor_signatures])
-        creator_signature_str = self.creator_signature if self.creator_signature else 'None'
-        test_voucher_status = "Test Voucher" if self.is_test_voucher else "Regular Voucher"
+        # Dynamische Erstellung des String-Formats für alle Attribute
+        attrs = vars(self)
+        attrs_str = ', '.join([f"{key}: {value}" for key, value in attrs.items()])
 
-        return (
-            f"MinutoVoucher(\n"
-            f"  Voucher ID: {self.voucher_id}\n"
-            f"  Creator ID: {self.creator_id}\n"
-            f"  Creator Name: {self.creator_name}\n"
-            f"  Creator Address: {self.creator_address}\n"
-            f"  Creator Gender: {self.creator_gender}\n"
-            f"  Amount: {self.amount}\n"
-            f"  Service Offer: {self.service_offer}\n"
-            f"  Valid Until: {self.validit_until}\n"
-            f"  Region: {self.region}\n"
-            f"  Coordinates: {self.coordinates}\n"
-            f"  Email: {self.email}\n"
-            f"  Phone: {self.phone}\n"
-            f"  Creation Date: {self.creation_date}\n"
-            f"  Guarantor Signatures: [{guarantor_signatures_str}]\n"
-            f"  Creator Signature: {creator_signature_str}\n"
-            f"  Status: {test_voucher_status}\n"
-            f"  transactions: {self.transactions}\n"
-            ")"
-        )
+        return f"MinutoVoucher({attrs_str})"
 
     def __eq__(self, other):
         # compare with string representation of the voucher
