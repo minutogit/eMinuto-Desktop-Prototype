@@ -168,18 +168,6 @@ def generate_shared_secret(private_key, peer_compressed_public_key):
     shared_secret = private_key.exchange(ec.ECDH(), peer_public_key)
     return shared_secret
 
-def generate_symmetric_key(password, salt=None):
-    if salt is None:
-        salt = os.urandom(16)
-    kdf = PBKDF2HMAC(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=salt,
-        iterations=480000,
-    )
-    key = base64.urlsafe_b64encode(kdf.derive(password))
-    return key, salt
-
 
 def generate_symmetric_key(password, salt=None):
 
@@ -191,7 +179,7 @@ def generate_symmetric_key(password, salt=None):
         algorithm=hashes.SHA256(),
         length=32,
         salt=salt,
-        iterations=480000,
+        iterations=100000,
     )
     key = base64.urlsafe_b64encode(kdf.derive(password))
     return key, salt
