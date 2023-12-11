@@ -144,9 +144,9 @@ class SimulationHelper:
         last_transaction_ids_of_used_vouchers = [
             voucher.transactions[-2]['t_id'] for voucher in transaction.transaction_vouchers
         ]
-
-        # Cleaning vouchers for reuse
-        used_vouchers = [voucher for voucher in transaction.transaction_vouchers]
+        
+        # Cleaning vouchers for reuse (Create entirely new objects to avoid referencing issues during simulation.)
+        used_vouchers = [copy.deepcopy(voucher) for voucher in transaction.transaction_vouchers]
         for voucher in used_vouchers:
             voucher.transactions.pop()  # Remove the latest transaction
 
