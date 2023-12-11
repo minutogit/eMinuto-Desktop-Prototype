@@ -252,5 +252,27 @@ class Person:
             full_amount += voucher.get_voucher_amount(self.id)
         return full_amount
 
+    def check_duplicate_voucher_objects(self):
+        """
+        Identifies and reports all duplicate voucher object IDs within the individual's list of vouchers.
+        Raises a ValueError if any duplicates are found. This method is primarily intended for debugging
+        purposes during simulations and is not required during regular use.
+        """
+
+        v_object_id_counts = {}
+        for voucher in self.vouchers:
+            voucher_id = id(voucher)
+            if voucher_id in v_object_id_counts:
+                v_object_id_counts[voucher_id] += 1
+            else:
+                v_object_id_counts[voucher_id] = 1
+
+        duplicates = [v_id for v_id, count in v_object_id_counts.items() if count > 1]
+
+        if duplicates:
+            print(f"Duplicate voucher object IDs found: {duplicates}")
+            print(v_object_id_counts)
+            raise ValueError("Duplicate voucher object(s) detected")
+
     def __str__(self):
         return f"Person({self.id}, {self.name}, {self.address}, {self.gender}, {self.email}, {self.phone}, {self.service_offer}, {self.coordinates})"

@@ -237,6 +237,12 @@ class SimulationHelper:
             print(f"Inconsistent total amount. Start: {total_start_amount}, End: {total_amount_after_simulation}")
             simulation_results_correct = False
 
+        # Verify that each voucher within a person's voucher list has a unique object ID.
+        # This ensures accuracy in simulations by preventing issues caused by the same object being referenced multiple times.
+        # An error will be raised if a duplicate voucher object ID is found, signaling potential simulation inaccuracies.
+        for person in self.persons:
+            person.check_duplicate_voucher_objects()
+
         return simulation_results_correct
 
 
