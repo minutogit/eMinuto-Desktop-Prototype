@@ -130,7 +130,40 @@ class TestPerson(unittest.TestCase):
             assert corrupt_voucher.verify_all_transactions() == False
             assert corrupt_voucher.verify_complete_voucher() == False
 
+    def test_double_spending_detection(self):
+        """
+        Test the detection of double spending within the transaction simulation.
+        This involves creating a simulation with multiple persons and vouchers, simulating
+        transactions, including attempts at double spending, and then checking if the
+        simulation accurately identifies the double spenders.
+        """
+        sim = SimulationHelper()
+        sim.simulation_folder = 'simulation'  # Storage location
+        sim.generate_persons(7)  # Create 7 persons
 
+        sim.generate_voucher_for_person(0, 1, 2, 100, 5)
+
+        sim.send_amount(0, 1, 50)
+
+        sim_dspender_ids = []
+        # 3 ids (persons) do double spending
+        sim_dspender_ids += [sim.send_amount_double_spend(0, 4, 49, 5, 48)]
+        sim_dspender_ids += [sim.send_amount_double_spend(1, 2, 47, 3, 46)]
+        sim_dspender_ids += [sim.send_amount_double_spend(2, 3, 45, 4, 44)]
+
+        # simulation 30 random transactions
+        sim.simulate_transaction(30)
+
+        # Check for double spenders in all persons
+        dspender = []
+        for person in sim.persons:
+            dspender += person.check_double_spending()
+
+        dspender_ids = list(set([item['double_spender_id'] for item in dspender]))
+
+        # Assert that the identified double spenders match the expected ones
+        self.assertEqual(sorted(dspender_ids), sorted(sim_dspender_ids),
+                         "Detected double spenders should match expected ones.")
 
     # def tearDown(self):
     #     # Cleanup: Remove test files
