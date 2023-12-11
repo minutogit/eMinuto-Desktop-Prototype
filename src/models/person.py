@@ -87,9 +87,7 @@ class Person:
                         else:
                             # If voucher exists, append transaction_id
                             voucher_info['transactions'].append(transaction)
-                            dprint(f"str({float(voucher_info['send_amount'])} + {float(transaction['amount'])})")
                             voucher_info["send_amount"] = str(float(voucher_info["send_amount"]) + float(transaction["amount"]))
-                            dprint(voucher_info["send_amount"])
 
         return double_spend_info
 

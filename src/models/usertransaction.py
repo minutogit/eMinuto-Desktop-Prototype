@@ -32,7 +32,6 @@ class UserTransaction:
             if voucher_amount == 0:  # use only vouchers with amount, ignore empty vouchers
                 continue
             if voucher_amount >= remaining_amount_to_send:
-                dprint(f"{voucher_amount}  --  {remaining_amount_to_send}")
                 # wähle diesen voucher und sende damit remaining_amount_to_send
                 selected_vouchers.append((voucher, remaining_amount_to_send))
                 remaining_amount_to_send = 0
