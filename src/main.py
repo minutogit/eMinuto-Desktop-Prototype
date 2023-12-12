@@ -1,10 +1,9 @@
 # main.py
 
-def main():
-    pass
+from gui.screen_manager import MyApp
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    MyApp().run()
 
 
 
