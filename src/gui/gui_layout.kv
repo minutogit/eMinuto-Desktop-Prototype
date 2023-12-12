@@ -1,0 +1,105 @@
+<NoProfileStartupScreen>:
+    AnchorLayout:
+        anchor_x: 'center'
+        anchor_y: 'center'
+        canvas.before:
+            Color:
+                rgba: 0.9, 0.9, 0.9, 1  # Hellgrauer Hintergrund für Sichtbarkeit
+            Rectangle:
+                size: self.size
+                pos: self.pos
+        BoxLayout:
+            orientation: 'vertical'
+            spacing: dp(10)
+            padding: dp(20), dp(20)
+            size_hint: None, None
+            width: self.minimum_width
+            height: self.minimum_height
+            Label:
+                text: 'Kein Profil vorhanden.'
+                color: 0, 0, 0, 1  # Schwarzer Text
+                size_hint: None, None
+                size: self.texture_size
+            MDRaisedButton:
+                text: 'Profil erstellen'
+                on_release: app.root.current = 'generate_new_user_id'
+                size_hint: None, None
+                height: dp(48)
+                width: 200
+
+
+<GenerateNewUserIdScreen>:
+    ScrollView:
+        do_scroll_x: False
+        do_scroll_y: True
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: self.minimum_height
+
+            MDTextField:
+                id: first_name
+                hint_text: 'Vorname'
+                size_hint_x: 0.9
+                size_hint_y: None
+                height: dp(48)
+                multiline: True
+                pos_hint: {'center_x': 0.5}
+
+            MDTextField:
+                id: last_name
+                hint_text: 'Nachname'
+                size_hint_x: 0.9
+                size_hint_y: None
+                height: dp(48)
+                multiline: True
+                pos_hint: {'center_x': 0.5}
+
+            MDTextField:
+                id: seed_field
+                hint_text: 'Seed'
+                readonly: True
+                size_hint_x: 0.9
+                size_hint_y: None
+                height: dp(48)
+                multiline: True
+                pos_hint: {'center_x': 0.5}
+
+            AnchorLayout:
+                anchor_x: 'center'
+                anchor_y: 'top'
+                size_hint_y: None
+                height: dp(48)
+                MDRaisedButton:
+                    text: 'Neuer Seed'
+                    on_release: root.generate_seed()
+                    size_hint: None, None
+                    width: 200
+                    height: dp(48)
+
+            MDTextField:
+                id: confirm_seed
+                hint_text: 'Seed wiederholen'
+                size_hint_x: 0.9
+                size_hint_y: None
+                height: dp(48)
+                multiline: True
+                pos_hint: {'center_x': 0.5}
+
+            AnchorLayout:
+                anchor_x: 'center'
+                anchor_y: 'top'
+                size_hint_y: None
+                height: dp(48)
+                MDRaisedButton:
+                    text: 'Bestätigen'
+                    disabled: not confirm_seed.text == seed_field.text
+                    on_release: root.confirm_seed()
+                    size_hint: None, None
+                    width: 200
+                    height: dp(48)
+
+
+
+
+
