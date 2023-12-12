@@ -1,52 +1,49 @@
 # screenmanager.py
+from src.services.crypto_utils import generate_seed
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 
 
 # for hot reload
-#from kivymd.app import MDApp
-from kivymd.tools.hotreload.app import MDApp
+from kivymd.app import MDApp
+#from kivymd.tools.hotreload.app import MDApp
 
 
 Builder.load_file('gui/gui_layout.kv')
 
 # Definiere die verschiedenen Bildschirme
-class DashboardScreen(Screen):
+class NoProfileStartupScreen(Screen):
     pass
 
-class SettingsScreen(Screen):
-    pass
+class GenerateNewUserIdScreen(Screen):
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self.on_enter = self.init_seed
 
-class CreateVoucherScreen(Screen):
-    pass
+    def init_seed(self):
+        self.generate_seed()
 
-class PerformTransactionScreen(Screen):
-    pass
+    def generate_seed(self):
+        seed = generate_seed()
+        self.ids.seed_field.text = seed
 
-class ReceiveTransactionScreen(Screen):
-    pass
 
-class VoucherListScreen(Screen):
-    pass
 
 # Hauptanwendung
 class MyApp(MDApp):
-    DEBUG = 1 # activate hot reload
-    KV_FILES = ["gui/gui_layout.kv"]
-    def build_app(self, first=False):
+    #DEBUG = 1 # activate hot reload
+    #KV_FILES = ["gui/gui_layout.kv"]
+    def build(self, first=False):
         self.theme_cls.primary_palette = "Blue"  # Setze das Farbschema
 
         # Erstelle den Screen Manager
         sm = ScreenManager()
 
-        sm.add_widget(DashboardScreen(name='dashboard'))
-        sm.add_widget(SettingsScreen(name='settings'))
-        sm.add_widget(CreateVoucherScreen(name='create_voucher'))
-        sm.add_widget(PerformTransactionScreen(name='perform_transaction'))
-        sm.add_widget(ReceiveTransactionScreen(name='receive_transaction'))
-        sm.add_widget(VoucherListScreen(name='voucher_list'))
+        sm.add_widget(NoProfileStartupScreen(name='no_profile_startup'))
+        sm.add_widget(GenerateNewUserIdScreen(name='generate_new_user_id'))
 
-        sm.current = 'dashboard'
+        sm.current = 'no_profile_startup'
+        print(generate_seed())
         return sm
 
 if __name__ == '__main__':
