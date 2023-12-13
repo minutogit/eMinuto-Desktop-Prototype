@@ -184,10 +184,24 @@ def generate_symmetric_key(password, salt=None):
     key = base64.urlsafe_b64encode(kdf.derive(password))
     return key, salt
 
-def symmetric_encrypt(obj, password):
-    key, salt = generate_symmetric_key(password)
-    f = Fernet(key)
+def symmetric_encrypt(obj, password="", key=None, salt=None):
+    """
+    Encrypts and compresses the provided object using symmetric encryption.
+    If 'key' is not provided, it is generated using the provided password and optional salt.
+    Providing 'key' directly facilitates faster encryption and decryption as the key generation step is skipped.
 
+    Args:
+        obj (Serializable or dict): The object to be encrypted. Should either be an instance of a Serializable class or a dictionary.
+        password (str, optional): The password used for generating the encryption key if the key is not directly provided. Defaults to an empty string.
+        key (bytes, optional): Directly provided encryption key for faster processing.
+        salt (bytes, optional): Salt used in conjunction with the password to generate the encryption key.
+
+    Returns:
+        dict: A dictionary containing the base64 encoded encrypted data and salt.
+    """
+    if key is None or salt is None:
+        key, salt = generate_symmetric_key(password)
+    f = Fernet(key)
     # Verwenden Sie die to_dict-Methode, um das Objekt in ein Dictionary umzuwandeln
     # und dann mit json.dumps zu serialisieren
     obj_dict = obj.to_dict() if isinstance(obj, Serializable) else obj
@@ -200,21 +214,27 @@ def symmetric_encrypt(obj, password):
         'salt': base64.b64encode(salt).decode()
     }
 
-def symmetric_decrypt(encrypted_data, password, cls=None):
+def symmetric_decrypt(encrypted_data, password="", cls=None, key=None):
     """
-    Decrypts and decompresses the given encrypted data using the provided password.
+    Decrypts and decompresses the given encrypted data using the provided password or directly provided key.
+    If 'key' is provided, it facilitates faster decryption by skipping the key generation step.
     Optionally instantiates and initializes an object of the specified class with the decrypted data.
     If no class is provided, returns the decrypted data as a dictionary.
 
-    :param encrypted_data: The encrypted data as a dictionary containing the encrypted payload and salt.
-    :param password: The password used for generating the decryption key.
-    :param cls: Optional. The class to instantiate and initialize with the decrypted data.
-                Should be a subclass of Serializable and have a no-argument constructor.
-    :return: An instance of the specified class initialized with the decrypted data if a class is provided;
-             otherwise, a dictionary of the decrypted data.
+    Args:
+        encrypted_data (dict): The encrypted data as a dictionary containing the encrypted payload and salt.
+        password (str, optional): The password used for generating the decryption key if the key is not directly provided. Defaults to an empty string.
+        cls (class, optional): Optional. The class to instantiate and initialize with the decrypted data.
+                               Should be a subclass of Serializable and have a no-argument constructor. Defaults to None.
+        key (bytes, optional): Directly provided decryption key for faster processing. Defaults to None.
+
+    Returns:
+        object or dict: An instance of the specified class initialized with the decrypted data if a class is provided;
+                        otherwise, a dictionary of the decrypted data.
     """
     salt = base64.b64decode(encrypted_data['salt'])
-    key, _ = generate_symmetric_key(password, salt=salt)
+    if key == None:
+        key, _ = generate_symmetric_key(password, salt=salt)
     f = Fernet(key)
 
     decrypted_data = f.decrypt(base64.b64decode(encrypted_data['encrypted_data']))
