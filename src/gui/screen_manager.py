@@ -1,5 +1,6 @@
 # screenmanager.py
 from src.services.crypto_utils import generate_seed
+from src.models.user_profile import UserProfile
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 
@@ -15,7 +16,7 @@ Builder.load_file('gui/gui_layout.kv')
 class NoProfileStartupScreen(Screen):
     pass
 
-class GenerateNewUserIdScreen(Screen):
+class GenerateNewUserProfileScreen(Screen):
     def __init__(self, **kw):
         super().__init__(**kw)
         self.on_enter = self.init_seed
@@ -26,6 +27,10 @@ class GenerateNewUserIdScreen(Screen):
     def generate_seed(self):
         seed = generate_seed()
         self.ids.seed_field.text = seed
+
+    def generate_new_user_profile(self):
+        print("generate_new_user_profile")
+        pass
 
 
 
@@ -40,10 +45,9 @@ class MyApp(MDApp):
         sm = ScreenManager()
 
         sm.add_widget(NoProfileStartupScreen(name='no_profile_startup'))
-        sm.add_widget(GenerateNewUserIdScreen(name='generate_new_user_id'))
+        sm.add_widget(GenerateNewUserProfileScreen(name='generate_new_user_profile'))
 
         sm.current = 'no_profile_startup'
-        print(generate_seed())
         return sm
 
 if __name__ == '__main__':
