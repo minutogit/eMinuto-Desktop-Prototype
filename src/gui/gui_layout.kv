@@ -56,6 +56,15 @@
                 pos_hint: {'center_x': 0.5}
 
             MDTextField:
+                id: organization
+                hint_text: 'Organisation'
+                size_hint_x: 0.9
+                size_hint_y: None
+                height: dp(48)
+                multiline: True
+                pos_hint: {'center_x': 0.5}
+
+            MDTextField:
                 id: seed_field
                 hint_text: 'Seed'
                 readonly: True
@@ -125,7 +134,7 @@
                 MDRaisedButton:
                     text: 'Profil Erstellen'
                     disabled: not (confirm_seed.text == seed_field.text and password.text == confirm_password.text and root.is_password_valid(password.text))
-                    on_release: root.generate_new_user_profile(seed_field.text, password.text)
+                    on_release: root.generate_new_user_profile(first_name.text, last_name.text, organization.text, seed_field.text, password.text)
                     size_hint: None, None
                     width: 200
                     height: dp(48)

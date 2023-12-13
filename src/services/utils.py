@@ -29,6 +29,19 @@ def file_exists(folder, filename):
     file_path = os.path.join(folder, filename)
     return os.path.exists(file_path)
 
+def join_path(folder, filename):
+    """
+    Joins a directory path and a filename to create a full file path.
+
+    Args:
+        folder (str): The directory path.
+        filename (str): The name of the file.
+
+    Returns:
+        str: The full path combining the folder and filename.
+    """
+    return os.path.join(folder, filename)
+
 
 def is_password_valid(password):
     """

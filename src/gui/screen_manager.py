@@ -10,7 +10,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.app import MDApp
 #from kivymd.tools.hotreload.app import MDApp
 
-
+user_profile = UserProfile()
 Builder.load_file('gui/gui_layout.kv')
 
 # Definiere die verschiedenen Bildschirme
@@ -32,8 +32,9 @@ class GenerateNewUserProfileScreen(Screen):
     def is_password_valid(self,password):
         return is_password_valid(password)
 
-    def generate_new_user_profile(self, seed, profile_password):
+    def generate_new_user_profile(self, first_name, last_name, organization, seed, profile_password):
         print(f"generate_new_user_profile\nseed: -{seed}-\npassword: -{profile_password}-")
+        user_profile.create_new_profile(first_name, last_name, organization, seed, profile_password)
         pass
 
 

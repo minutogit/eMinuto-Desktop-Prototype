@@ -1,5 +1,8 @@
 import json
 from src.services.crypto_utils import symmetric_decrypt, symmetric_encrypt, generate_shared_secret, extract_compressed_pubkey_from_public_ID
+import os
+from pathlib import Path
+
 
 class SecureFileHandler:
     def encrypt_and_save(self, obj, password, file_path):
@@ -10,6 +13,11 @@ class SecureFileHandler:
         :param password: The password used for encryption.
         :param file_path: Path to the file where the encrypted data will be saved.
         """
+
+        # create folder if not exist
+        directory = os.path.dirname(file_path)
+        Path(directory).mkdir(parents=True, exist_ok=True)
+
         encrypted_data = symmetric_encrypt(obj, password)
         with open(file_path, 'w') as file:
             json.dump(encrypted_data, file)
