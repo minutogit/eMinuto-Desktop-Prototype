@@ -26,6 +26,13 @@ class UserProfile(Serializable):
         self.profile_filename = 'userprofile.dat'
         self._person = None
 
+    def init_existing_profile(self,password):
+        if not self.load_profile_from_disk(password):
+            return False
+        print("init: ", self.person_data)
+
+        return True
+
     def create_new_profile(self, first_name, last_name, organization, seed, profile_password):
         key, salt = generate_symmetric_key(profile_password)
         self.encrypted_seed_words = symmetric_encrypt(seed, key=key, salt=salt)
@@ -34,14 +41,21 @@ class UserProfile(Serializable):
         self.person_data['organization'] = organization
         self.save_profile_to_disk(profile_password)
 
-
     def save_profile_to_disk(self, password):
         filehandler = SecureFileHandler()
         filehandler.encrypt_and_save(self, password, join_path(self.data_folder, self.profile_filename))
 
-    @staticmethod
-    def check_file_exists(data_folder, profile_filename):
-        return file_exists(data_folder, profile_filename)
+    def load_profile_from_disk(self, password):
+        filehandler = SecureFileHandler()
+        try:
+            loaded_profile = filehandler.decrypt_and_load(join_path(self.data_folder, self.profile_filename), password, UserProfile)
+            self.__dict__.update(loaded_profile.__dict__)
+            return True
+        except Exception: # Exception when password is wrong
+            return False
+
+    def profile_exists(self):
+        return file_exists(self.data_folder, self.profile_filename)
 
 
 

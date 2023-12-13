@@ -1,3 +1,133 @@
+<DashboardScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: dp(20)
+
+        # white area
+        BoxLayout:
+            size_hint_y: None
+            height: dp(50)
+            padding: dp(20), 0  # Hinzufügen von horizontalem Padding
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 1  # Weißer Hintergrund
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+
+            Label:
+                text: root.title
+                halign: 'left'
+                size_hint_x: 0.9
+                color: 0, 0, 0, 1
+                font_size: '22sp'
+                bold: True
+
+            MDIcon:
+                icon: "account-circle"
+                size_hint_x: 0.1
+
+        # blue area
+        BoxLayout:
+            orientation: 'vertical'
+            padding: dp(20)
+            canvas.before:
+                Color:
+                    rgba: 0.2, 0.4, 0.8, 1  # Ein schöneres Blau
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos
+                    radius: [15, 15, 15, 15]  # Runde Ecken
+
+            Label:
+                text: 'Kontostand'
+                color: 1, 1, 1, 1  # Weißer Text
+                font_size: '20sp'
+                bold: True
+                halign: 'left'
+                text_size: self.width, None
+                height: self.texture_size[1]
+            Label:
+                text: 'Andere Minuto: ' + str(root.balance_other_vouchers)
+                color: 1, 1, 1, 1  # Weißer Text
+                halign: 'left'
+                text_size: self.width, None
+                height: self.texture_size[1]
+            Label:
+                text: 'Eigene Minuto: ' + str(root.balance_own_vouchers)
+                color: 1, 1, 1, 1  # Weißer Text
+                halign: 'left'
+                text_size: self.width, None
+                height: self.texture_size[1]
+
+        # # white area
+        BoxLayout:
+            size_hint_y: None
+            height: dp(200)
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 1  # Weißer Hintergrund
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+
+
+<ProfileLoginScreen>:
+    ScrollView:
+        do_scroll_x: False
+        do_scroll_y: True
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: self.minimum_height
+
+            Label:
+                text: "eMinuto Login"
+                color: 0, 0, 0, 1
+                size_hint_y: None
+                height: dp(48)
+                font_size: '20sp'
+                halign: 'center'
+                pos_hint: {'center_x': 0.5}
+
+            MDTextField:
+                id: password
+                hint_text: 'Passwort'
+                password: True
+                size_hint_x: None
+                width: min(200, self.parent.width * 0.9)
+                size_hint_y: None
+                height: dp(48)
+                pos_hint: {'center_x': 0.5}
+                on_focus:
+                    error_label.text = ''
+
+            Label:
+                id: error_label
+                text: ""
+                size_hint_y: None
+                height: dp(20)
+                color: 0, 0, 0, 1
+
+            Widget:  # Platzhalter für Abstand
+                size_hint_y: None
+                height: dp(20)
+
+            AnchorLayout:
+                anchor_x: 'center'
+                anchor_y: 'top'
+                size_hint_y: None
+                height: dp(48)
+                MDRaisedButton:
+                    text: 'Login'
+                    on_release:
+                        if root.load_existing_profile(password.text): app.root.current = 'dashboard'
+                        else: error_label.text = 'Falsches Passwort'; password.text = ''
+                    size_hint: None, None
+                    width: 200
+                    height: dp(48)
+
+
 <NoProfileStartupScreen>:
     AnchorLayout:
         anchor_x: 'center'
@@ -134,7 +264,7 @@
                 MDRaisedButton:
                     text: 'Profil Erstellen'
                     disabled: not (confirm_seed.text == seed_field.text and password.text == confirm_password.text and root.is_password_valid(password.text))
-                    on_release: root.generate_new_user_profile(first_name.text, last_name.text, organization.text, seed_field.text, password.text)
+                    on_release: root.generate_new_user_profile(first_name.text, last_name.text, organization.text, seed_field.text, password.text); app.root.current = 'dashboard'
                     size_hint: None, None
                     width: 200
                     height: dp(48)
