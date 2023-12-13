@@ -1,6 +1,7 @@
 # utils.py
 import inspect
 from datetime import datetime
+import os
 
 def get_timestamp(years_to_add=0, end_of_year=False):
     """
@@ -24,6 +25,27 @@ def get_timestamp(years_to_add=0, end_of_year=False):
 
     return future_time.isoformat() + "Z"
 
+def file_exists(folder, filename):
+    file_path = os.path.join(folder, filename)
+    return os.path.exists(file_path)
+
+
+def is_password_valid(password):
+    """
+    Check if the provided password meets the specified criteria.
+
+    A valid password must meet the following conditions:
+    - It must be at least 8 characters long.
+
+    Args:
+    password (str): The password string to be validated.
+
+    Returns:
+    bool: True if the password meets the criteria, False otherwise.
+    """
+    if len(password) < 8:
+        return False
+    return True
 
 def amount_precision(amount, precision=2):
     """

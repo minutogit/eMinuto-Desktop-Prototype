@@ -1,5 +1,6 @@
 # screenmanager.py
 from src.services.crypto_utils import generate_seed
+from src.services.utils import is_password_valid, file_exists
 from src.models.user_profile import UserProfile
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
@@ -28,8 +29,11 @@ class GenerateNewUserProfileScreen(Screen):
         seed = generate_seed()
         self.ids.seed_field.text = seed
 
-    def generate_new_user_profile(self):
-        print("generate_new_user_profile")
+    def is_password_valid(self,password):
+        return is_password_valid(password)
+
+    def generate_new_user_profile(self, seed, profile_password):
+        print(f"generate_new_user_profile\nseed: -{seed}-\npassword: -{profile_password}-")
         pass
 
 
