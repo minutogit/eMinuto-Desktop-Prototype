@@ -44,10 +44,12 @@ class SimulationHelper:
         """
         if index % 2 == 0:  # Even index for female
             gender = 2
-            name = fake.first_name_female() + " " + fake.last_name_female()
+            first_name = fake.first_name_female()
+            last_name = fake.last_name_female()
         else:  # Odd index for male
             gender = 1
-            name = fake.first_name_male() + " " + fake.last_name_male()
+            first_name = fake.first_name_male()
+            last_name = fake.last_name_male()
 
         address = fake.street_address()
         email = fake.email()
@@ -56,7 +58,18 @@ class SimulationHelper:
         coordinates = f"{fake.latitude()}, {fake.longitude()}"
         seed = generate_seed()
 
-        return Person(name, address, gender, email, phone, service_offer, coordinates, seed=seed)
+        temp_dict = {
+            'first_name': first_name,
+            'last_name': last_name,
+            'organization': 'organization name',
+            'address': address,
+            'gender': gender,
+            'email': email,
+            'phone': phone,
+            'service_offer': service_offer,
+            'coordinates': coordinates
+        }
+        return Person(temp_dict, seed=seed)
 
     def generate_persons(self, num_persons):
         """

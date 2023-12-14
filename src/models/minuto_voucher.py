@@ -12,7 +12,9 @@ class MinutoVoucher(Serializable):
         # Initialize default values for voucher attributes
         self.voucher_id = ''
         self.creator_id = ''
-        self.creator_name = ''
+        self.creator_first_name = ''
+        self.creator_last_name = ''
+        self.creator_organization = ''
         self.creator_address = ''
         self.creator_gender = 0 # 0 for unknown, 1 for male, 2 for female
         self.amount = 0
@@ -31,14 +33,16 @@ class MinutoVoucher(Serializable):
         self.transactions = [] # list of transactions
 
     @classmethod
-    def create(cls, creator_id: str, creator_name: str, creator_address, creator_gender: int, email: str, phone: str, service_offer: str, coordinates: str,
+    def create(cls, creator_id: str, creator_first_name: str, creator_last_name: str, creator_organization: str, creator_address, creator_gender: int, email: str, phone: str, service_offer: str, coordinates: str,
                amount: float, region: str, validity: int, is_test_voucher: bool = False):
         # Create a new voucher instance with provided details
         voucher = cls()
         voucher.creator_id = creator_id
         voucher.voucher_id = ""  # voucher ID will be generated from hash when creator signs the voucher
         voucher.creation_date = get_timestamp()
-        voucher.creator_name = creator_name
+        voucher.creator_first_name = creator_first_name
+        voucher.creator_last_name = creator_last_name
+        voucher.creator_organization = creator_organization
         voucher.creator_address = creator_address
         voucher.creator_gender = creator_gender
         voucher.amount = amount_precision(amount)

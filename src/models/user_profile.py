@@ -8,15 +8,15 @@ class UserProfile(Serializable):
     def __init__(self):
         # A dictionary to store all personal data
         self.person_data = {
-            'first_name': None,
-            'last_name': None,
-            'organization': None,
-            'address': None,
+            'first_name': '',
+            'last_name': '',
+            'organization': '',
+            'address': '',
             'gender': 0,
-            'email': None,
-            'phone': None,
-            'service_offer': None,
-            'coordinates': None
+            'email': '',
+            'phone': '',
+            'service_offer': '',
+            'coordinates': ''
         }
 
         # Additional attributes of UserProfile
@@ -31,16 +31,7 @@ class UserProfile(Serializable):
         if not self.load_profile_from_disk(password):
             return False
         seed = symmetric_decrypt(self.encrypted_seed_words, password)
-        self.person = Person(
-            f"{self.person_data['first_name']} {self.person_data['last_name']}",
-            self.person_data['address'],
-            self.person_data['gender'],
-            self.person_data['email'],
-            self.person_data['phone'],
-            self.person_data['service_offer'],
-            self.person_data['coordinates'],
-            seed=seed
-        )
+        self.person = Person(self.person_data, seed=seed)
         return True
 
     def create_new_profile(self, first_name, last_name, organization, seed, profile_password):
@@ -49,16 +40,7 @@ class UserProfile(Serializable):
         self.person_data['first_name'] = first_name
         self.person_data['last_name'] = last_name
         self.person_data['organization'] = organization
-        self.person = Person(
-            f"{self.person_data['first_name']} {self.person_data['last_name']}",
-            "",
-            self.person_data['gender'],
-            "",
-            "",
-            "",
-            "",
-            seed=seed
-        )
+        self.person = Person(self.person_data,seed=seed)
         self.save_profile_to_disk(profile_password)
 
     def save_profile_to_disk(self, password):

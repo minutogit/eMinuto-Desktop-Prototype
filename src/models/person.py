@@ -6,21 +6,24 @@ from src.services.utils import get_timestamp, dprint, amount_precision, get_doub
 import json
 
 class Person:
-    def __init__(self, name, address, gender, email, phone, service_offer, coordinates, seed=None):
+    def __init__(self, person_data, seed=None):
         self.key = Key(seed) if seed else Key()
         self.id = self.key.id
         self.pubkey_short = self.key.get_compressed_public_key()
-        self.name = name
-        self.address = address
-        self.gender = gender  # 0 für unbekannt, 1 für männlich, 2 für weiblich
-        self.email = email
-        self.phone = phone
-        self.service_offer = service_offer  # Angebot / Fähigkeiten
-        self.coordinates = coordinates
 
-        self.current_voucher = None  # Initialisierung von current_voucher
-        self.vouchers = [] # list of vouchers with amount
-        self.used_vouchers = [] # list of used vouchers after transaction with no amount
+        # Setting attributes from the person_data dictionary
+        self.first_name = person_data.get('first_name')
+        self.last_name = person_data.get('last_name')
+        self.organization = person_data.get('organization')
+        self.address = person_data.get('address')
+        self.gender = person_data.get('gender')  # 0 for unknown, 1 for male, 2 for female
+        self.email = person_data.get('email')
+        self.phone = person_data.get('phone')
+        self.service_offer = person_data.get('service_offer')  # Offer / Skills
+        self.coordinates = person_data.get('coordinates')
+        self.current_voucher = None  # Initialization of current_voucher
+        self.vouchers = []  # List of vouchers with amount
+        self.used_vouchers = []  # List of used vouchers after transaction without amount
         self.usertransaction = UserTransaction()
 
     def init_empty_voucher(self):
@@ -30,7 +33,7 @@ class Person:
     def create_voucher(self, amount, region, validity):
         """ Erstellt einen neuen MinutoVoucher. """
         from src.models.minuto_voucher import MinutoVoucher
-        self.current_voucher = MinutoVoucher.create(self.id, self.name, self.address, self.gender, self.email, self.phone, self.service_offer, self.coordinates, amount, region, validity)
+        self.current_voucher = MinutoVoucher.create(self.id, self.first_name, self.last_name, self.organization, self.address, self.gender, self.email, self.phone, self.service_offer, self.coordinates, amount, region, validity)
 
     def check_double_spending(self):
         """
@@ -135,7 +138,9 @@ class Person:
         # Prepare guarantor information for signature
         guarantor_info = {
             "id": self.id,
-            "name": self.name,
+            "name": self.first_name,
+            "name": self.last_name,
+            "name": self.organization,
             "address": self.address,
             "gender": self.gender,
             "email": self.email,
@@ -236,7 +241,7 @@ class Person:
             if creator_id != voucher.creator_id:
                 if creator_id != '':
                     print(linetext)
-                linetext = f"V-Creator: {voucher.creator_name} \tV-Amounts: {voucher.get_voucher_amount(self.id)}M"
+                linetext = f"V-Creator: {voucher.creator_first_name} {voucher.creator_last_name} \tV-Amounts: {voucher.get_voucher_amount(self.id)}M"
                 creator_id = voucher.creator_id
             else:
                 linetext += f"  {voucher.get_voucher_amount(self.id)}M"
