@@ -1,75 +1,79 @@
 <DashboardScreen>:
     BoxLayout:
         orientation: 'vertical'
-        padding: dp(20)
+        padding: dp(20), dp(0)
 
-        # white area
+        # Weißer Bereich
         BoxLayout:
+            orientation: 'horizontal'
             size_hint_y: None
             height: dp(50)
-            padding: dp(20), 0  # Hinzufügen von horizontalem Padding
-            canvas.before:
-                Color:
-                    rgba: 1, 1, 1, 1  # Weißer Hintergrund
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
+            padding: dp(0), dp(10)
 
-            Label:
+            MDLabel:
                 text: root.title
-                halign: 'left'
                 size_hint_x: 0.9
-                color: 0, 0, 0, 1
-                font_size: '22sp'
+                font_size: '20sp'
                 bold: True
+                #text_size: self.width, None
 
             MDIcon:
                 icon: "account-circle"
-                size_hint_x: 0.1
+                font_size: "32sp"
 
-        # blue area
+         # Blue area
         BoxLayout:
             orientation: 'vertical'
+            size_hint_y: None
+            height: dp(120)  # Fixed height for the blue area
             padding: dp(20)
             canvas.before:
                 Color:
-                    rgba: 0.2, 0.4, 0.8, 1  # Ein schöneres Blau
+                    rgba: 0.2, 0.4, 0.8, 1
                 RoundedRectangle:
                     size: self.size
                     pos: self.pos
-                    radius: [15, 15, 15, 15]  # Runde Ecken
+                    radius: [15, 15, 15, 15]
 
-            Label:
+            MDLabel:
                 text: 'Kontostand'
-                color: 1, 1, 1, 1  # Weißer Text
+                theme_text_color: "Custom"
+                color: 1, 1, 1, 1  # White text
                 font_size: '20sp'
                 bold: True
-                halign: 'left'
+                size_hint_y: None
+                height: dp(30)  # Height for "Kontostand" label
                 text_size: self.width, None
-                height: self.texture_size[1]
+
             Label:
                 text: 'Andere Minuto: ' + str(root.balance_other_vouchers)
-                color: 1, 1, 1, 1  # Weißer Text
-                halign: 'left'
+                color: 1, 1, 1, 1  # White text
+                size_hint_y: None
+                height: dp(30)  # Height for the first additional label
                 text_size: self.width, None
-                height: self.texture_size[1]
+
             Label:
                 text: 'Eigene Minuto: ' + str(root.balance_own_vouchers)
-                color: 1, 1, 1, 1  # Weißer Text
-                halign: 'left'
+                color: 1, 1, 1, 1  # White text
+                size_hint_y: None
+                height: dp(30)  # Height for the second additional label
                 text_size: self.width, None
-                height: self.texture_size[1]
 
-        # # white area
-        BoxLayout:
-            size_hint_y: None
-            height: dp(200)
-            canvas.before:
-                Color:
-                    rgba: 1, 1, 1, 1  # Weißer Hintergrund
-                Rectangle:
-                    size: self.size
-                    pos: self.pos
+
+        # white area
+        ScrollView:
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                canvas.before:
+                    Color:
+                        rgba: 1, 1, 1, 1  # White background
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+
+
 
 
 <ProfileLoginScreen>:

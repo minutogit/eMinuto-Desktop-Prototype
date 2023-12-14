@@ -5,11 +5,8 @@ from src.models.user_profile import UserProfile
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.properties import StringProperty
+from kivymd.color_definitions import colors
 
-
-# for hot reload
-from kivymd.app import MDApp
-#from kivymd.tools.hotreload.app import MDApp
 
 user_profile = UserProfile()
 Builder.load_file('gui/gui_layout.kv')
@@ -28,7 +25,6 @@ class DashboardScreen(Screen):
         self.title = self.get_title()
         self.balance_other_vouchers = str(self.get_balance_other_vouchers())
         self.balance_own_vouchers = str(self.get_balance_own_vouchers())
-
 
     def __init__(self, **kw):
         super().__init__(**kw)
@@ -76,17 +72,13 @@ class GenerateNewUserProfileScreen(Screen):
 
 
 # Hauptanwendung
+from kivymd.app import MDApp
 class MyApp(MDApp):
-    #DEBUG = 1 # activate hot reload
-    #KV_FILES = ["gui/gui_layout.kv"]
     def build(self, first=False):
-        self.theme_cls.primary_palette = "Blue"  # Setze das Farbschema
-
         # Erstelle den Screen Manager
         sm = ScreenManager()
 
         sm.add_widget(DashboardScreen(name='dashboard'))
-
 
         if user_profile.profile_exists():
             sm.add_widget(ProfileLoginScreen(name='profile_login'))
