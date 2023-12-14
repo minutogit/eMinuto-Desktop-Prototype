@@ -17,9 +17,10 @@
                 bold: True
                 #text_size: self.width, None
 
-            MDIcon:
+            MDIconButton:
                 icon: "account-circle"
-                font_size: "32sp"
+                user_font_size: "32sp"
+                on_release: app.root.current = 'user_info'
 
          # Blue area
         BoxLayout:
@@ -73,6 +74,93 @@
                         size: self.size
                         pos: self.pos
 
+<UserInfoScreen>:
+    MDBoxLayout:
+        orientation: 'vertical'
+        spacing: dp(10)
+        padding: dp(20)
+        md_bg_color: app.theme_cls.primary_color  # Hintergrundfarbe
+
+        # Kopfbereich mit Zurück-Button
+        MDBoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(50)
+            padding: dp(0), dp(10)
+            MDIconButton:
+                icon: "arrow-left"
+                user_font_size: "24sp"
+                pos_hint: {"center_y": .5}
+                theme_text_color: "Custom"
+                text_color: 1, 1, 1, 1
+                on_release: root.go_back_to_dashboard()
+            MDLabel:
+                text: "Benutzerinformation"
+                font_style: "H5"
+                size_hint_x: None
+                width: self.texture_size[0]
+                theme_text_color: "Custom"
+                text_color: 1, 1, 1, 1
+                valign: "top"
+                adaptive_size: True
+
+        # Scrollbare Ansicht für die Benutzerdaten
+        ScrollView:
+            MDList:
+                OneLineIconListItem:
+                    text: "Vorname: " + root.first_name
+                    on_release: root.show_edit_dialog('first_name', 'Vorname')
+                    IconLeftWidget:
+                        icon: "account"
+
+                OneLineIconListItem:
+                    text: "Nachname: " + root.last_name
+                    on_release: root.show_edit_dialog('last_name', 'Nachname')
+                    IconLeftWidget:
+                        icon: "account-outline"
+
+                OneLineIconListItem:
+                    text: "Organisation: " + root.organization
+                    on_release: root.show_edit_dialog('organization', 'Organisation')
+                    IconLeftWidget:
+                        icon: "office-building"
+
+                OneLineIconListItem:
+                    text: "Adresse: " + root.address
+                    on_release: root.show_edit_dialog('address', 'Adresse')
+                    IconLeftWidget:
+                        icon: "map-marker"
+
+                OneLineIconListItem:
+                    id: gender_item
+                    text: "Geschlecht: " + ("Unbekannt" if root.gender == 0 else "Männlich" if root.gender == 1 else "Weiblich")
+                    on_release: root.show_gender_edit_dialog()
+                    IconLeftWidget:
+                        icon: "gender-male-female"
+
+                OneLineIconListItem:
+                    text: "E-Mail: " + root.email
+                    on_release: root.show_edit_dialog('email', 'E-Mail')
+                    IconLeftWidget:
+                        icon: "email"
+
+                OneLineIconListItem:
+                    text: "Telefon: " + root.phone
+                    on_release: root.show_edit_dialog('phone', 'Telefon')
+                    IconLeftWidget:
+                        icon: "phone"
+
+                OneLineIconListItem:
+                    text: "Dienstleistungsangebot: " + root.service_offer
+                    on_release: root.show_edit_dialog('service_offer', 'Dienstleistungsangebot')
+                    IconLeftWidget:
+                        icon: "hand-heart"
+
+                OneLineIconListItem:
+                    text: "Koordinaten: " + root.coordinates
+                    on_release: root.show_edit_dialog('coordinates', 'Koordinaten')
+                    IconLeftWidget:
+                        icon: "crosshairs-gps"
 
 
 
@@ -272,6 +360,8 @@
                     size_hint: None, None
                     width: 200
                     height: dp(48)
+
+
 
 
 
