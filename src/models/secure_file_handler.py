@@ -6,20 +6,20 @@ from pathlib import Path
 
 
 class SecureFileHandler:
-    def encrypt_and_save(self, obj, password, file_path, second_password=None):
+    def encrypt_and_save(self, obj, file_path, password="", second_password=None, key=None, salt=None):
         """
         Encrypts an object using symmetric encryption and saves it to a file.
 
         :param obj: The object to encrypt.
-        :param password: The password used for encryption.
         :param file_path: Path to the file where the encrypted data will be saved.
+        :param password: The password used for encryption.
         """
 
         # create folder if not exist
         directory = os.path.dirname(file_path)
         Path(directory).mkdir(parents=True, exist_ok=True)
 
-        encrypted_data = symmetric_encrypt(obj, password, second_password=second_password)
+        encrypted_data = symmetric_encrypt(obj, password=password, second_password=second_password, key=key, salt=salt)
         with open(file_path, 'w') as file:
             json.dump(encrypted_data, file)
 
@@ -48,7 +48,7 @@ class SecureFileHandler:
         """
         peer_compressed_public_key = extract_compressed_pubkey_from_public_ID(peer_user_id)
         shared_secret = generate_shared_secret(private_key, peer_compressed_public_key)
-        self.encrypt_and_save(obj, shared_secret, file_path)
+        self.encrypt_and_save(obj, file_path, shared_secret)
 
     def decrypt_with_shared_secret_and_load(self, file_path, private_key, peer_user_id, obj=None):
         """

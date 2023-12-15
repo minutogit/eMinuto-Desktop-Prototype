@@ -185,7 +185,7 @@ class TestPerson(unittest.TestCase):
         filehandler = SecureFileHandler()
 
         # Test encryption with password
-        filehandler.encrypt_and_save(sim.persons[1].vouchers[0], "mypassword", "secure_voucher.txt")
+        filehandler.encrypt_and_save(sim.persons[1].vouchers[0], "secure_voucher.txt", "mypassword")
         decrypted_data = filehandler.decrypt_and_load("secure_voucher.txt", "mypassword", MinutoVoucher)
         self.assertTrue(decrypted_data.verify_complete_voucher())
         self.assertEqual(sim.persons[1].vouchers[0], decrypted_data)
