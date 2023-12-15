@@ -45,17 +45,17 @@ class UserProfile(Serializable):
         return True
 
     def create_new_profile(self, first_name, last_name, organization, seed, profile_password):
-        key, salt = generate_symmetric_key(profile_password)
-        self.encrypted_seed_words = symmetric_encrypt(seed, key=key, salt=salt)
+        recovery_password = str(seed).lower().replace(" ", "") # when password lost, recovery possible from seed
+        self.encrypted_seed_words = symmetric_encrypt(seed, profile_password, second_password=recovery_password)
         self.person_data['first_name'] = first_name
         self.person_data['last_name'] = last_name
         self.person_data['organization'] = organization
         self.person = Person(self.person_data,seed=seed)
-        self.save_profile_to_disk(profile_password)
+        self.save_profile_to_disk(profile_password, recovery_password)
 
-    def save_profile_to_disk(self, password):
+    def save_profile_to_disk(self, password, second_password=None):
         filehandler = SecureFileHandler()
-        filehandler.encrypt_and_save(self, password, join_path(self.data_folder, self.profile_filename))
+        filehandler.encrypt_and_save(self, password, join_path(self.data_folder, self.profile_filename), second_password)
 
     def load_profile_from_disk(self, password):
         filehandler = SecureFileHandler()

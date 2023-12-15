@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 class SecureFileHandler:
-    def encrypt_and_save(self, obj, password, file_path):
+    def encrypt_and_save(self, obj, password, file_path, second_password=None):
         """
         Encrypts an object using symmetric encryption and saves it to a file.
 
@@ -19,7 +19,7 @@ class SecureFileHandler:
         directory = os.path.dirname(file_path)
         Path(directory).mkdir(parents=True, exist_ok=True)
 
-        encrypted_data = symmetric_encrypt(obj, password)
+        encrypted_data = symmetric_encrypt(obj, password, second_password=second_password)
         with open(file_path, 'w') as file:
             json.dump(encrypted_data, file)
 

@@ -184,60 +184,88 @@ def generate_symmetric_key(password, salt=None):
     key = base64.urlsafe_b64encode(kdf.derive(password))
     return key, salt
 
-def symmetric_encrypt(obj, password="", key=None, salt=None):
+def symmetric_encrypt(obj, password="", second_password=None, key=None, salt=None):
     """
-    Encrypts and compresses the provided object using symmetric encryption.
+    Encrypts and compresses the provided object using symmetric encryption and concatenates
+    the encrypted data, salt, and optionally the encrypted key, separated by '|'.
     If 'key' is not provided, it is generated using the provided password and optional salt.
+    If a second password is provided, the encryption key itself is encrypted with this second password.
     Providing 'key' directly facilitates faster encryption and decryption as the key generation step is skipped.
 
     Args:
-        obj (Serializable or dict): The object to be encrypted. Should either be an instance of a Serializable class or a dictionary.
-        password (str, optional): The password used for generating the encryption key if the key is not directly provided. Defaults to an empty string.
+        obj (Serializable or dict): The object to be encrypted.
+        password (str, optional): The password used for generating the encryption key. Defaults to an empty string.
+        second_password (str, optional): A second password used to encrypt the encryption key.
         key (bytes, optional): Directly provided encryption key for faster processing.
         salt (bytes, optional): Salt used in conjunction with the password to generate the encryption key.
 
     Returns:
-        dict: A dictionary containing the base64 encoded encrypted data and salt.
+        str: A string containing the base64 encoded encrypted data, salt, and optionally the encrypted key, separated by '|'.
     """
+    if password == "" and key == None:
+        raise Exception("No key or password provided.")
+
     if key is None or salt is None:
-        key, salt = generate_symmetric_key(password)
+        key, salt = generate_symmetric_key(password, salt)
     f = Fernet(key)
-    # Verwenden Sie die to_dict-Methode, um das Objekt in ein Dictionary umzuwandeln
-    # und dann mit json.dumps zu serialisieren
     obj_dict = obj.to_dict() if isinstance(obj, Serializable) else obj
     serialized_data = json.dumps(obj_dict).encode('utf-8')
     compressed_data = gzip.compress(serialized_data)
-
     encrypted_data = f.encrypt(compressed_data)
-    return {
-        'encrypted_data': base64.b64encode(encrypted_data).decode(),
-        'salt': base64.b64encode(salt).decode()
-    }
 
-def symmetric_decrypt(encrypted_data, password="", cls=None, key=None):
+    # Encrypt the key with the second password if it is provided
+    if second_password:
+        second_key, _ = generate_symmetric_key(second_password, salt)
+        f2 = Fernet(second_key)
+        encrypted_key = f2.encrypt(key)
+        return '|'.join([base64.b64encode(encrypted_data).decode(),
+                         base64.b64encode(salt).decode(),
+                         base64.b64encode(encrypted_key).decode()])
+    else:
+        # Without a second password, return only the encrypted data and salt
+        return '|'.join([base64.b64encode(encrypted_data).decode(),
+                         base64.b64encode(salt).decode()])
+
+def symmetric_decrypt(encrypted_string, password="", cls=None, key=None):
     """
-    Decrypts and decompresses the given encrypted data using the provided password or directly provided key.
+    Decrypts and decompresses the given encrypted string, which contains the encrypted data, salt,
+    and optionally the encrypted key, separated by '|'. Uses the provided password or directly provided key for decryption.
     If 'key' is provided, it facilitates faster decryption by skipping the key generation step.
     Optionally instantiates and initializes an object of the specified class with the decrypted data.
-    If no class is provided, returns the decrypted data as a dictionary.
 
     Args:
-        encrypted_data (dict): The encrypted data as a dictionary containing the encrypted payload and salt.
-        password (str, optional): The password used for generating the decryption key if the key is not directly provided. Defaults to an empty string.
-        cls (class, optional): Optional. The class to instantiate and initialize with the decrypted data.
-                               Should be a subclass of Serializable and have a no-argument constructor. Defaults to None.
-        key (bytes, optional): Directly provided decryption key for faster processing. Defaults to None.
+        encrypted_string (str): The encrypted string containing the encrypted payload, salt, and optionally the encrypted key.
+        password (str, optional): The password used for generating the decryption key. Defaults to an empty string.
+        cls (class, optional): The class to instantiate with the decrypted data.
+        key (bytes, optional): Directly provided decryption key for faster processing.
 
     Returns:
-        object or dict: An instance of the specified class initialized with the decrypted data if a class is provided;
-                        otherwise, a dictionary of the decrypted data.
+        object or dict: An instance of the specified class initialized with the decrypted data, or a dictionary of the decrypted data.
     """
-    salt = base64.b64decode(encrypted_data['salt'])
-    if key == None:
+    parts = encrypted_string.split('|')
+    encrypted_data = base64.b64decode(parts[0])
+    salt = base64.b64decode(parts[1])
+    encrypted_key = base64.b64decode(parts[2]) if len(parts) > 2 else None
+
+    # Try to decrypt the data with the provided or generated key
+    if key is None:
         key, _ = generate_symmetric_key(password, salt=salt)
     f = Fernet(key)
-
-    decrypted_data = f.decrypt(base64.b64decode(encrypted_data['encrypted_data']))
+    try:
+        decrypted_data = f.decrypt(encrypted_data)
+    except Exception:
+        if encrypted_key is not None:
+            # If decryption fails and encrypted key exists, try to decrypt the key
+            key, _ = generate_symmetric_key(password, salt=salt)
+            f2 = Fernet(key)
+            try:
+                decrypted_key = f2.decrypt(encrypted_key)
+                f_final = Fernet(decrypted_key)
+                decrypted_data = f_final.decrypt(encrypted_data)
+            except Exception:
+                raise Exception("Invalid decryption key, password, or second password")
+        else:
+            raise Exception("Invalid decryption key or password")
 
     # Decompressing and then deserializing the object
     decompressed_data = gzip.decompress(decrypted_data)
@@ -246,13 +274,11 @@ def symmetric_decrypt(encrypted_data, password="", cls=None, key=None):
     if cls:
         # Instantiate an object of the provided class
         obj = cls()
-        for key, value in deserialized_data.items():
-            setattr(obj, key, value)  # Set each attribute from the deserialized data
+        for k, value in deserialized_data.items():
+            setattr(obj, k, value)  # Set each attribute from the deserialized data
         return obj
     else:
         # Return the deserialized dictionary if no class was provided
         return deserialized_data
-
-
 
 
