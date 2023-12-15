@@ -1,7 +1,7 @@
 # user_profile.py
 from src.services.utils import file_exists, join_path, Serializable
 from src.services.crypto_utils import generate_symmetric_key, symmetric_encrypt, symmetric_decrypt
-from src.models.SecureFileHandler import SecureFileHandler
+from src.models.secure_file_handler import SecureFileHandler
 from src.models.person import Person
 
 class UserProfile(Serializable):

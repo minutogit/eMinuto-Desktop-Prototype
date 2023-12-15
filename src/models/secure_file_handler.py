@@ -1,3 +1,4 @@
+# secure_file_handler.py
 import json
 from src.services.crypto_utils import symmetric_decrypt, symmetric_encrypt, generate_shared_secret, extract_compressed_pubkey_from_public_ID
 import os

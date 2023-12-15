@@ -1,4 +1,5 @@
-from src.models.vouchertransaction import VoucherTransaction
+# user_transaction.py
+from src.models.voucher_transaction import VoucherTransaction
 from src.services.utils import dprint, amount_precision
 
 class UserTransaction:

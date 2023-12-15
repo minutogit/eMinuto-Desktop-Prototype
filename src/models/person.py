@@ -1,7 +1,7 @@
 # person.py
 from src.models.key import Key
-from src.models.vouchertransaction import VoucherTransaction
-from src.models.usertransaction import UserTransaction
+from src.models.voucher_transaction import VoucherTransaction
+from src.models.user_transaction import UserTransaction
 from src.services.utils import get_timestamp, dprint, amount_precision, get_double_spending_vtransaction_ids
 import json
 

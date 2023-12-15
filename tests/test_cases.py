@@ -1,3 +1,4 @@
+# test_cases.py
 import unittest
 import os
 from tests.models.simulationhelper import SimulationHelper
@@ -172,7 +173,7 @@ class TestPerson(unittest.TestCase):
         then decrypting it and verifying the integrity of the decrypted data.
         """
         from src.models.minuto_voucher import MinutoVoucher
-        from src.models.SecureFileHandler import SecureFileHandler
+        from src.models.secure_file_handler import SecureFileHandler
 
         sim = SimulationHelper()
         sim.simulation_folder = 'simulation'  # Storage location

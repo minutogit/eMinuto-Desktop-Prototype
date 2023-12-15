@@ -4,7 +4,7 @@ import os
 from src.models.key import Key
 from src.services.utils import get_timestamp, dprint, amount_precision, Serializable
 from src.services.crypto_utils import get_hash
-from src.models.vouchertransaction import VoucherTransaction
+from src.models.voucher_transaction import VoucherTransaction
 
 
 class MinutoVoucher(Serializable):
