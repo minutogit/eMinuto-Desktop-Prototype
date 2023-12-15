@@ -236,7 +236,7 @@ class MinutoVoucher(Serializable):
         if not voucher.guarantor_signatures:
             return False
         sign_number = 0
-        #dprint(voucher)
+
         for guarantor_info, signature in voucher.guarantor_signatures:
             # to catch key erros when corrupt file
             try:
@@ -247,7 +247,7 @@ class MinutoVoucher(Serializable):
                 return False
 
             data_to_verify = voucher.get_voucher_data(type="guarantor_signature", guarantor_verify=sign_number)# + json.dumps(guarantor_info, sort_keys=True)
-            #dprint("data_to_verify\n",data_to_verify, "\n")
+
             if not Key.verify_signature(data_to_verify, signature, pubkey_short):
                 return False
             sign_number += 1
