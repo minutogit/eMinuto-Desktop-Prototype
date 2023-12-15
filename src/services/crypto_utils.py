@@ -31,6 +31,30 @@ def create_key_pair(seed_words):
     private_key = ec.derive_private_key(seed_int, ec.SECP384R1())
     return private_key, private_key.public_key()
 
+def b64d(encoded_string):
+    """
+    Decode a Base64 encoded string.
+
+    Args:
+    encoded_string (str): The Base64 encoded string to be decoded.
+
+    Returns:
+    bytes: The decoded data as bytes.
+    """
+    return base64.b64decode(encoded_string)
+
+def b64e(data):
+    """
+    Encode data to Base64 string.
+
+    Args:
+    data (bytes): The data to be encoded in bytes.
+
+    Returns:
+    str: The Base64 encoded string.
+    """
+    return base64.b64encode(data).decode()
+
 def is_base64(s):
     try:
         base64.b64decode(s)
@@ -169,12 +193,23 @@ def generate_shared_secret(private_key, peer_compressed_public_key):
     return shared_secret
 
 
-def generate_symmetric_key(password, salt=None):
+def generate_symmetric_key(password, salt=None, b64_string=False):
+    """
+    Generates a symmetric key using a password and optional salt.
 
+    Args:
+        password (str): The password used to generate the key.
+        salt (bytes, optional): A salt for the key derivation. If None, a random salt is generated.
+        b64_string (bool, optional): If True, both key and salt are returned as Base64 encoded strings. Defaults to False.
+
+    Returns:
+        Tuple[str | bytes, str | bytes]: The generated key and salt, either as bytes or Base64 encoded strings.
+    """
     if isinstance(password, str):
         password = password.encode()
     if salt is None:
         salt = secrets.token_bytes(16)
+
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
@@ -182,6 +217,10 @@ def generate_symmetric_key(password, salt=None):
         iterations=100000,
     )
     key = base64.urlsafe_b64encode(kdf.derive(password))
+
+    if b64_string:
+        return key.decode(), b64e(salt)
+
     return key, salt
 
 def symmetric_encrypt(obj, password="", second_password=None, key=None, salt=None):
@@ -213,18 +252,15 @@ def symmetric_encrypt(obj, password="", second_password=None, key=None, salt=Non
     compressed_data = gzip.compress(serialized_data)
     encrypted_data = f.encrypt(compressed_data)
 
-    # Encrypt the key with the second password if it is provided
+    # Encrypt the key with the second password if provided
     if second_password:
         second_key, _ = generate_symmetric_key(second_password, salt)
         f2 = Fernet(second_key)
         encrypted_key = f2.encrypt(key)
-        return '|'.join([base64.b64encode(encrypted_data).decode(),
-                         base64.b64encode(salt).decode(),
-                         base64.b64encode(encrypted_key).decode()])
+        return '|'.join([b64e(encrypted_data), b64e(salt), b64e(encrypted_key)])
     else:
-        # Without a second password, return only the encrypted data and salt
-        return '|'.join([base64.b64encode(encrypted_data).decode(),
-                         base64.b64encode(salt).decode()])
+        return '|'.join([b64e(encrypted_data), b64e(salt)])
+
 
 def symmetric_decrypt(encrypted_string, password="", cls=None, key=None):
     """
