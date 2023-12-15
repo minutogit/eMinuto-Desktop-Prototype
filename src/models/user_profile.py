@@ -5,6 +5,16 @@ from src.models.secure_file_handler import SecureFileHandler
 from src.models.person import Person
 
 class UserProfile(Serializable):
+    # Singleton instance of UserProfile.
+    # Ensures a single, globally accessible user profile instance across the application.
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        """needed for singleton instance"""
+        if not cls._instance:
+            cls._instance = super(UserProfile, cls).__new__(cls)
+        return cls._instance
+
     def __init__(self):
         # A dictionary to store all personal data
         self.person_data = {
@@ -68,5 +78,6 @@ class UserProfile(Serializable):
     def profile_exists(self):
         return file_exists(self.data_folder, self.profile_filename)
 
-
+# Instantiate the UserProfile
+user_profile = UserProfile()
 
