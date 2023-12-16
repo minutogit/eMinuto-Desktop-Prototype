@@ -112,7 +112,7 @@ class UserInfoScreen(Screen):
             new_value = self.edit_dialog.content_cls.text
         setattr(self, self.current_edit_property, new_value)
         user_profile.person_data[self.current_edit_property] = new_value
-
+        user_profile.save_profile_to_disk()
         # Additional steps to persist changes can be added here,
         # such as updating a database or writing to a file
 
