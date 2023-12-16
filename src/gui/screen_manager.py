@@ -48,6 +48,20 @@ class DashboardScreen(Screen):
         """Demo function to get balance of own vouchers."""
         return "500.00"
 
+class PasswordRecoveryScreen(Screen):
+    """Screen for logging into an existing user profile."""
+    def __init__(self, **kw):
+        super().__init__(**kw)
+
+    def set_new_password_pressed(self,seed, new_password):
+        if user_profile.recover_password_with_seed(str(seed), str(new_password)):
+            self.manager.current = 'dashboard'
+            Snackbar(text="Neues Passwort erfolgreich gesetzt!").open()
+        else:
+            Snackbar(text="Seed ist falsch!").open()
+
+    def is_password_valid(self, password):
+        return is_password_valid(password)
 
 class ProfileLoginScreen(Screen):
     """Screen for logging into an existing user profile."""
@@ -97,6 +111,7 @@ class MyApp(MDApp):
         # Add screens based on whether a user profile exists
         if user_profile.profile_exists():
             sm.add_widget(ProfileLoginScreen(name='profile_login'))
+            sm.add_widget(PasswordRecoveryScreen(name='password_recovery'))
             sm.current = 'profile_login'
         else:
             sm.add_widget(NoProfileStartupScreen(name='no_profile_startup'))
@@ -105,6 +120,8 @@ class MyApp(MDApp):
 
         sm.add_widget(DashboardScreen(name='dashboard'))
         sm.add_widget(UserInfoScreen(name='user_info'))
+
+
 
         return sm
 

@@ -75,6 +75,22 @@
                         pos: self.pos
 
 
+
+<PasswordRecovery>:
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint_y: None
+        height: self.minimum_height
+
+        Label:
+            text: "eMinuto Login"
+            color: 0, 0, 0, 1
+            size_hint_y: None
+            height: dp(48)
+            font_size: '20sp'
+            halign: 'center'
+            pos_hint: {'center_x': 0.5}
+
 <ProfileLoginScreen>:
     ScrollView:
         do_scroll_x: False
@@ -96,12 +112,25 @@
             MDTextField:
                 id: password
                 hint_text: 'Passwort'
+                mode: 'round'
                 password: True
                 size_hint_x: None
                 width: min(200, self.parent.width * 0.9)
                 size_hint_y: None
-                height: dp(48)
+                height: dp(100)
                 pos_hint: {'center_x': 0.5}
+
+            MDTextButton:
+                text: "[u]Passwort vergessen?[/u]"
+                markup: True
+                font_style: 'Caption'
+                pos_hint: {'center_x': 0.5}
+                on_release: app.root.current = 'password_recovery'  # oder entsprechende Funktion
+                valign: 'top'
+                size_hint_y: None
+                height: dp(20)  # Setzen Sie eine spezifische Höhe
+                padding: 0, dp(5), 0, 0
+
 
             Widget:  # Platzhalter für Abstand
                 size_hint_y: None
@@ -115,6 +144,84 @@
                 MDRaisedButton:
                     text: 'Login'
                     on_release: root.on_login_pressed()
+                    size_hint: None, None
+                    width: 200
+                    height: dp(48)
+
+<PasswordRecoveryScreen>:
+    ScrollView:
+        do_scroll_x: False
+        do_scroll_y: True
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: self.minimum_height
+
+            Label:
+                text: "Neues Passwort erstellen"
+                color: 0, 0, 0, 1
+                size_hint_y: None
+                height: dp(48)
+                font_size: '20sp'
+                halign: 'center'
+                pos_hint: {'center_x': 0.5}
+
+            MDTextField:
+                id: seed_field
+                hint_text: 'Seed eingeben'
+                size_hint_x: 0.9
+                size_hint_y: None
+                height: dp(48)
+                multiline: True
+                pos_hint: {'center_x': 0.5}
+                mode: 'rectangle'
+
+            Widget:
+                size_hint_y: None
+                height: dp(20)
+
+            MDTextField:
+                id: password
+                hint_text: 'Neues Passwort'
+                password: True
+                size_hint_y: None
+                height: dp(100)
+                pos_hint: {'center_x': 0.5}
+                mode: 'round'
+                password: True
+                size_hint_x: None
+                width: min(200, self.parent.width * 0.9)
+
+
+            Widget:
+                size_hint_y: None
+                height: dp(20)
+
+            MDTextField:
+                id: confirm_password
+                hint_text: 'Passwort wiederholen'
+                password: True
+                height: dp(100)
+                pos_hint: {'center_x': 0.5}
+                mode: 'round'
+                password: True
+                size_hint_x: None
+                width: min(200, self.parent.width * 0.9)
+                padding: 50, 50, 50, 50
+
+
+            Widget: # for space over next button
+                size_hint_y: None
+                height: dp(20)
+            AnchorLayout:
+                anchor_x: 'center'
+                anchor_y: 'top'
+                size_hint_y: None
+                height: dp(48)
+                MDRaisedButton:
+                    text: 'Neues Passwort setzten'
+                    disabled: not (seed_field.text != "" and password.text == confirm_password.text and root.is_password_valid(password.text))
+                    on_release: root.set_new_password_pressed(seed_field.text, password.text)
                     size_hint: None, None
                     width: 200
                     height: dp(48)
