@@ -1,4 +1,5 @@
 # screenmanager.py
+from kivymd.uix.snackbar import Snackbar
 
 from src.services.crypto_utils import generate_seed
 from src.services.utils import is_password_valid
@@ -52,6 +53,13 @@ class ProfileLoginScreen(Screen):
     """Screen for logging into an existing user profile."""
     def __init__(self, **kw):
         super().__init__(**kw)
+
+    def on_login_pressed(self):
+        if self.load_existing_profile(self.ids.password.text):
+            self.manager.current = 'dashboard'
+        else:
+            Snackbar(text="Falsches Passwort").open()
+            self.ids.password.text = ''
 
     def load_existing_profile(self, password):
         """Load an existing profile with the given password."""
