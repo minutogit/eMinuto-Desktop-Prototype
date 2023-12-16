@@ -152,19 +152,31 @@
     ScrollView:
         do_scroll_x: False
         do_scroll_y: True
-        BoxLayout:
+        MDBoxLayout:
             orientation: 'vertical'
             size_hint_y: None
             height: self.minimum_height
 
-            Label:
-                text: "Neues Passwort erstellen"
-                color: 0, 0, 0, 1
+            MDBoxLayout:
+                orientation: 'horizontal'
                 size_hint_y: None
-                height: dp(48)
-                font_size: '20sp'
-                halign: 'center'
-                pos_hint: {'center_x': 0.5}
+                height: dp(50)
+                padding: dp(0), dp(10)
+
+                MDIconButton:
+                    icon: "arrow-left"
+                    user_font_size: "24sp"
+                    pos_hint: {"center_y": .5}
+                    theme_text_color: "Custom"
+                    on_release: root.go_back_to_profile_login()
+                MDLabel:
+                    text: "Neues Passwort setzen"
+                    font_style: "H5"
+                    size_hint_x: None
+                    width: self.texture_size[0]
+                    theme_text_color: "Custom"
+                    valign: "top"
+                    adaptive_size: True
 
             MDTextField:
                 id: seed_field
@@ -219,7 +231,7 @@
                 size_hint_y: None
                 height: dp(48)
                 MDRaisedButton:
-                    text: 'Neues Passwort setzten'
+                    text: 'Neues Passwort setzen'
                     disabled: not (seed_field.text != "" and password.text == confirm_password.text and root.is_password_valid(password.text))
                     on_release: root.set_new_password_pressed(seed_field.text, password.text)
                     size_hint: None, None

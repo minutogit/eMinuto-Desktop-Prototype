@@ -5,6 +5,7 @@ from src.services.crypto_utils import generate_seed
 from src.services.utils import is_password_valid
 from kivymd.app import MDApp
 from kivy.lang import Builder
+from kivy.clock import Clock
 from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
 from kivy.properties import StringProperty
 from src.gui.user_info_screen import UserInfoScreen
@@ -62,6 +63,17 @@ class PasswordRecoveryScreen(Screen):
 
     def is_password_valid(self, password):
         return is_password_valid(password)
+
+    def go_back_to_profile_login(self):
+        """Temporarily sets the transition direction for this switch."""
+        self.manager.transition.direction = 'right'
+        self.manager.current = 'profile_login'
+        # Schedule resetting the transition direction after a short delay
+        Clock.schedule_once(lambda dt: self.reset_transition_direction(), 0.5)
+
+    def reset_transition_direction(self):
+        """Resets the transition direction."""
+        self.manager.transition.direction = 'left'
 
 class ProfileLoginScreen(Screen):
     """Screen for logging into an existing user profile."""
