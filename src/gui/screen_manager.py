@@ -49,6 +49,17 @@ class DashboardScreen(Screen):
         """Demo function to get balance of own vouchers."""
         return "500.00"
 
+    def logout(self):
+        user_profile.__init__() # reset profile
+        self.manager.transition.direction = 'right'
+        self.manager.current = 'profile_login'
+        # Schedule resetting the transition direction after a short delay
+        Clock.schedule_once(lambda dt: self.reset_transition_direction(), 0.5)
+
+    def reset_transition_direction(self):
+        """Resets the transition direction."""
+        self.manager.transition.direction = 'left'
+
 class PasswordRecoveryScreen(Screen):
     """Screen for logging into an existing user profile."""
     def __init__(self, **kw):
@@ -56,6 +67,7 @@ class PasswordRecoveryScreen(Screen):
 
     def set_new_password_pressed(self,seed, new_password):
         if user_profile.recover_password_with_seed(str(seed), str(new_password)):
+            self.ids.seed_field.text = ''
             self.manager.current = 'dashboard'
             Snackbar(text="Neues Passwort erfolgreich gesetzt!").open()
         else:
@@ -66,6 +78,7 @@ class PasswordRecoveryScreen(Screen):
 
     def go_back_to_profile_login(self):
         """Temporarily sets the transition direction for this switch."""
+        self.ids.seed_field.text = ''
         self.manager.transition.direction = 'right'
         self.manager.current = 'profile_login'
         # Schedule resetting the transition direction after a short delay
@@ -83,6 +96,7 @@ class ProfileLoginScreen(Screen):
     def on_login_pressed(self):
         if self.load_existing_profile(self.ids.password.text):
             self.manager.current = 'dashboard'
+            self.ids.password.text = ''
         else:
             Snackbar(text="Falsches Passwort").open()
             self.ids.password.text = ''

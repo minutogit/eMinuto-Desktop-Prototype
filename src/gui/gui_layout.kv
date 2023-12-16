@@ -3,24 +3,36 @@
         orientation: 'vertical'
         padding: dp(20), dp(0)
 
-        # Weißer Bereich
-        BoxLayout:
+        MDBoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
             height: dp(50)
-            padding: dp(0), dp(10)
-
-            MDLabel:
-                text: root.title
-                size_hint_x: 0.9
-                font_size: '20sp'
-                bold: True
-                #text_size: self.width, None
 
             MDIconButton:
                 icon: "account-circle"
-                user_font_size: "32sp"
+                icon_size: "36sp"
                 on_release: app.root.current = 'user_info'
+                pos_hint: {'center_y': .5}  # Vertically centers the icon
+
+            MDLabel:
+                text: root.title
+                font_style: "H5"
+                size_hint_x: None
+                width: self.texture_size[0]
+                theme_text_color: "Custom"
+                valign: "top"
+                adaptive_size: True
+                pos_hint: {'center_y': .5}
+
+            Widget:
+                size_hint_x: 1  # This empty widget pushes next icon to the right
+
+            MDIconButton:
+                icon: "exit-to-app"
+                icon_size: "32sp"
+                on_release: root.logout()  # logout
+                pos_hint: {'center_y': .5}  # Vertically centers the icon
+
 
          # Blue area
         BoxLayout:
@@ -60,7 +72,6 @@
                 height: dp(30)  # Height for the second additional label
                 text_size: self.width, None
 
-
         # white area
         ScrollView:
             BoxLayout:
@@ -75,21 +86,6 @@
                         pos: self.pos
 
 
-
-<PasswordRecovery>:
-    BoxLayout:
-        orientation: 'vertical'
-        size_hint_y: None
-        height: self.minimum_height
-
-        Label:
-            text: "eMinuto Login"
-            color: 0, 0, 0, 1
-            size_hint_y: None
-            height: dp(48)
-            font_size: '20sp'
-            halign: 'center'
-            pos_hint: {'center_x': 0.5}
 
 <ProfileLoginScreen>:
     ScrollView:
