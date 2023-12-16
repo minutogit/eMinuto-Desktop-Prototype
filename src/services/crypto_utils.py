@@ -244,8 +244,12 @@ def symmetric_encrypt(obj, password="", second_password=None, key=None, salt=Non
     if password == "" and key == None:
         raise Exception("No key or password provided.")
 
+    if key is not None and not isinstance(key, bytes):
+        raise TypeError("Key must be a byte string.")
+
     if key is None or salt is None:
         key, salt = generate_symmetric_key(password, salt)
+
     f = Fernet(key)
     obj_dict = obj.to_dict() if isinstance(obj, Serializable) else obj
     serialized_data = json.dumps(obj_dict).encode('utf-8')
