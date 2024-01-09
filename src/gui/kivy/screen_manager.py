@@ -8,12 +8,12 @@ from kivy.lang import Builder
 from kivy.clock import Clock
 from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
 from kivy.properties import StringProperty
-from src.gui.user_info_screen import UserInfoScreen
+from src.gui.kivy.user_info_screen import UserInfoScreen
 from src.models.user_profile import user_profile
 
 # Load the GUI layout files
-Builder.load_file('gui/gui_layout.kv')
-Builder.load_file('gui/user_info_screen.kv')
+Builder.load_file('src/gui/kivy/gui_layout.kv')
+Builder.load_file('src/gui/kivy/user_info_screen.kv')
 
 class NoProfileStartupScreen(Screen):
     """Screen displayed when no user profile is found."""
