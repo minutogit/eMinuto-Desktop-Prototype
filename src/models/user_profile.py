@@ -30,6 +30,7 @@ class UserProfile(Serializable):
         }
 
         # Additional attributes of UserProfile
+        self.profile_name = ""
         self.balance = 0
         self.transaction_pin = None
         self.encrypted_seed_words = None
@@ -46,12 +47,13 @@ class UserProfile(Serializable):
         self.person = Person(self.person_data, seed=seed)
         return True
 
-    def create_new_profile(self, first_name, last_name, organization, seed, profile_password):
+    def create_new_profile(self, profile_name, first_name, last_name, organization, seed, profile_password):
         # storekey and salt in object for saving to disk
         seed = " ".join(str(seed).lower().split())  # remove multiple white spaces, lower case
         self.encryption_key, self.encryption_salt = generate_symmetric_key(profile_password, b64_string=True)
         # when password lost, seed is second password for recovery
         self.encrypted_seed_words = symmetric_encrypt(seed, second_password=seed, key=self.encryption_key.encode('utf-8'), salt=b64d(self.encryption_salt))
+        self.profile_name = profile_name
         self.person_data['first_name'] = first_name
         self.person_data['last_name'] = last_name
         self.person_data['organization'] = organization

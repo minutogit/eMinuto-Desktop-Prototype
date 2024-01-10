@@ -12,6 +12,7 @@ from src.gui.qt.ui_components.dialog_generate_profile import Ui_DialogGeneratePr
 #afrom ui_components.dialog_new_password import Ui_DialogNewPassword
 from src.gui.qt.ui_components.dialog_enter_password import Ui_DialogEnterPassword
 from src.gui.qt.ui_components.dialog_profile_create_selection import Ui_Dialog_Profile_Create_Selection
+from src.gui.qt.ui_components.dialog_profile import Ui_Form_Profile
 
 
 def show_message_box(title, text):
@@ -23,7 +24,7 @@ def show_message_box(title, text):
 def apply_global_styles(app):
     app.setStyleSheet("""
         QMainWindow {
-            background-color: #f2f2f2; /* Hintergrundfarbe der Hauptfenster */
+            background-color: #f2f2f2; 
         }
         QLineEdit, QTextBrowser, QTextEdit {
             background-color: white;
@@ -34,9 +35,9 @@ def apply_global_styles(app):
             color: #34495e;
         }
         QLineEdit:focus, QTextEdit:focus {
-            border: 2px solid #3498db; /* Fetten Rand bei Fokus */
+            border: 2px solid #3498db; 
         }
-        /* Hier können Sie weitere Stile für andere Widget-Typen hinzufügen */
+        
     """)
 
 
@@ -47,10 +48,56 @@ class Dialog_Enter_Password(QMainWindow, Ui_DialogEnterPassword):
         super().__init__()
         self.setupUi(self)
         self.wrong_passwort_counter = 0
-        #self.pushButton_OK.clicked.connect(self.check_password)
+        self.pushButton_OK.clicked.connect(self.check_password)
         #self.lineEdit_entered_password.returnPressed.connect(self.check_password)
         self.change_existing_password = False
         self.show_seed_words = False
+
+    def check_password(self):
+        password = self.lineEdit_entered_password.text()
+        if not user_profile.init_existing_profile(password):
+            show_message_box("Falsches Passwort!", "Falsches Passwort eingegeben!")
+            self.lineEdit_entered_password.setText("")
+            return
+        frm_main_window.update_values()
+        self.close()
+
+
+
+class Dialog_Profile(QMainWindow, Ui_Form_Profile):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+
+        self.pushButton_save.clicked.connect(self.save_profile)
+        self.pushButton_close.clicked.connect(self.close)
+
+    def init_and_show(self):
+        self.lineEdit_profile_name.setText(user_profile.profile_name)
+        self.lineEdit_first_name.setText(user_profile.person_data['first_name'])
+        self.lineEdit_last_name.setText(user_profile.person_data['last_name'])
+        self.lineEdit_organization.setText(user_profile.person_data['organization'])
+        self.lineEdit_address.setText(user_profile.person_data['address'])
+        self.lineEdit_email.setText(user_profile.person_data['email'])
+        self.lineEdit_phone.setText(user_profile.person_data['phone'])
+        self.textEdit_service_offer.setText(user_profile.person_data['service_offer'])
+        self.lineEdit_coordinates.setText(user_profile.person_data['coordinates'])
+        self.show()
+
+    def save_profile(self):
+        user_profile.profile_name = self.lineEdit_profile_name.text()
+        user_profile.person_data['first_name'] = self.lineEdit_first_name.text()
+        user_profile.person_data['last_name'] = self.lineEdit_last_name.text()
+        user_profile.person_data['organization'] = self.lineEdit_organization.text()
+        user_profile.person_data['address'] = self.lineEdit_address.text()
+        user_profile.person_data['email'] = self.lineEdit_email.text()
+        user_profile.person_data['phone'] = self.lineEdit_phone.text()
+        user_profile.person_data['service_offer'] = self.textEdit_service_offer.toPlainText()
+        user_profile.person_data['coordinates'] = self.lineEdit_coordinates.text()
+        frm_main_window.update_values()
+        user_profile.save_profile_to_disk()
+
+
 
 
 class Dialog_Profile_Create_Selection(QMainWindow, Ui_Dialog_Profile_Create_Selection):
@@ -93,6 +140,7 @@ class Dialog_Generate_Profile(QMainWindow, Ui_DialogGenerateProfile):
         first_name = self.lineEdit_first_name.text().strip()
         last_name = self.lineEdit_last_name.text().strip()
 
+
         #check conditions
         if not seed == retyped_seed.strip():
             show_message_box("Fehler!", "Schlüsselwörter stimmen nicht überein. Bitte prüfen!")
@@ -102,10 +150,14 @@ class Dialog_Generate_Profile(QMainWindow, Ui_DialogGenerateProfile):
             return
         if password != password_confirmed:
             show_message_box("Fehler!", "Passwörter stimmen nicht überein.")
+            return
         if not is_password_valid(password):
             show_message_box("Fehler!", "Passwort muss mindestens 8 Zeichen haben.")
+            return
 
-        user_profile.create_new_profile(first_name, last_name, organization, seed, password)
+        user_profile.create_new_profile(profile_name, first_name, last_name, organization, seed, password)
+        frm_main_window.update_values()
+
         self.close()
 
 
@@ -113,10 +165,37 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.setWindowTitle(f"eMinuto")
+        self.actionProfile.triggered.connect(dialog_profile.init_and_show)  # menu
+        self.actionClose.triggered.connect(self.close)
+
+    def update_values(self):
+        self.setWindowTitle(f"eMinuto - Profil: {user_profile.profile_name}")
+        self.label_username.setText(f"{user_profile.person_data['first_name']} {user_profile.person_data['last_name']}")
+        self.lineEdit_own_balance.setText(self.get_balance_own_vouchers())
+        self.lineEdit_other_balance.setText(self.get_balance_other_vouchers())
+
+    def on_enter(self):
+        """Update the screen when entering."""
+        self.title = self.get_title()
+        self.balance_other_vouchers = str(self.get_balance_other_vouchers())
+        self.balance_own_vouchers = str(self.get_balance_own_vouchers())
+
+    def get_title(self):
+        """Get the user's full name for the title."""
+        name = user_profile.person_data['first_name']
+        surname = user_profile.person_data['last_name']
+        return f"{name} {surname}"
+
+    def get_balance_other_vouchers(self):
+        """Demo function to get balance of other vouchers."""
+        return "123.45"
+
+    def get_balance_own_vouchers(self):
+        """Demo function to get balance of own vouchers."""
+        return "500.00"
 
 
-# app = QApplication()
-#
 #
 app = QApplication([])
 apply_global_styles(app)
@@ -124,6 +203,10 @@ apply_global_styles(app)
 dialog_generate_profile = Dialog_Generate_Profile()
 dialog_enter_password = Dialog_Enter_Password()
 dialog_profile_create_selection = Dialog_Profile_Create_Selection()
+dialog_profile = Dialog_Profile()
+
+
+frm_main_window = Frm_Mainwin()
 
 #
 #
