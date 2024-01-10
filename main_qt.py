@@ -9,7 +9,7 @@ def main():
 
     qt_main.frm_main_window.show()
     if user_profile.profile_exists():
-        qt_main.dialog_enter_password.show()
+        qt_main.dialog_profile_login.show()
     else:
         qt_main.dialog_profile_create_selection.show()
 

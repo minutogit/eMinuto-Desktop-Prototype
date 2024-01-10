@@ -9,8 +9,7 @@ from src.models.user_profile import user_profile
 
 from src.gui.qt.ui_components.main_window import Ui_MainWindow
 from src.gui.qt.ui_components.dialog_generate_profile import Ui_DialogGenerateProfile
-#afrom ui_components.dialog_new_password import Ui_DialogNewPassword
-from src.gui.qt.ui_components.dialog_enter_password import Ui_DialogEnterPassword
+from src.gui.qt.ui_components.dialog_profile_login import Ui_DialogProfileLogin
 from src.gui.qt.ui_components.dialog_profile_create_selection import Ui_Dialog_Profile_Create_Selection
 from src.gui.qt.ui_components.dialog_profile import Ui_Form_Profile
 
@@ -41,27 +40,27 @@ def apply_global_styles(app):
     """)
 
 
-
-
-class Dialog_Enter_Password(QMainWindow, Ui_DialogEnterPassword):
+class Dialog_Profile_Login(QMainWindow, Ui_DialogProfileLogin):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.wrong_passwort_counter = 0
         self.pushButton_OK.clicked.connect(self.check_password)
-        #self.lineEdit_entered_password.returnPressed.connect(self.check_password)
-        self.change_existing_password = False
-        self.show_seed_words = False
+        self.lineEdit_entered_password.textChanged.connect(self.on_password_text_changed)
+
+    def on_password_text_changed(self, text):
+        # Setzt das Label nur zurück, wenn der Benutzer etwas eingibt
+        if text:
+            self.label_status.setText("")
 
     def check_password(self):
         password = self.lineEdit_entered_password.text()
         if not user_profile.init_existing_profile(password):
-            show_message_box("Falsches Passwort!", "Falsches Passwort eingegeben!")
-            self.lineEdit_entered_password.setText("")
+            self.label_status.setText("Passwort falsch")
+            self.lineEdit_entered_password.clear()
+            self.lineEdit_entered_password.setFocus()
             return
         frm_main_window.update_values()
         self.close()
-
 
 
 class Dialog_Profile(QMainWindow, Ui_Form_Profile):
@@ -96,8 +95,6 @@ class Dialog_Profile(QMainWindow, Ui_Form_Profile):
         user_profile.person_data['coordinates'] = self.lineEdit_coordinates.text()
         frm_main_window.update_values()
         user_profile.save_profile_to_disk()
-
-
 
 
 class Dialog_Profile_Create_Selection(QMainWindow, Ui_Dialog_Profile_Create_Selection):
@@ -201,7 +198,7 @@ app = QApplication([])
 apply_global_styles(app)
 
 dialog_generate_profile = Dialog_Generate_Profile()
-dialog_enter_password = Dialog_Enter_Password()
+dialog_profile_login = Dialog_Profile_Login()
 dialog_profile_create_selection = Dialog_Profile_Create_Selection()
 dialog_profile = Dialog_Profile()
 
