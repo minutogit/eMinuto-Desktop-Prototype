@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>551</width>
+    <height>534</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -163,7 +163,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>551</width>
      <height>22</height>
     </rect>
    </property>
@@ -182,7 +182,14 @@
     <addaction name="actionProfileLogin"/>
     <addaction name="actionProfileLogout"/>
    </widget>
+   <widget class="QMenu" name="menuMinuto">
+    <property name="title">
+     <string>Minuto</string>
+    </property>
+    <addaction name="actionCreateMinuto"/>
+   </widget>
    <addaction name="menuStart"/>
+   <addaction name="menuMinuto"/>
    <addaction name="menuProfile"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -214,6 +221,11 @@
   <action name="actionCreateProfile">
    <property name="text">
     <string>Profil erstellen</string>
+   </property>
+  </action>
+  <action name="actionCreateMinuto">
+   <property name="text">
+    <string>Minuto schöpfen</string>
    </property>
   </action>
  </widget>

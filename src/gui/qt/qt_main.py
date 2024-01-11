@@ -13,6 +13,8 @@ from src.gui.qt.ui_components.dialog_generate_profile import Ui_DialogGeneratePr
 from src.gui.qt.ui_components.dialog_profile_login import Ui_DialogProfileLogin
 from src.gui.qt.ui_components.dialog_profile_create_selection import Ui_Dialog_Profile_Create_Selection
 from src.gui.qt.ui_components.dialog_profile import Ui_Form_Profile
+from src.gui.qt.ui_components.dialog_create_minuto import Ui_DialogCreateMinuto
+
 
 
 def show_message_box(title, text):
@@ -40,6 +42,36 @@ def apply_global_styles(app):
         
     """)
 
+
+class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.lineEdit_amount.textChanged.connect(self.update_voucher_description)
+
+    def init_values(self):
+        self.lineEdit_amount.setText("1000")
+        self.update_voucher_description(self.lineEdit_amount.text())
+        self.lineEdit_creator_organization.setText(user_profile.person_data['organization'])
+        self.lineEdit_creator_first_name.setText(user_profile.person_data['first_name'])
+        self.lineEdit_creator_last_name.setText(user_profile.person_data['last_name'])
+        self.lineEdit_creator_address.setText(user_profile.person_data['address'])
+        self.lineEdit_email.setText(user_profile.person_data['email'])
+        self.lineEdit_phone.setText(user_profile.person_data['phone'])
+        self.textEdit_service_offer.setText(user_profile.person_data['service_offer'])
+        self.label_coordinates.setText(user_profile.person_data['coordinates'])
+
+    def update_voucher_description(self, amount):
+        """Update the voucher description based on the amount."""
+        if amount:
+            self.label_voucher_description.setText(
+                f"Gutschein für Waren oder Dienstleistungen im Wert von {amount} Minuten qualitativer Leistung.")
+        else:
+            self.label_voucher_description.setText("Gutschein für Waren oder Dienstleistungen")
+
+    def init_and_show(self):
+        self.init_values()
+        self.show()
 
 class Dialog_Profile_Login(QMainWindow, Ui_DialogProfileLogin):
     def __init__(self):
@@ -172,6 +204,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.setWindowTitle(f"eMinuto")
         self.actionEditProfile.triggered.connect(dialog_profile.init_and_show)
+        self.actionCreateMinuto.triggered.connect(dialog_create_minuto.init_and_show)
         self.actionProfileLogin.triggered.connect(dialog_profile_login.login)
         self.actionProfileLogout.triggered.connect(self.profile_logout)
 
@@ -243,6 +276,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         if profile_initialized:
             show(self.actionEditProfile)
             show(self.actionProfileLogout)
+            show(self.actionCreateMinuto)
             enable(self.lineEdit_own_balance)
             enable(self.lineEdit_other_balance)
 
@@ -256,7 +290,10 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
             hide(self.actionEditProfile)
             hide(self.actionProfileLogout)
             hide(self.actionCreateProfile)
+            hide(self.actionCreateMinuto)
 
+
+            # disable(self.menuMinuto) does not work
             disable(self.lineEdit_own_balance)
             disable(self.lineEdit_other_balance)
 
@@ -267,7 +304,9 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
             hide(self.actionEditProfile)
             hide(self.actionProfileLogout)
             hide(self.actionProfileLogin)
+            hide(self.actionCreateMinuto)
 
+            # disable(self.menuMinuto) does not work
             disable(self.lineEdit_own_balance)
             disable(self.lineEdit_other_balance)
 
@@ -283,6 +322,7 @@ dialog_generate_profile = Dialog_Generate_Profile()
 dialog_profile_login = Dialog_Profile_Login()
 dialog_profile_create_selection = Dialog_Profile_Create_Selection()
 dialog_profile = Dialog_Profile()
+dialog_create_minuto = Dialog_Create_Minuto()
 
 
 frm_main_window = Frm_Mainwin()
