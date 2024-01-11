@@ -112,6 +112,19 @@ class UserProfile(Serializable):
         return {key: value for key, value in self.__dict__.items()
                 if not key.startswith('_') and key not in exclude}
 
+    def get_own_minuto_balance(self):
+        if not self._profile_initialized:
+            return "0,00"
+
+        return "123,00" # todo
+
+    def get_other_minuto_balance(self):
+        if not self._profile_initialized:
+            return "0,00"
+
+        return "123,00" # todo
+
+
     def profile_exists(self):
         return file_exists(self.data_folder, self.profile_filename)
 

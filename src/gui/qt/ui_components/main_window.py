@@ -79,6 +79,7 @@ class Ui_MainWindow(object):
         self.lineEdit_own_balance = QLineEdit(self.layoutWidget)
         self.lineEdit_own_balance.setObjectName(u"lineEdit_own_balance")
         self.lineEdit_own_balance.setFont(font2)
+        self.lineEdit_own_balance.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
         self.lineEdit_own_balance.setReadOnly(True)
 
         self.horizontalLayout.addWidget(self.lineEdit_own_balance)
@@ -98,6 +99,7 @@ class Ui_MainWindow(object):
         self.lineEdit_other_balance = QLineEdit(self.layoutWidget)
         self.lineEdit_other_balance.setObjectName(u"lineEdit_other_balance")
         self.lineEdit_other_balance.setFont(font2)
+        self.lineEdit_other_balance.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
         self.lineEdit_other_balance.setReadOnly(True)
 
         self.horizontalLayout_2.addWidget(self.lineEdit_other_balance)

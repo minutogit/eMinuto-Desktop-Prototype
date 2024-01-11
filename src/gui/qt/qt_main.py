@@ -1,6 +1,7 @@
 # qt_main.py
 from PySide6.QtWidgets import QApplication, QMainWindow, \
     QMessageBox, QLineEdit
+
 from PySide6 import QtSql
 from src.services.crypto_utils import generate_seed
 from src.services.utils import is_password_valid
@@ -45,6 +46,8 @@ class Dialog_Profile_Login(QMainWindow, Ui_DialogProfileLogin):
         super().__init__()
         self.setupUi(self)
         self.pushButton_OK.clicked.connect(self.check_password)
+        self.lineEdit_entered_password.returnPressed.connect(self.check_password)
+
         self.lineEdit_entered_password.textChanged.connect(self.on_password_text_changed)
 
     def on_password_text_changed(self, text):
@@ -59,8 +62,13 @@ class Dialog_Profile_Login(QMainWindow, Ui_DialogProfileLogin):
             self.lineEdit_entered_password.clear()
             self.lineEdit_entered_password.setFocus()
             return
-        frm_main_window.update_values()
+        self.lineEdit_entered_password.clear()
+        frm_main_window.profile_login()
         self.close()
+
+    def login(self):
+        self.lineEdit_entered_password.setFocus()
+        self.show()
 
 
 class Dialog_Profile(QMainWindow, Ui_Form_Profile):
@@ -164,7 +172,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.setWindowTitle(f"eMinuto")
         self.actionEditProfile.triggered.connect(dialog_profile.init_and_show)
-        self.actionProfileLogin.triggered.connect(dialog_profile_login.show)
+        self.actionProfileLogin.triggered.connect(dialog_profile_login.login)
         self.actionProfileLogout.triggered.connect(self.profile_logout)
 
         self.actionClose.triggered.connect(self.close)
@@ -173,13 +181,20 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
     def update_values(self):
         self.setWindowTitle(f"eMinuto - Profil: {user_profile.profile_name}")
         self.label_username.setText(f"{user_profile.person_data['first_name']} {user_profile.person_data['last_name']}")
-        self.lineEdit_own_balance.setText(self.get_balance_own_vouchers())
-        self.lineEdit_other_balance.setText(self.get_balance_other_vouchers())
+        self.lineEdit_own_balance.setText(user_profile.get_own_minuto_balance())
+        self.lineEdit_other_balance.setText(user_profile.get_other_minuto_balance())
+
+
+    def profile_login(self):
+        self.update_values()
         self.set_gui_depending_profile_status()
+        self.show_status_message("Erfolgreich eingeloggt.")
 
     def profile_logout(self):
         user_profile.profile_logout()
         self.update_values()
+        self.set_gui_depending_profile_status()
+        self.show_status_message("Erfolgreich ausgeloggt.")
 
     def on_enter(self):
         """Update the screen when entering."""
@@ -255,6 +270,9 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
 
             disable(self.lineEdit_own_balance)
             disable(self.lineEdit_other_balance)
+
+    def show_status_message(self, message):
+        self.statusBar().showMessage(message, 5000)  # 5 seconds timeout
 
 
 #
