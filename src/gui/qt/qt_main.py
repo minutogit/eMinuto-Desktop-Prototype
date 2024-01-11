@@ -163,14 +163,23 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.setWindowTitle(f"eMinuto")
-        self.actionProfile.triggered.connect(dialog_profile.init_and_show)  # menu
+        self.actionEditProfile.triggered.connect(dialog_profile.init_and_show)
+        self.actionProfileLogin.triggered.connect(dialog_profile_login.show)
+        self.actionProfileLogout.triggered.connect(self.profile_logout)
+
         self.actionClose.triggered.connect(self.close)
+        self.set_gui_depending_profile_status()
 
     def update_values(self):
         self.setWindowTitle(f"eMinuto - Profil: {user_profile.profile_name}")
         self.label_username.setText(f"{user_profile.person_data['first_name']} {user_profile.person_data['last_name']}")
         self.lineEdit_own_balance.setText(self.get_balance_own_vouchers())
         self.lineEdit_other_balance.setText(self.get_balance_other_vouchers())
+        self.set_gui_depending_profile_status()
+
+    def profile_logout(self):
+        user_profile.profile_logout()
+        self.update_values()
 
     def on_enter(self):
         """Update the screen when entering."""
@@ -191,6 +200,61 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
     def get_balance_own_vouchers(self):
         """Demo function to get balance of own vouchers."""
         return "500.00"
+
+    def set_gui_depending_profile_status(self):
+        """changes the gui depending on whether the profile exists and is active or inactive."""
+
+        profile_exists = user_profile.profile_exists()
+        profile_initialized = user_profile.profile_initialized()
+
+        profile_name = user_profile.profile_name
+        window_title = f"eMinuto"
+
+
+        def hide(object): #helper
+            object.setVisible(False)
+
+        def show(object):
+            object.setVisible(True)
+
+        def disable(object):
+            object.setEnabled(False)
+
+        def enable(object):
+            object.setEnabled(True)
+
+
+        #changings of GUI
+        if profile_initialized:
+            show(self.actionEditProfile)
+            show(self.actionProfileLogout)
+            enable(self.lineEdit_own_balance)
+            enable(self.lineEdit_other_balance)
+
+            hide(self.actionProfileLogin)
+            hide(self.actionCreateProfile)
+
+
+        if profile_exists and not profile_initialized:
+            show(self.actionProfileLogin)
+
+            hide(self.actionEditProfile)
+            hide(self.actionProfileLogout)
+            hide(self.actionCreateProfile)
+
+            disable(self.lineEdit_own_balance)
+            disable(self.lineEdit_other_balance)
+
+
+        if not profile_exists:
+            show(self.actionCreateProfile)
+
+            hide(self.actionEditProfile)
+            hide(self.actionProfileLogout)
+            hide(self.actionProfileLogin)
+
+            disable(self.lineEdit_own_balance)
+            disable(self.lineEdit_other_balance)
 
 
 #

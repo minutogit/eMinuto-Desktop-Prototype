@@ -10,13 +10,17 @@ class UserProfile(Serializable):
     _instance = None
 
     def __new__(cls, *args, **kwargs):
-        """needed for singleton instance"""
+        """Required for singleton instance"""
         if not cls._instance:
             cls._instance = super(UserProfile, cls).__new__(cls)
         return cls._instance
 
     def __init__(self):
-        # A dictionary to store all personal data
+        # Initialize the profile state
+        self.initialize_state()
+
+    def initialize_state(self):
+        """Initialize or reset the state of the profile."""
         self.person_data = {
             'first_name': '',
             'last_name': '',
@@ -29,16 +33,16 @@ class UserProfile(Serializable):
             'coordinates': ''
         }
 
-        # Additional attributes of UserProfile
         self.profile_name = ""
         self.balance = 0
         self.transaction_pin = None
         self.encrypted_seed_words = None
         self.encryption_key = None
         self.encryption_salt = None
-        self.data_folder = 'mdata' # static folder for app
+        self.data_folder = 'mdata'  # static folder for the app
         self.profile_filename = 'userprofile.dat'
-        self.person = None # _ to exclude storage on disk
+        self.person = None
+        self._profile_initialized = False
 
     def init_existing_profile(self,password):
         if not self.load_profile_from_disk(password):
@@ -59,6 +63,7 @@ class UserProfile(Serializable):
         self.person_data['organization'] = organization
         self.person = Person(self.person_data,seed=seed)
         self.save_profile_to_disk(second_password=seed)
+        self._profile_initialized = True
 
     def recover_password_with_seed(self,seed, new_password):
         seed = " ".join(str(seed).lower().split()) # remove multiple white spaces, lower case
@@ -84,11 +89,16 @@ class UserProfile(Serializable):
         file_path = join_path(self.data_folder, self.profile_filename)
         filehandler.encrypt_and_save(self, file_path, password=password,  second_password=recovery_password,key=self.encryption_key.encode('utf-8'), salt=b64d(self.encryption_salt))
 
+    def profile_logout(self):
+        self.save_profile_to_disk()
+        self.initialize_state()
+
     def load_profile_from_disk(self, password):
         filehandler = SecureFileHandler()
         try:
             loaded_profile = filehandler.decrypt_and_load(join_path(self.data_folder, self.profile_filename), password, UserProfile)
             self.__dict__.update(loaded_profile.__dict__)
+            self._profile_initialized = True
             return True
         except Exception: # Exception when password is wrong
             return False
@@ -104,6 +114,9 @@ class UserProfile(Serializable):
 
     def profile_exists(self):
         return file_exists(self.data_folder, self.profile_filename)
+
+    def profile_initialized(self):
+        return self._profile_initialized
 
 # Instantiate the UserProfile
 user_profile = UserProfile()
