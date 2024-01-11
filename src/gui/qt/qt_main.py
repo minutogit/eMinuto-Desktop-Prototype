@@ -48,6 +48,31 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
         super().__init__()
         self.setupUi(self)
         self.lineEdit_amount.textChanged.connect(self.update_voucher_description)
+        self.pushButton_CreateVoucher.clicked.connect(self.create_minuto)
+
+    def create_minuto(self):
+        # Extrahiere die Werte aus den GUI-Elementen
+        amount = int(self.lineEdit_amount.text())
+        region = self.lineEdit_region.text()
+        years_valid = int(self.spinBox_years_valid.text())
+
+        # Extrahiere Informationen aus anderen GUI-Elementen
+        first_name = self.lineEdit_creator_first_name.text()
+        last_name = self.lineEdit_creator_last_name.text()
+        organization = self.lineEdit_creator_organization.text()
+        address = self.lineEdit_creator_address.text()
+        email = self.lineEdit_email.text()
+        phone = self.lineEdit_phone.text()
+        service_offer = self.textEdit_service_offer.toPlainText()
+        coordinates = self.lineEdit_coordinates.text()
+        is_test_vocher = self.checkBox_is_test_voucher.isChecked()
+
+        # Geschlechtswert von QComboBox ermitteln
+        gender = self.comboBox_creator_gender.currentIndex() # 0 unknown, 1 male, 2 female
+
+        # Erstelle den Voucher
+        user_profile.create_voucher(first_name, last_name, organization, address, gender, email, phone, service_offer,
+                                    coordinates, amount, region, years_valid, is_test_vocher)
 
     def init_values(self):
         self.lineEdit_amount.setText("1000")

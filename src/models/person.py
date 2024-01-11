@@ -23,6 +23,7 @@ class Person:
         self.coordinates = person_data.get('coordinates')
         self.current_voucher = None  # Initialization of current_voucher
         self.vouchers = []  # List of vouchers with amount
+        self.unfinished_vouchers = [] # list of vouchers which not ready because of missing guarantor sign
         self.used_vouchers = []  # List of used vouchers after transaction without amount
         self.usertransaction = UserTransaction()
 
@@ -30,10 +31,15 @@ class Person:
         from src.models.minuto_voucher import MinutoVoucher
         self.current_voucher = MinutoVoucher()
 
-    def create_voucher(self, amount, region, validity):
+    def create_voucher(self, amount, region, years_valid, is_test_voucher=False):
         """ Erstellt einen neuen MinutoVoucher. """
         from src.models.minuto_voucher import MinutoVoucher
-        self.current_voucher = MinutoVoucher.create(self.id, self.first_name, self.last_name, self.organization, self.address, self.gender, self.email, self.phone, self.service_offer, self.coordinates, amount, region, validity)
+        self.current_voucher = MinutoVoucher.create(self.id, self.first_name, self.last_name, self.organization, self.address, self.gender, self.email, self.phone, self.service_offer, self.coordinates, amount, region, years_valid, is_test_voucher)
+
+    def create_voucher_from_gui(self, first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher=False):
+        """ used to create voucher from gui """
+        from src.models.minuto_voucher import MinutoVoucher
+        self.current_voucher = MinutoVoucher.create(self.id, first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher)
 
     def check_double_spending(self):
         """

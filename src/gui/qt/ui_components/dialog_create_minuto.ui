@@ -210,6 +210,14 @@
         <pointsize>11</pointsize>
        </font>
       </property>
+      <property name="editable">
+       <bool>true</bool>
+      </property>
+      <item>
+       <property name="text">
+        <string>unbekannt</string>
+       </property>
+      </item>
       <item>
        <property name="text">
         <string>männlich</string>
@@ -218,11 +226,6 @@
       <item>
        <property name="text">
         <string>weiblich</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>unbekannt</string>
        </property>
       </item>
      </widget>
@@ -312,7 +315,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QCheckBox" name="checkBox">
+     <widget class="QCheckBox" name="checkBox_is_test_voucher">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
         <horstretch>0</horstretch>
@@ -512,7 +515,7 @@
     <string>Erstellen</string>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -551,7 +554,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>180</x>
@@ -586,7 +589,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QSpinBox" name="spinBox_validit_until">
+     <widget class="QSpinBox" name="spinBox_years_valid">
       <property name="maximumSize">
        <size>
         <width>49</width>
@@ -629,13 +632,13 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>180</x>
      <y>60</y>
      <width>301</width>
-     <height>51</height>
+     <height>56</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_2">

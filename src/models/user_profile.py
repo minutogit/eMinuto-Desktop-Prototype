@@ -41,7 +41,7 @@ class UserProfile(Serializable):
         self.encryption_salt = None
         self.data_folder = 'mdata'  # static folder for the app
         self.profile_filename = 'userprofile.dat'
-        self.person = None
+        self.person = Person()
         self._profile_initialized = False
 
     def init_existing_profile(self,password):
@@ -102,6 +102,16 @@ class UserProfile(Serializable):
             return True
         except Exception: # Exception when password is wrong
             return False
+
+    def create_voucher(self, first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher):
+        unfinished_subfolder = "unfinished"
+        self.person.create_voucher_from_gui(first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher)
+        file_path = join_path(self.data_folder, unfinished_subfolder)
+        voucher_name = f"voucher-{self.person.current_voucher.creation_date}.txt"
+        self.person.save_voucher(voucher_name, file_path)
+        self.person.unfinished_vouchers.append(self.person.current_voucher)
+        self.person.current_voucher = None
+
 
     def to_dict(self):
         """

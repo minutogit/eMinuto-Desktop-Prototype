@@ -44,7 +44,7 @@ class MinutoVoucher(Serializable):
         voucher.creator_last_name = creator_last_name
         voucher.creator_organization = creator_organization
         voucher.creator_address = creator_address
-        voucher.creator_gender = creator_gender
+        voucher.creator_gender = creator_gender # unknown = 0, male = 1, female = 2
         voucher.amount = amount_precision(amount)
         voucher.description = f"Voucher for goods or services worth {amount_precision(amount)} minutes of quality work."
         voucher.footnote = "Voucher redemption for Minuto players only."
