@@ -6,7 +6,7 @@ from src.services.utils import get_timestamp, dprint, amount_precision, get_doub
 import json
 
 class Person:
-    def __init__(self, person_data, seed=None):
+    def __init__(self, person_data={}, seed=None):
         self.key = Key(seed) if seed else Key()
         self.id = self.key.id
         self.pubkey_short = self.key.get_compressed_public_key()

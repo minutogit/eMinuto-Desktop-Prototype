@@ -8,12 +8,19 @@ from src.services.utils import is_password_valid
 from src.models.user_profile import user_profile
 
 
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QAction
+from PySide6.QtWidgets import QMainWindow, QMenu
+from PySide6.QtCore import QSortFilterProxyModel, Qt
+
+
+
 from src.gui.qt.ui_components.main_window import Ui_MainWindow
 from src.gui.qt.ui_components.dialog_generate_profile import Ui_DialogGenerateProfile
 from src.gui.qt.ui_components.dialog_profile_login import Ui_DialogProfileLogin
 from src.gui.qt.ui_components.dialog_profile_create_selection import Ui_Dialog_Profile_Create_Selection
 from src.gui.qt.ui_components.dialog_profile import Ui_Form_Profile
 from src.gui.qt.ui_components.dialog_create_minuto import Ui_DialogCreateMinuto
+from src.gui.qt.ui_components.dialog_voucher_list import Ui_DialogVoucherList
 
 
 
@@ -97,6 +104,106 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
     def init_and_show(self):
         self.init_values()
         self.show()
+
+
+class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.all_vouchers = None
+        self.headers = ["Voucher ID", "Creator", "Organization", "Address", "Gender", "Amount", "Description",
+                        "Footnote", "Service Offer", "Validity Until", "Region", "Coordinates", "Email", "Phone",
+                        "Creation Date", "Test Voucher", "Guarantor Signatures", "Creator Signature",
+                        "Transactions"]
+        self.voucher_mapping = {}
+        self.isTableViewConnected = False
+        self.tableView_vouchers.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tableView_vouchers.horizontalHeader().customContextMenuRequested.connect(self.openContextMenu)
+
+    def init_show(self):
+        self.init_values()
+        self.show()
+
+    def init_values(self):
+        self.all_vouchers = user_profile.person.unfinished_vouchers
+
+        model = QStandardItemModel()
+        model.setHorizontalHeaderLabels(self.headers)
+
+        self.proxyModel = QSortFilterProxyModel()
+        self.proxyModel.setSourceModel(model)
+        self.proxyModel.setDynamicSortFilter(True)
+        self.tableView_vouchers.setModel(self.proxyModel)
+        self.tableView_vouchers.setSortingEnabled(True)
+
+        for i, voucher in enumerate(self.all_vouchers):
+            self.add_voucher_to_model(model, voucher)
+            self.voucher_mapping[i] = voucher
+
+        self.tableView_vouchers.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tableView_vouchers.customContextMenuRequested.connect(self.openContextMenu)
+        if not self.isTableViewConnected:
+            self.tableView_vouchers.doubleClicked.connect(self.on_table_view_clicked)
+            self.isTableViewConnected = True
+
+    def add_voucher_to_model(self, model, voucher):
+        gender_text = {0: "Unbekannt", 1: "Männlich", 2: "Weiblich"}.get(voucher.creator_gender, "Unbekannt")
+        test_voucher_text = "Ja" if voucher.is_test_voucher else "Nein"
+        creator_signature_text = "Ja" if voucher.creator_signature else "Nein"
+        row = [
+            self.create_non_editable_item(voucher.voucher_id),
+            self.create_non_editable_item(f"{voucher.creator_first_name} {voucher.creator_last_name}"),
+            self.create_non_editable_item(voucher.creator_organization),
+            self.create_non_editable_item(voucher.creator_address),
+            self.create_non_editable_item(gender_text),
+            self.create_non_editable_item(str(voucher.amount)),
+            self.create_non_editable_item(voucher.description),
+            self.create_non_editable_item(voucher.footnote),
+            self.create_non_editable_item(voucher.service_offer),
+            self.create_non_editable_item(voucher.validit_until),
+            self.create_non_editable_item(voucher.region),
+            self.create_non_editable_item(voucher.coordinates),
+            self.create_non_editable_item(voucher.email),
+            self.create_non_editable_item(voucher.phone),
+            self.create_non_editable_item(voucher.creation_date),
+            self.create_non_editable_item(test_voucher_text),
+            self.create_non_editable_item(str(len(voucher.guarantor_signatures))),
+            self.create_non_editable_item(creator_signature_text),
+            self.create_non_editable_item(str(len(voucher.transactions)))
+        ]
+        model.appendRow(row)
+
+    def create_non_editable_item(self, text):
+        item = QStandardItem(str(text))
+        item.setEditable(False)
+        return item
+
+    def openContextMenu(self, position):
+        menu = QMenu()
+        for i, header in enumerate(self.headers):
+            action = QAction(header, menu)
+            action.setCheckable(True)
+            action.setChecked(not self.tableView_vouchers.isColumnHidden(i))
+            action.setData(i)
+            action.toggled.connect(self.toggleColumnVisibility)
+            menu.addAction(action)
+        menu.exec_(self.tableView_vouchers.viewport().mapToGlobal(position))
+
+    def toggleColumnVisibility(self, visible):
+        column = self.sender().data()
+        if visible:
+            self.tableView_vouchers.showColumn(column)
+        else:
+            self.tableView_vouchers.hideColumn(column)
+
+    def on_table_view_clicked(self, index):
+        mapped_index = self.proxyModel.mapToSource(index)
+        row = mapped_index.row()
+        voucher = self.voucher_mapping[row]
+        print(voucher)
+
+
+
 
 class Dialog_Profile_Login(QMainWindow, Ui_DialogProfileLogin):
     def __init__(self):
@@ -232,6 +339,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.actionCreateMinuto.triggered.connect(dialog_create_minuto.init_and_show)
         self.actionProfileLogin.triggered.connect(dialog_profile_login.login)
         self.actionProfileLogout.triggered.connect(self.profile_logout)
+        self.actionVoucherList.triggered.connect(dialog_voucher_list.init_show)
 
         self.actionClose.triggered.connect(self.close)
         self.set_gui_depending_profile_status()
@@ -348,6 +456,7 @@ dialog_profile_login = Dialog_Profile_Login()
 dialog_profile_create_selection = Dialog_Profile_Create_Selection()
 dialog_profile = Dialog_Profile()
 dialog_create_minuto = Dialog_Create_Minuto()
+dialog_voucher_list = DialogVoucherList()
 
 
 frm_main_window = Frm_Mainwin()

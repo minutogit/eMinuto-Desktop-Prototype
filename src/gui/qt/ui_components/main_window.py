@@ -39,6 +39,8 @@ class Ui_MainWindow(object):
         self.actionCreateProfile.setObjectName(u"actionCreateProfile")
         self.actionCreateMinuto = QAction(MainWindow)
         self.actionCreateMinuto.setObjectName(u"actionCreateMinuto")
+        self.actionVoucherList = QAction(MainWindow)
+        self.actionVoucherList.setObjectName(u"actionVoucherList")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.label_username = QLabel(self.centralwidget)
@@ -133,6 +135,7 @@ class Ui_MainWindow(object):
         self.menuProfile.addAction(self.actionProfileLogin)
         self.menuProfile.addAction(self.actionProfileLogout)
         self.menuMinuto.addAction(self.actionCreateMinuto)
+        self.menuMinuto.addAction(self.actionVoucherList)
 
         self.retranslateUi(MainWindow)
 
@@ -148,6 +151,7 @@ class Ui_MainWindow(object):
         self.actionProfileLogout.setText(QCoreApplication.translate("MainWindow", u"Ausloggen", None))
         self.actionCreateProfile.setText(QCoreApplication.translate("MainWindow", u"Profil erstellen", None))
         self.actionCreateMinuto.setText(QCoreApplication.translate("MainWindow", u"Minuto sch\u00f6pfen", None))
+        self.actionVoucherList.setText(QCoreApplication.translate("MainWindow", u"Gutscheinliste", None))
         self.label_username.setText("")
         self.label.setText(QCoreApplication.translate("MainWindow", u"Kontostand", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"eigene Minuto", None))

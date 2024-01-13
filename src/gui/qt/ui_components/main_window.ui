@@ -187,6 +187,7 @@
      <string>Minuto</string>
     </property>
     <addaction name="actionCreateMinuto"/>
+    <addaction name="actionVoucherList"/>
    </widget>
    <addaction name="menuStart"/>
    <addaction name="menuMinuto"/>
@@ -226,6 +227,11 @@
   <action name="actionCreateMinuto">
    <property name="text">
     <string>Minuto schöpfen</string>
+   </property>
+  </action>
+  <action name="actionVoucherList">
+   <property name="text">
+    <string>Gutscheinliste</string>
    </property>
   </action>
  </widget>
