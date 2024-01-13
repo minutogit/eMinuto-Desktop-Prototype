@@ -8,7 +8,7 @@ from src.services.utils import is_password_valid
 from src.models.user_profile import user_profile
 
 
-from PySide6.QtGui import QStandardItemModel, QStandardItem, QAction
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QAction, QWindow
 from PySide6.QtWidgets import QMainWindow, QMenu
 from PySide6.QtCore import QSortFilterProxyModel, Qt
 
@@ -21,6 +21,8 @@ from src.gui.qt.ui_components.dialog_profile_create_selection import Ui_Dialog_P
 from src.gui.qt.ui_components.dialog_profile import Ui_Form_Profile
 from src.gui.qt.ui_components.dialog_create_minuto import Ui_DialogCreateMinuto
 from src.gui.qt.ui_components.dialog_voucher_list import Ui_DialogVoucherList
+from src.gui.qt.ui_components.from_show_voucher import Ui_FormShowVoucher
+from src.gui.qt.ui_components.form_show_raw_data import Ui_FormShowRawData
 
 
 
@@ -48,6 +50,88 @@ def apply_global_styles(app):
         }
         
     """)
+
+
+from PySide6.QtGui import QStandardItemModel, QStandardItem
+from PySide6.QtWidgets import QAbstractItemView
+
+class FormShowRawData(QMainWindow, Ui_FormShowRawData):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.pushButton_Close.clicked.connect(self.close)
+
+    def show_data(self, object):
+        import json
+        # Convert the object's dictionary to a JSON-formatted string
+        json_representation = json.dumps(object.__dict__, sort_keys=False, indent=4, ensure_ascii=False)
+        self.textEdit_text_data.setText(json_representation)
+        self.show()
+
+
+class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.voucher = None
+        self.pushButtonClose.clicked.connect(self.close)
+        self.pushButtonRawData.clicked.connect(self.show_raw_data)
+
+    def show_raw_data(self):
+        form_show_raw_data.show_data(self.voucher)
+
+    def show_voucher(self, voucher):
+        self.voucher = voucher
+        model = QStandardItemModel(self)
+        model.setColumnCount(2)
+        model.setHorizontalHeaderLabels(["Attribute", "Value"])
+
+        # Set the model to the table and adjust table properties
+        self.tableView_voucher.setModel(model)
+        self.tableView_voucher.verticalHeader().setVisible(False)
+        self.tableView_voucher.horizontalHeader().setVisible(True)
+        self.tableView_voucher.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tableView_voucher.setSelectionMode(QAbstractItemView.NoSelection)
+
+        # Add voucher details as rows
+        voucher_details = [
+            ("Voucher ID", voucher.voucher_id),
+            ("Creator ID", voucher.creator_id),
+            ("Creator First Name", voucher.creator_first_name),
+            ("Creator Last Name", voucher.creator_last_name),
+            ("Creator Organization", voucher.creator_organization),
+            ("Creator Address", voucher.creator_address),
+            ("Creator Gender", voucher.creator_gender),
+            ("Amount", voucher.amount),
+            ("Description", voucher.description),
+            ("Footnote", voucher.footnote),
+            ("Service Offer", voucher.service_offer),
+            ("Validity Until", voucher.validit_until),
+            ("Region", voucher.region),
+            ("Coordinates", voucher.coordinates),
+            ("Email", voucher.email),
+            ("Phone", voucher.phone),
+            ("Creation Date", voucher.creation_date),
+            ("Is Test Voucher", "Yes" if voucher.is_test_voucher else "No"),
+            ("Guarantor Signatures", len(voucher.guarantor_signatures)),
+            ("Creator Signature", "Signed" if voucher.creator_signature else "Not Signed"),
+            ("Transactions", len(voucher.transactions))
+        ]
+
+        for label, value in voucher_details:
+            label_item = self.create_non_editable_item(label)
+            value_item = self.create_non_editable_item(str(value))
+            model.appendRow([label_item, value_item])
+
+        self.show()
+
+    def create_non_editable_item(self, text):
+        item = QStandardItem(str(text))
+        item.setEditable(False)
+        return item
+
+
+
 
 
 class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
@@ -200,7 +284,7 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         mapped_index = self.proxyModel.mapToSource(index)
         row = mapped_index.row()
         voucher = self.voucher_mapping[row]
-        print(voucher)
+        form_show_voucher.show_voucher(voucher)
 
 
 
@@ -451,12 +535,14 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
 app = QApplication([])
 apply_global_styles(app)
 
+form_show_raw_data = FormShowRawData()
 dialog_generate_profile = Dialog_Generate_Profile()
 dialog_profile_login = Dialog_Profile_Login()
 dialog_profile_create_selection = Dialog_Profile_Create_Selection()
 dialog_profile = Dialog_Profile()
 dialog_create_minuto = Dialog_Create_Minuto()
 dialog_voucher_list = DialogVoucherList()
+form_show_voucher = FormShowVoucher()
 
 
 frm_main_window = Frm_Mainwin()
