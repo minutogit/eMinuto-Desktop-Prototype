@@ -49,7 +49,22 @@ class UserProfile(Serializable):
             return False
         seed = symmetric_decrypt(self.encrypted_seed_words, password)
         self.person = Person(self.person_data, seed=seed)
+        self.read_vouchers_from_disk()
         return True
+
+    def read_vouchers_from_disk(self):
+        unfinished_subfolder = "unfinished"
+        import os
+        file_path = os.path.join(self.data_folder, unfinished_subfolder)
+
+        # List all files in the directory
+        for filename in os.listdir(file_path):
+            # Check if the file is a .txt file
+            if filename.endswith('.txt'):
+                self.person.read_voucher(filename,file_path)
+                self.person.unfinished_vouchers.append(self.person.current_voucher)
+                self.person.current_voucher = None
+
 
     def create_new_profile(self, profile_name, first_name, last_name, organization, seed, profile_password):
         # storekey and salt in object for saving to disk
