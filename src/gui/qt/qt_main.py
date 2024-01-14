@@ -8,8 +8,8 @@ from src.services.utils import is_password_valid
 from src.models.user_profile import user_profile
 
 
-from PySide6.QtGui import QStandardItemModel, QStandardItem, QAction, QWindow
-from PySide6.QtWidgets import QMainWindow, QMenu
+from PySide6.QtGui import QTextDocument, QAction
+from PySide6.QtWidgets import QMainWindow, QMenu, QHeaderView
 from PySide6.QtCore import QSortFilterProxyModel, Qt
 
 
@@ -21,7 +21,7 @@ from src.gui.qt.ui_components.dialog_profile_create_selection import Ui_Dialog_P
 from src.gui.qt.ui_components.dialog_profile import Ui_Form_Profile
 from src.gui.qt.ui_components.dialog_create_minuto import Ui_DialogCreateMinuto
 from src.gui.qt.ui_components.dialog_voucher_list import Ui_DialogVoucherList
-from src.gui.qt.ui_components.from_show_voucher import Ui_FormShowVoucher
+from src.gui.qt.ui_components.form_show_voucher import Ui_FormShowVoucher
 from src.gui.qt.ui_components.form_show_raw_data import Ui_FormShowRawData
 
 
@@ -84,7 +84,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         self.voucher = voucher
         model = QStandardItemModel(self)
         model.setColumnCount(2)
-        model.setHorizontalHeaderLabels(["Attribute", "Value"])
+        model.setHorizontalHeaderLabels(["Inhalt", "Wert"])
 
         # Set the model to the table and adjust table properties
         self.tableView_voucher.setModel(model)
@@ -95,33 +95,37 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
 
         # Add voucher details as rows
         voucher_details = [
-            ("Voucher ID", voucher.voucher_id),
-            ("Creator ID", voucher.creator_id),
-            ("Creator First Name", voucher.creator_first_name),
-            ("Creator Last Name", voucher.creator_last_name),
-            ("Creator Organization", voucher.creator_organization),
-            ("Creator Address", voucher.creator_address),
-            ("Creator Gender", voucher.creator_gender),
-            ("Amount", voucher.amount),
-            ("Description", voucher.description),
-            ("Footnote", voucher.footnote),
-            ("Service Offer", voucher.service_offer),
-            ("Validity Until", voucher.validit_until),
+            ("Gutschein-ID", voucher.voucher_id),
+            ("Ersteller-ID", voucher.creator_id),
+            ("Vorname des Erstellers", voucher.creator_first_name),
+            ("Nachname des Erstellers", voucher.creator_last_name),
+            ("Organisation des Erstellers", voucher.creator_organization),
+            ("Adresse des Erstellers", voucher.creator_address),
+            ("Geschlecht des Erstellers", voucher.creator_gender),
+            ("Betrag", voucher.amount),
+            ("Beschreibung", voucher.description),
+            ("Fußnote", voucher.footnote),
+            ("Serviceangebot", voucher.service_offer),
+            ("Gültig bis", voucher.validit_until),
             ("Region", voucher.region),
-            ("Coordinates", voucher.coordinates),
-            ("Email", voucher.email),
-            ("Phone", voucher.phone),
-            ("Creation Date", voucher.creation_date),
-            ("Is Test Voucher", "Yes" if voucher.is_test_voucher else "No"),
-            ("Guarantor Signatures", len(voucher.guarantor_signatures)),
-            ("Creator Signature", "Signed" if voucher.creator_signature else "Not Signed"),
-            ("Transactions", len(voucher.transactions))
+            ("Koordinaten", voucher.coordinates),
+            ("E-Mail", voucher.email),
+            ("Telefon", voucher.phone),
+            ("Erstellungsdatum", voucher.creation_date),
+            ("Ist Testgutschein", "Ja" if voucher.is_test_voucher else "Nein"),
+            ("Garantenunterschriften", len(voucher.guarantor_signatures)),
+            ("Unterschrift des Erstellers", "Unterschrieben" if voucher.creator_signature else "Nicht unterschrieben"),
+            ("Transaktionen", len(voucher.transactions))
         ]
 
         for label, value in voucher_details:
             label_item = self.create_non_editable_item(label)
             value_item = self.create_non_editable_item(str(value))
             model.appendRow([label_item, value_item])
+
+        self.tableView_voucher.setWordWrap(True)
+        self.tableView_voucher.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.tableView_voucher.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
 
         self.show()
 
@@ -195,10 +199,13 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         super().__init__()
         self.setupUi(self)
         self.all_vouchers = None
-        self.headers = ["Voucher ID", "Creator", "Organization", "Address", "Gender", "Amount", "Description",
-                        "Footnote", "Service Offer", "Validity Until", "Region", "Coordinates", "Email", "Phone",
-                        "Creation Date", "Test Voucher", "Guarantor Signatures", "Creator Signature",
-                        "Transactions"]
+        self.headers = [
+            "Gutschein-ID", "Ersteller", "Organisation", "Adresse", "Geschlecht",
+            "Betrag", "Beschreibung", "Fußnote", "Dienstleistungsangebot",
+            "Gültigkeit bis", "Region", "Koordinaten", "E-Mail", "Telefon",
+            "Erstellungsdatum", "Testgutschein", "Garantenunterschriften",
+            "Unterschrift des Erstellers", "Transaktionen"
+        ]
         self.voucher_mapping = {}
         self.isTableViewConnected = False
         self.tableView_vouchers.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
@@ -494,6 +501,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
             show(self.actionEditProfile)
             show(self.actionProfileLogout)
             show(self.actionCreateMinuto)
+            show(self.actionVoucherList)
             enable(self.lineEdit_own_balance)
             enable(self.lineEdit_other_balance)
 
@@ -508,6 +516,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
             hide(self.actionProfileLogout)
             hide(self.actionCreateProfile)
             hide(self.actionCreateMinuto)
+            hide(self.actionVoucherList)
 
 
             # disable(self.menuMinuto) does not work
@@ -522,6 +531,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
             hide(self.actionProfileLogout)
             hide(self.actionProfileLogin)
             hide(self.actionCreateMinuto)
+            hide(self.actionVoucherList)
 
             # disable(self.menuMinuto) does not work
             disable(self.lineEdit_own_balance)
