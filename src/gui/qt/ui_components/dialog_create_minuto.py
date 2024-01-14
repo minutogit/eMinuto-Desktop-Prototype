@@ -343,6 +343,19 @@ class Ui_DialogCreateMinuto(object):
 
         self.horizontalLayout_2.addLayout(self.verticalLayout_4)
 
+        QWidget.setTabOrder(self.lineEdit_amount, self.lineEdit_region)
+        QWidget.setTabOrder(self.lineEdit_region, self.lineEdit_coordinates)
+        QWidget.setTabOrder(self.lineEdit_coordinates, self.spinBox_years_valid)
+        QWidget.setTabOrder(self.spinBox_years_valid, self.lineEdit_creator_organization)
+        QWidget.setTabOrder(self.lineEdit_creator_organization, self.lineEdit_creator_first_name)
+        QWidget.setTabOrder(self.lineEdit_creator_first_name, self.lineEdit_creator_last_name)
+        QWidget.setTabOrder(self.lineEdit_creator_last_name, self.comboBox_creator_gender)
+        QWidget.setTabOrder(self.comboBox_creator_gender, self.lineEdit_creator_address)
+        QWidget.setTabOrder(self.lineEdit_creator_address, self.lineEdit_email)
+        QWidget.setTabOrder(self.lineEdit_email, self.lineEdit_phone)
+        QWidget.setTabOrder(self.lineEdit_phone, self.textEdit_service_offer)
+        QWidget.setTabOrder(self.textEdit_service_offer, self.checkBox_is_test_voucher)
+        QWidget.setTabOrder(self.checkBox_is_test_voucher, self.pushButton_CreateVoucher)
 
         self.retranslateUi(DialogCreateMinuto)
 

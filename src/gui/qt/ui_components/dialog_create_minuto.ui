@@ -728,6 +728,22 @@
    </layout>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>lineEdit_amount</tabstop>
+  <tabstop>lineEdit_region</tabstop>
+  <tabstop>lineEdit_coordinates</tabstop>
+  <tabstop>spinBox_years_valid</tabstop>
+  <tabstop>lineEdit_creator_organization</tabstop>
+  <tabstop>lineEdit_creator_first_name</tabstop>
+  <tabstop>lineEdit_creator_last_name</tabstop>
+  <tabstop>comboBox_creator_gender</tabstop>
+  <tabstop>lineEdit_creator_address</tabstop>
+  <tabstop>lineEdit_email</tabstop>
+  <tabstop>lineEdit_phone</tabstop>
+  <tabstop>textEdit_service_offer</tabstop>
+  <tabstop>checkBox_is_test_voucher</tabstop>
+  <tabstop>pushButton_CreateVoucher</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

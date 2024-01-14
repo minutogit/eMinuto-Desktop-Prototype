@@ -137,8 +137,6 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
 
 
 
-
-
 class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
     def __init__(self):
         super().__init__()
@@ -171,12 +169,18 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
                                     coordinates, amount, region, years_valid, is_test_vocher)
 
     def init_values(self):
+        address = (f"{user_profile.person_data['street']} {user_profile.person_data['zip_code']} "
+                   f"{user_profile.person_data['city']} {user_profile.person_data['state_or_region']} "
+                   f"{user_profile.person_data['country']}")
         self.lineEdit_amount.setText("1000")
+        self.lineEdit_region.setText(user_profile.person_data['zip_code'])
+        self.comboBox_creator_gender.setCurrentIndex(int(user_profile.person_data['gender']))
+        self.lineEdit_coordinates.setText(user_profile.person_data['coordinates'])
         self.update_voucher_description(self.lineEdit_amount.text())
         self.lineEdit_creator_organization.setText(user_profile.person_data['organization'])
         self.lineEdit_creator_first_name.setText(user_profile.person_data['first_name'])
         self.lineEdit_creator_last_name.setText(user_profile.person_data['last_name'])
-        self.lineEdit_creator_address.setText(user_profile.person_data['address'])
+        self.lineEdit_creator_address.setText(address)
         self.lineEdit_email.setText(user_profile.person_data['email'])
         self.lineEdit_phone.setText(user_profile.person_data['phone'])
         self.textEdit_service_offer.setText(user_profile.person_data['service_offer'])
@@ -340,7 +344,12 @@ class Dialog_Profile(QMainWindow, Ui_Form_Profile):
         self.lineEdit_first_name.setText(user_profile.person_data['first_name'])
         self.lineEdit_last_name.setText(user_profile.person_data['last_name'])
         self.lineEdit_organization.setText(user_profile.person_data['organization'])
-        self.lineEdit_address.setText(user_profile.person_data['address'])
+        self.comboBox_gender.setCurrentIndex(user_profile.person_data['gender'])
+        self.lineEdit_street.setText(user_profile.person_data['street'])
+        self.lineEdit_zip_code.setText(user_profile.person_data['zip_code'])
+        self.lineEdit_city.setText(user_profile.person_data['city'])
+        self.lineEdit_state_or_region.setText(user_profile.person_data['state_or_region'])
+        self.lineEdit_country.setText(user_profile.person_data['country'])
         self.lineEdit_email.setText(user_profile.person_data['email'])
         self.lineEdit_phone.setText(user_profile.person_data['phone'])
         self.textEdit_service_offer.setText(user_profile.person_data['service_offer'])
@@ -352,7 +361,12 @@ class Dialog_Profile(QMainWindow, Ui_Form_Profile):
         user_profile.person_data['first_name'] = self.lineEdit_first_name.text()
         user_profile.person_data['last_name'] = self.lineEdit_last_name.text()
         user_profile.person_data['organization'] = self.lineEdit_organization.text()
-        user_profile.person_data['address'] = self.lineEdit_address.text()
+        user_profile.person_data['street'] = self.lineEdit_street.text()
+        user_profile.person_data['zip_code'] = self.lineEdit_zip_code.text()
+        user_profile.person_data['city'] = self.lineEdit_city.text()
+        user_profile.person_data['state_or_region'] = self.lineEdit_state_or_region.text()
+        user_profile.person_data['country'] = self.lineEdit_country.text()
+        user_profile.person_data['gender'] = self.comboBox_gender.currentIndex()
         user_profile.person_data['email'] = self.lineEdit_email.text()
         user_profile.person_data['phone'] = self.lineEdit_phone.text()
         user_profile.person_data['service_offer'] = self.textEdit_service_offer.toPlainText()
@@ -376,8 +390,6 @@ class Dialog_Profile_Create_Selection(QMainWindow, Ui_Dialog_Profile_Create_Sele
 
     def restore_profile(self):
         self.close()
-        #dialog_restore_profile.restore_old_profile()
-        pass
 
 class Dialog_Generate_Profile(QMainWindow, Ui_DialogGenerateProfile):
     def __init__(self):
@@ -417,7 +429,8 @@ class Dialog_Generate_Profile(QMainWindow, Ui_DialogGenerateProfile):
             return
 
         user_profile.create_new_profile(profile_name, first_name, last_name, organization, seed, password)
-        frm_main_window.update_values()
+        frm_main_window.profile_logout()
+        dialog_profile_login.show()
 
         self.close()
 
