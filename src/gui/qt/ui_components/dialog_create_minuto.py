@@ -350,7 +350,7 @@ class Ui_DialogCreateMinuto(object):
     # setupUi
 
     def retranslateUi(self, DialogCreateMinuto):
-        DialogCreateMinuto.setWindowTitle(QCoreApplication.translate("DialogCreateMinuto", u"Create Minuto Voucher", None))
+        DialogCreateMinuto.setWindowTitle(QCoreApplication.translate("DialogCreateMinuto", u"Minuto sch\u00f6pfen", None))
         self.label_creator_first_name.setText(QCoreApplication.translate("DialogCreateMinuto", u"Rufname", None))
         self.label_creator_last_name.setText(QCoreApplication.translate("DialogCreateMinuto", u"Familienname", None))
         self.label_creator_organization.setText(QCoreApplication.translate("DialogCreateMinuto", u"Organisation / Firma", None))

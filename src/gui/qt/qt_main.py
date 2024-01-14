@@ -101,7 +101,8 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
             ("Nachname des Erstellers", voucher.creator_last_name),
             ("Organisation des Erstellers", voucher.creator_organization),
             ("Adresse des Erstellers", voucher.creator_address),
-            ("Geschlecht des Erstellers", voucher.creator_gender),
+            ("Geschlecht des Erstellers",
+             {0: "Unbekannt", 1: "Männlich", 2: "Weiblich"}.get(voucher.creator_gender, "Unbekannt")),
             ("Betrag", voucher.amount),
             ("Beschreibung", voucher.description),
             ("Fußnote", voucher.footnote),
@@ -113,7 +114,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
             ("Telefon", voucher.phone),
             ("Erstellungsdatum", voucher.creation_date),
             ("Ist Testgutschein", "Ja" if voucher.is_test_voucher else "Nein"),
-            ("Garantenunterschriften", len(voucher.guarantor_signatures)),
+            ("Anzahl Bürgen", len(voucher.guarantor_signatures)),
             ("Unterschrift des Erstellers", "Unterschrieben" if voucher.creator_signature else "Nicht unterschrieben"),
             ("Transaktionen", len(voucher.transactions))
         ]
