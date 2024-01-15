@@ -1,55 +1,24 @@
 # qt_main.py
-from PySide6.QtWidgets import QApplication, QMainWindow, \
-    QMessageBox, QLineEdit
+from PySide6.QtCore import QSortFilterProxyModel, Qt
+from PySide6.QtGui import QAction
+from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QMainWindow, QMenu, QHeaderView
 
-from PySide6 import QtSql
-from src.services.crypto_utils import generate_seed
-from src.services.utils import is_password_valid
+from src.gui.qt.profile_dialogs import Dialog_Generate_Profile
+from src.gui.qt.ui_components.dialog_create_minuto import Ui_DialogCreateMinuto
+from src.gui.qt.ui_components.dialog_profile import Ui_Form_Profile
+from src.gui.qt.ui_components.dialog_profile_create_selection import Ui_Dialog_Profile_Create_Selection
+from src.gui.qt.ui_components.dialog_profile_login import Ui_DialogProfileLogin
+from src.gui.qt.ui_components.dialog_voucher_list import Ui_DialogVoucherList
+from src.gui.qt.ui_components.form_show_raw_data import Ui_FormShowRawData
+from src.gui.qt.ui_components.form_show_voucher import Ui_FormShowVoucher
+from src.gui.qt.ui_components.main_window import Ui_MainWindow
+from src.gui.qt.utils import apply_global_styles
 from src.models.user_profile import user_profile
 
 
-from PySide6.QtGui import QTextDocument, QAction
-from PySide6.QtWidgets import QMainWindow, QMenu, QHeaderView
-from PySide6.QtCore import QSortFilterProxyModel, Qt
 
 
-
-from src.gui.qt.ui_components.main_window import Ui_MainWindow
-from src.gui.qt.ui_components.dialog_generate_profile import Ui_DialogGenerateProfile
-from src.gui.qt.ui_components.dialog_profile_login import Ui_DialogProfileLogin
-from src.gui.qt.ui_components.dialog_profile_create_selection import Ui_Dialog_Profile_Create_Selection
-from src.gui.qt.ui_components.dialog_profile import Ui_Form_Profile
-from src.gui.qt.ui_components.dialog_create_minuto import Ui_DialogCreateMinuto
-from src.gui.qt.ui_components.dialog_voucher_list import Ui_DialogVoucherList
-from src.gui.qt.ui_components.form_show_voucher import Ui_FormShowVoucher
-from src.gui.qt.ui_components.form_show_raw_data import Ui_FormShowRawData
-
-
-
-def show_message_box(title, text):
-    dlg = QMessageBox()
-    dlg.setWindowTitle(title)
-    dlg.setText(text)
-    dlg.exec()
-
-def apply_global_styles(app):
-    app.setStyleSheet("""
-        QMainWindow {
-            background-color: #f2f2f2; 
-        }
-        QLineEdit, QTextBrowser, QTextEdit {
-            background-color: white;
-            border: 1px solid #bdc3c7;
-            border-radius: 4px;
-            padding: 5px;
-            selection-background-color: #1abc9c;
-            color: #34495e;
-        }
-        QLineEdit:focus, QTextEdit:focus {
-            border: 2px solid #3498db; 
-        }
-        
-    """)
 
 
 from PySide6.QtGui import QStandardItemModel, QStandardItem
@@ -386,60 +355,22 @@ class Dialog_Profile_Create_Selection(QMainWindow, Ui_Dialog_Profile_Create_Sele
 
     def generate_new_profile(self):
         self.close()
-        dialog_generate_profile.show()
+        frm_main_window.dialog_generate_profile.show()
 
     def restore_profile(self):
         self.close()
 
-class Dialog_Generate_Profile(QMainWindow, Ui_DialogGenerateProfile):
-    def __init__(self):
-        super().__init__()
-        self.setupUi(self)
-        self.lineEdit_new_seed.setText(generate_seed())
-        self.btn_new_seed_words.clicked.connect(self.generate_new_word_seed)
-        self.btn_create_profile.clicked.connect(self.create_profile)
-
-    def generate_new_word_seed(self):
-        self.lineEdit_new_seed.setText(generate_seed())
-        #pass
-
-    def create_profile(self):
-        seed = self.lineEdit_new_seed_confirmed.text().strip()
-        retyped_seed = self.lineEdit_new_seed_confirmed.text().strip()
-        profile_name = self.lineEdit_profile_name.text().strip()
-        password = self.lineEdit_password.text()
-        password_confirmed = self.lineEdit_password_confirmed.text()
-        organization = self.lineEdit_organization.text().strip()
-        first_name = self.lineEdit_first_name.text().strip()
-        last_name = self.lineEdit_last_name.text().strip()
-
-
-        #check conditions
-        if not seed == retyped_seed.strip():
-            show_message_box("Fehler!", "Schlüsselwörter stimmen nicht überein. Bitte prüfen!")
-            return
-        if profile_name.replace(" ","") == "":
-            show_message_box("Fehler!", "Bitte Profilnamen eingeben.")
-            return
-        if password != password_confirmed:
-            show_message_box("Fehler!", "Passwörter stimmen nicht überein.")
-            return
-        if not is_password_valid(password):
-            show_message_box("Fehler!", "Passwort muss mindestens 8 Zeichen haben.")
-            return
-
-        user_profile.create_new_profile(profile_name, first_name, last_name, organization, seed, password)
-        frm_main_window.profile_logout()
-        dialog_profile_login.show()
-
-        self.close()
 
 
 class Frm_Mainwin(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.dialog_generate_profile = Dialog_Generate_Profile()
+        self.dialog_generate_profile.profileCreated.connect(self.onProfileCreated)
+
         self.setWindowTitle(f"eMinuto")
+        self.actionCreateProfile.triggered.connect(self.dialog_generate_profile.show)
         self.actionEditProfile.triggered.connect(dialog_profile.init_and_show)
         self.actionCreateMinuto.triggered.connect(dialog_create_minuto.init_and_show)
         self.actionProfileLogin.triggered.connect(dialog_profile_login.login)
@@ -448,6 +379,10 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
 
         self.actionClose.triggered.connect(self.close)
         self.set_gui_depending_profile_status()
+
+    def onProfileCreated(self):
+        self.profile_logout()
+        dialog_profile_login.show()
 
     def update_values(self):
         self.setWindowTitle(f"eMinuto - Profil: {user_profile.profile_name}")
@@ -560,7 +495,6 @@ app = QApplication([])
 apply_global_styles(app)
 
 form_show_raw_data = FormShowRawData()
-dialog_generate_profile = Dialog_Generate_Profile()
 dialog_profile_login = Dialog_Profile_Login()
 dialog_profile_create_selection = Dialog_Profile_Create_Selection()
 dialog_profile = Dialog_Profile()
@@ -570,14 +504,4 @@ form_show_voucher = FormShowVoucher()
 
 
 frm_main_window = Frm_Mainwin()
-
-#
-#
-# db = QtSql.QSqlDatabase.addDatabase("QSQLITE")
-#
-# frm_main_window = Frm_Mainwin()
-# frm_main_window.show()
-# #frm_main_window.profile_login()
-#
-# app.exec()
 
