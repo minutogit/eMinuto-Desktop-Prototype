@@ -2,7 +2,7 @@
 import json
 import os
 from src.models.key import Key
-from src.services.utils import get_timestamp, dprint, amount_precision, Serializable
+from src.services.utils import get_timestamp, dprint, amount_precision, Serializable, random_string
 from src.services.crypto_utils import get_hash
 from src.models.voucher_transaction import VoucherTransaction
 
@@ -11,12 +11,13 @@ class MinutoVoucher(Serializable):
     def __init__(self):
         # Initialize default values for voucher attributes
         self.voucher_id = ''
+        self.temp_voucher_id = ""  # Temporary voucher ID, to be used until the final voucher is ready
         self.creator_id = ''
         self.creator_first_name = ''
         self.creator_last_name = ''
         self.creator_organization = ''
         self.creator_address = ''
-        self.creator_gender = 0 # 0 for unknown, 1 for male, 2 for female
+        self.creator_gender = 0  # 0 for unknown, 1 for male, 2 for female
         self.amount = 0
         self.description = ""
         self.footnote = ""
@@ -30,7 +31,7 @@ class MinutoVoucher(Serializable):
         self.is_test_voucher = False  # Indicates if the voucher is a test voucher
         self.guarantor_signatures = []  # Guarantor signatures
         self.creator_signature = None  # Creator's signature
-        self.transactions = [] # list of transactions
+        self.transactions = []  # list of transactions
 
     @classmethod
     def create(cls, creator_id: str, creator_first_name: str, creator_last_name: str, creator_organization: str, creator_address, creator_gender: int, email: str, phone: str, service_offer: str, coordinates: str,
@@ -39,6 +40,7 @@ class MinutoVoucher(Serializable):
         voucher = cls()
         voucher.creator_id = creator_id
         voucher.voucher_id = ""  # voucher ID will be generated from hash when creator signs the voucher
+        voucher.temp_voucher_id = random_string(16)
         voucher.creation_date = get_timestamp()
         voucher.creator_first_name = creator_first_name
         voucher.creator_last_name = creator_last_name
@@ -57,7 +59,7 @@ class MinutoVoucher(Serializable):
         voucher.is_test_voucher = is_test_voucher
         return voucher
 
-    def get_voucher_data(self, type, guarantor_info = "", guarantor_verify = -1):
+    def get_voucher_data(self, type):
         # Dynamically generate the data for signing and hashing, including optional guarantor signatures
 
         # Initially, these keys are excluded from the hashing process.
@@ -66,26 +68,9 @@ class MinutoVoucher(Serializable):
         # By doing this, unknown keys are also dynamically included in the hash, enabling older versions to correctly verify hashes of newer versions with additional parameters.
         data = {key: value for key, value in self.__dict__.items() if key not in excluded_keys}
 
-        # if guarantor_signature then also guarantor_signatures is included. So the voucher has to be signed
-        # by the first guarantor and then by the second guarantor (with included first guarantor sign)
-        # this step by step signing by guarantors is needed to prevent double create valid vouchers with different
-        # orders of the guarantors signs by the creator
         guarantor_signs = ''
         guarantor_data = json.dumps(data, sort_keys=True, ensure_ascii=False)
         if type == "guarantor_signature":
-            if guarantor_verify == -1: # this part is used when signing
-                for g_sign in self.guarantor_signatures:
-                    guarantor_signs += json.dumps(g_sign, sort_keys=True, ensure_ascii=False)
-
-                guarantor_data += guarantor_signs + json.dumps(guarantor_info, sort_keys=True, ensure_ascii=False)
-            else: # this part is used when verifing signature
-                for sign_number in range(guarantor_verify + 1):
-                    if sign_number == guarantor_verify:
-                        guarantor_data += json.dumps(self.guarantor_signatures[sign_number][0], sort_keys=True, ensure_ascii=False)
-                    else:
-                        guarantor_data += json.dumps(self.guarantor_signatures[sign_number], sort_keys=True,
-                                                     ensure_ascii=False)
-
             return guarantor_data
 
         # for voucher_id_hashing add guarantor_signatures
@@ -237,19 +222,26 @@ class MinutoVoucher(Serializable):
             return False
         sign_number = 0
 
+        last_id = ""
+
         for guarantor_info, signature in voucher.guarantor_signatures:
-            # to catch key erros when corrupt file
+            # Ensure the order of IDs is maintained to prevent creation of multiple correct vouchers by the creator
             try:
-                if Key.check_user_id(guarantor_info["id"]) == False:
-                     return False
-                pubkey_short = Key.get_pubkey_from_id(guarantor_info["id"])
+                current_id = guarantor_info["id"]
+                # Check if the current ID is not in the correct order or if it's invalid, then return False
+                if current_id < last_id or not Key.check_user_id(current_id):
+                    return False
+                pubkey_short = Key.get_pubkey_from_id(current_id)
             except:
                 return False
 
-            data_to_verify = voucher.get_voucher_data(type="guarantor_signature", guarantor_verify=sign_number)# + json.dumps(guarantor_info, sort_keys=True)
+            data_to_verify = voucher.get_voucher_data(type="guarantor_signature")
+            data_to_verify += json.dumps(guarantor_info, sort_keys=True, ensure_ascii=False)
 
             if not Key.verify_signature(data_to_verify, signature, pubkey_short):
                 return False
+
+            last_id = current_id
             sign_number += 1
 
         return True

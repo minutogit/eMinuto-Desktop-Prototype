@@ -22,6 +22,7 @@ class Person:
         self.service_offer = person_data.get('service_offer')  # Offer / Skills
         self.coordinates = person_data.get('coordinates')
         self.current_voucher = None  # Initialization of current_voucher
+        self.current_voucher_signature = None # signature of current_voucher (set when a voucher is signed as guarantor)
         self.vouchers = []  # List of vouchers with amount
         self.unfinished_vouchers = [] # list of vouchers which not ready because of missing guarantor sign
         self.used_vouchers = []  # List of used vouchers after transaction without amount
@@ -143,24 +144,31 @@ class Person:
 
         # Prepare guarantor information for signature
         guarantor_info = {
+            "temp_voucher_id": voucher.temp_voucher_id,
             "id": self.id,
-            "name": self.first_name,
-            "name": self.last_name,
-            "name": self.organization,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "organization": self.organization,
             "address": self.address,
             "gender": self.gender,
             "email": self.email,
             "phone": self.phone,
             "coordinates": self.coordinates,
+            "temp_voucher_id": voucher.temp_voucher_id,
             "signature_time": get_timestamp()
         }
 
         # get voucher data for signing
-        data_to_sign = voucher.get_voucher_data(type="guarantor_signature", guarantor_info=guarantor_info)
+        data_to_sign = voucher.get_voucher_data(type="guarantor_signature")
+        data_to_sign += json.dumps(guarantor_info, sort_keys=True, ensure_ascii=False)
         signature = self.key.sign(data_to_sign, base64_encode=True)
 
         # Append the signed guarantor information to the voucher
         voucher.guarantor_signatures.append((guarantor_info, signature))
+        # Important! Signatures must be ordered by the guarantor's ID to prevent the possibility of creating multiple valid vouchers with the same signatures.
+        voucher.guarantor_signatures.sort(key=lambda x: x[0]["id"])
+
+        self.current_voucher_signature = (guarantor_info, signature)
 
     def verify_guarantor_signatures(self, voucher=None):
         """ Validates all guarantor signatures on the voucher. """
@@ -185,6 +193,16 @@ class Person:
         if voucher.creator_id != self.id:
             print("Can only sign own voucher as creator!")
             return
+
+        """
+        Important! Signatures must be ordered by the guarantor's ID to prevent the possibility of creating multiple
+        valid vouchers with the same signatures. This is essential because different orders of signatures could
+        otherwise lead to the creation of seemingly unique, but actually identical vouchers.
+        This sorting method allows for distributing an unfinished voucher to all guarantors at once. It eliminates the
+        need to send the voucher to the first guarantor, wait for their signature, and then proceed to the next
+        guarantor in a sequential manner. This significantly streamlines the signing process.
+        """
+        voucher.guarantor_signatures.sort(key=lambda x: x[0]["id"])
 
         data_to_sign = voucher.get_voucher_data(type="creator_signing")
         voucher.creator_signature = (self.key.sign(data_to_sign, base64_encode=True))

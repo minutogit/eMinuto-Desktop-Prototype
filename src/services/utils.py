@@ -1,7 +1,13 @@
 # utils.py
 import inspect
 from datetime import datetime
-import os
+import os, random, string
+
+def random_string(length):
+    """Generate a random string of specified length."""
+    characters = string.ascii_letters + string.digits
+    return ''.join(random.choice(characters) for i in range(length))
+
 
 def get_timestamp(years_to_add=0, end_of_year=False):
     """
