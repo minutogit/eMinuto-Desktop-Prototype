@@ -55,44 +55,54 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         model.setColumnCount(2)
         model.setHorizontalHeaderLabels(["Inhalt", "Wert"])
 
-        # Set the model to the table and adjust table properties
+        # Translation dictionary
+        translations = {
+            'voucher_id': 'Gutschein-ID',
+            'temp_voucher_id': 'Temporäre Gutschein-ID',
+            'creator_id': 'Ersteller-ID',
+            'creator_first_name': 'Vorname des Erstellers',
+            'creator_last_name': 'Nachname des Erstellers',
+            'creator_organization': 'Organisation des Erstellers',
+            'creator_address': 'Adresse des Erstellers',
+            'creator_gender': 'Geschlecht des Erstellers',
+            'amount': 'Betrag',
+            'description': 'Beschreibung',
+            'footnote': 'Fußnote',
+            'service_offer': 'Serviceangebot',
+            'validit_until': 'Gültig bis',
+            'region': 'Region',
+            'coordinates': 'Koordinaten',
+            'email': 'E-Mail',
+            'phone': 'Telefon',
+            'creation_date': 'Erstellungsdatum',
+            'is_test_voucher': 'Ist Testgutschein',
+            'guarantor_signatures': 'Anzahl Bürgen',
+            'creator_signature': 'Unterschrift des Erstellers',
+            'transactions': 'Transaktionen'
+        }
+
+        for attr, value in vars(voucher).items():
+            translated_attr = translations.get(attr, attr)  # Translate or use original attribute name
+
+            # Convert value to a more human-readable format if necessary
+            if attr == 'creator_gender':
+                value = {0: "Unbekannt", 1: "Männlich", 2: "Weiblich"}.get(value, "Unbekannt")
+            elif attr == 'is_test_voucher':
+                value = "Ja" if value else "Nein"
+            elif isinstance(value, list):
+                value = str(len(value))  # For lists, show their length
+            elif attr == 'creator_signature':
+                value = "Unterschrieben" if value else "Nicht unterschrieben"
+
+            label_item = QStandardItem(translated_attr)
+            value_item = QStandardItem(str(value))
+            model.appendRow([label_item, value_item])
+
         self.tableView_voucher.setModel(model)
         self.tableView_voucher.verticalHeader().setVisible(False)
         self.tableView_voucher.horizontalHeader().setVisible(True)
         self.tableView_voucher.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.tableView_voucher.setSelectionMode(QAbstractItemView.NoSelection)
-
-        # Add voucher details as rows
-        voucher_details = [
-            ("Gutschein-ID", voucher.voucher_id),
-            ("Ersteller-ID", voucher.creator_id),
-            ("Vorname des Erstellers", voucher.creator_first_name),
-            ("Nachname des Erstellers", voucher.creator_last_name),
-            ("Organisation des Erstellers", voucher.creator_organization),
-            ("Adresse des Erstellers", voucher.creator_address),
-            ("Geschlecht des Erstellers",
-             {0: "Unbekannt", 1: "Männlich", 2: "Weiblich"}.get(voucher.creator_gender, "Unbekannt")),
-            ("Betrag", voucher.amount),
-            ("Beschreibung", voucher.description),
-            ("Fußnote", voucher.footnote),
-            ("Serviceangebot", voucher.service_offer),
-            ("Gültig bis", voucher.validit_until),
-            ("Region", voucher.region),
-            ("Koordinaten", voucher.coordinates),
-            ("E-Mail", voucher.email),
-            ("Telefon", voucher.phone),
-            ("Erstellungsdatum", voucher.creation_date),
-            ("Ist Testgutschein", "Ja" if voucher.is_test_voucher else "Nein"),
-            ("Anzahl Bürgen", len(voucher.guarantor_signatures)),
-            ("Unterschrift des Erstellers", "Unterschrieben" if voucher.creator_signature else "Nicht unterschrieben"),
-            ("Transaktionen", len(voucher.transactions))
-        ]
-
-        for label, value in voucher_details:
-            label_item = self.create_non_editable_item(label)
-            value_item = self.create_non_editable_item(str(value))
-            model.appendRow([label_item, value_item])
-
         self.tableView_voucher.setWordWrap(True)
         self.tableView_voucher.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.tableView_voucher.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
