@@ -452,7 +452,7 @@
     <string>Gutschein Daten</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_players_only">
+  <widget class="QLabel" name="label_footnote">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -467,7 +467,7 @@
     </font>
    </property>
    <property name="text">
-    <string>Gutschein-Nutzung nur für Mitspieler/innen.</string>
+    <string/>
    </property>
    <property name="alignment">
     <set>Qt::AlignCenter</set>

@@ -1,7 +1,7 @@
 # qt_main.py
 from PySide6.QtCore import QSortFilterProxyModel, Qt
-from PySide6.QtGui import QAction
-from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QAction, QShowEvent
+from PySide6.QtWidgets import QApplication, QStatusBar, QLabel, QHBoxLayout, QWidget, QPushButton
 from PySide6.QtWidgets import QMainWindow, QMenu, QHeaderView
 
 from src.gui.qt.profile_dialogs import Dialog_Generate_Profile
@@ -15,6 +15,7 @@ from src.gui.qt.ui_components.form_show_voucher import Ui_FormShowVoucher
 from src.gui.qt.ui_components.main_window import Ui_MainWindow
 from src.gui.qt.utils import apply_global_styles
 from src.models.user_profile import user_profile
+from src.models.minuto_voucher import MinutoVoucher
 
 
 
@@ -39,32 +40,96 @@ class FormShowRawData(QMainWindow, Ui_FormShowRawData):
 
 
 class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
+    """
+    FormShowVoucher class for displaying and managing voucher information.
+    """
+
     def __init__(self):
+        """ Initialize the FormShowVoucher window. """
         super().__init__()
         self.setupUi(self)
         self.voucher = None
         self.pushButtonClose.clicked.connect(self.close)
         self.pushButtonRawData.clicked.connect(self.show_raw_data)
+        self.apply_stylesheet_to_buttons()
+
+    def apply_stylesheet_to_buttons(self):
+        """ Apply custom stylesheet to buttons in the form. """
+        button_stylesheet = """
+                QPushButton {
+                    /* Stylesheet for normal button states */
+                }
+                QPushButton:disabled {
+                    background-color: #d3d3d3;
+                    color: #a0a0a0;
+                }
+            """
+        for button in self.findChildren(QPushButton):
+            button.setStyleSheet(button_stylesheet)
+
+    def update_status(self, voucher: MinutoVoucher):
+        """
+        Update the UI based on the current status of the voucher,
+        enabling or disabling buttons accordingly.
+        """
+        # Check conditions for voucher status
+        own_voucher = (voucher.creator_id == user_profile.person.id)
+        enough_guarantors = (len(voucher.guarantor_signatures) >= 2)
+        no_creator_signature = (voucher.creator_signature is None)
+
+        # Enable or disable buttons based on voucher status
+        self.pushButtonSendToGuarantor.setEnabled(own_voucher and not enough_guarantors)
+        self.pushButtonSignAsCreator.setEnabled(own_voucher and enough_guarantors and no_creator_signature)
+        self.pushButtonSignAsGuarantor.setEnabled(not own_voucher and not enough_guarantors)
+
+        voucher_status = ""
+        if own_voucher:
+            voucher_status += "<b>Eigener Gutschein"
+            if not enough_guarantors:
+                voucher_status += " (Nicht genug Bürgen)"
+            elif no_creator_signature is None:
+                voucher_status += " (Eigene Unterschrift fehlt)"
+            else:
+                voucher_status += " (gültig)"
+        else:
+            voucher_status += "<b>Erhaltener Gutschein"
+            if not enough_guarantors:
+                voucher_status += " (Nicht genug Bürgen)"
+            elif no_creator_signature is None:
+                voucher_status += " (Ersteller Unterschrift fehlt)"
+            else:
+                voucher_status += " (Gültig)"
+        voucher_status += "</b>"
+
+        self.labelInfoTextLeft.setText(voucher_status)
+
+        available_amount = voucher.get_voucher_amount(user_profile.person.id)
+        self.labelInfoTextRight.setText(f"<b>Verfügbarer Betrag:  {available_amount} Minuto</b>")
 
     def show_raw_data(self):
+        """ Display raw data of the voucher. """
         form_show_raw_data.show_data(self.voucher)
 
-    def show_voucher(self, voucher):
+    def show_voucher(self, voucher: MinutoVoucher):
+        """
+        Display voucher details in a table view.
+        Translates attribute names and formats values for presentation.
+        """
         self.voucher = voucher
         model = QStandardItemModel(self)
         model.setColumnCount(2)
         model.setHorizontalHeaderLabels(["Inhalt", "Wert"])
 
-        # Translation dictionary
+        # Translate and display each voucher attribute
         translations = {
             'voucher_id': 'Gutschein-ID',
             'temp_voucher_id': 'Temporäre Gutschein-ID',
             'creator_id': 'Ersteller-ID',
-            'creator_first_name': 'Vorname des Erstellers',
-            'creator_last_name': 'Nachname des Erstellers',
-            'creator_organization': 'Organisation des Erstellers',
-            'creator_address': 'Adresse des Erstellers',
-            'creator_gender': 'Geschlecht des Erstellers',
+            'creator_first_name': 'Vorname',
+            'creator_last_name': 'Nachname',
+            'creator_organization': 'Organisation',
+            'creator_address': 'Adresse',
+            'creator_gender': 'Geschlecht',
             'amount': 'Betrag',
             'description': 'Beschreibung',
             'footnote': 'Fußnote',
@@ -107,9 +172,11 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         self.tableView_voucher.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.tableView_voucher.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
 
+        self.update_status(voucher)
         self.show()
 
     def create_non_editable_item(self, text):
+        """ Create a non-editable table item with the provided text. """
         item = QStandardItem(str(text))
         item.setEditable(False)
         return item
@@ -120,8 +187,17 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.initialized = False  # Flag to track initialization
         self.lineEdit_amount.textChanged.connect(self.update_voucher_description)
         self.pushButton_CreateVoucher.clicked.connect(self.create_minuto)
+        self.init_values()
+
+    def showEvent(self, event: QShowEvent):
+        """Called when the dialog is shown."""
+        if not self.initialized:
+            self.init_values()
+            self.initialized = True
+        super().showEvent(event)
 
     def create_minuto(self):
         # Extrahiere die Werte aus den GUI-Elementen
@@ -129,7 +205,6 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
         region = self.lineEdit_region.text()
         years_valid = int(self.spinBox_years_valid.text())
 
-        # Extrahiere Informationen aus anderen GUI-Elementen
         first_name = self.lineEdit_creator_first_name.text()
         last_name = self.lineEdit_creator_last_name.text()
         organization = self.lineEdit_creator_organization.text()
@@ -140,12 +215,15 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
         coordinates = self.lineEdit_coordinates.text()
         is_test_vocher = self.checkBox_is_test_voucher.isChecked()
 
-        # Geschlechtswert von QComboBox ermitteln
         gender = self.comboBox_creator_gender.currentIndex() # 0 unknown, 1 male, 2 female
+        footnote = self.label_footnote.text()
+        description = self.label_voucher_description.text()
+        voucher = user_profile.create_voucher(first_name, last_name, organization, address, gender, email, phone, service_offer,
+                                    coordinates, amount, region, years_valid, is_test_vocher, description, footnote)
+        form_show_voucher.show_voucher(voucher)
+        self.initialized = False # to load values from profile on next show
+        self.close()
 
-        # Erstelle den Voucher
-        user_profile.create_voucher(first_name, last_name, organization, address, gender, email, phone, service_offer,
-                                    coordinates, amount, region, years_valid, is_test_vocher)
 
     def init_values(self):
         address = (f"{user_profile.person_data['street']} {user_profile.person_data['zip_code']} "
@@ -163,7 +241,7 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
         self.lineEdit_email.setText(user_profile.person_data['email'])
         self.lineEdit_phone.setText(user_profile.person_data['phone'])
         self.textEdit_service_offer.setText(user_profile.person_data['service_offer'])
-        self.label_coordinates.setText(user_profile.person_data['coordinates'])
+        self.label_footnote.setText("Gutschein-Nutzung nur für Mitspieler/innen.")
 
     def update_voucher_description(self, amount):
         """Update the voucher description based on the amount."""
@@ -173,9 +251,6 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
         else:
             self.label_voucher_description.setText("Gutschein für Waren oder Dienstleistungen")
 
-    def init_and_show(self):
-        self.init_values()
-        self.show()
 
 
 class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
@@ -382,7 +457,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.setWindowTitle(f"eMinuto")
         self.actionCreateProfile.triggered.connect(self.dialog_generate_profile.show)
         self.actionEditProfile.triggered.connect(dialog_profile.init_and_show)
-        self.actionCreateMinuto.triggered.connect(dialog_create_minuto.init_and_show)
+        self.actionCreateMinuto.triggered.connect(dialog_create_minuto.show)
         self.actionProfileLogin.triggered.connect(dialog_profile_login.login)
         self.actionProfileLogout.triggered.connect(self.profile_logout)
         self.actionVoucherList.triggered.connect(dialog_voucher_list.init_show)

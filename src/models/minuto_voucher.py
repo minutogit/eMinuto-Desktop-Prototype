@@ -10,32 +10,32 @@ from src.models.voucher_transaction import VoucherTransaction
 class MinutoVoucher(Serializable):
     def __init__(self):
         # Initialize default values for voucher attributes
-        self.voucher_id = ''
-        self.temp_voucher_id = ""  # Temporary voucher ID, to be used until the final voucher is ready
-        self.creator_id = ''
-        self.creator_first_name = ''
-        self.creator_last_name = ''
-        self.creator_organization = ''
-        self.creator_address = ''
-        self.creator_gender = 0  # 0 for unknown, 1 for male, 2 for female
+        self.region = ''
         self.amount = 0
         self.description = ""
-        self.footnote = ""
-        self.service_offer = ''
         self.validit_until = ''
-        self.region = ''
-        self.coordinates = ''
-        self.email = ''
+        self.creator_id = ''
+        self.creator_organization = ''
+        self.creator_first_name = ''
+        self.creator_last_name = ''
+        self.creator_address = ''
         self.phone = ''
-        self.creation_date = ''
-        self.is_test_voucher = False  # Indicates if the voucher is a test voucher
-        self.guarantor_signatures = []  # Guarantor signatures
+        self.email = ''
+        self.creator_gender = 0  # 0 for unknown, 1 for male, 2 for female
+        self.service_offer = ''
         self.creator_signature = None  # Creator's signature
+        self.coordinates = ''
+        self.guarantor_signatures = []  # Guarantor signatures
         self.transactions = []  # list of transactions
+        self.creation_date = ''
+        self.voucher_id = ''
+        self.temp_voucher_id = ""  # Temporary voucher ID, to be used until the final voucher is ready
+        self.footnote = ""
+        self.is_test_voucher = False  # Indicates if the voucher is a test voucher
 
     @classmethod
     def create(cls, creator_id: str, creator_first_name: str, creator_last_name: str, creator_organization: str, creator_address, creator_gender: int, email: str, phone: str, service_offer: str, coordinates: str,
-               amount: float, region: str, validity: int, is_test_voucher: bool = False):
+               amount: float, region: str, validity: int, is_test_voucher: bool = False, description='', footnote=''):
         # Create a new voucher instance with provided details
         voucher = cls()
         voucher.creator_id = creator_id
@@ -48,8 +48,14 @@ class MinutoVoucher(Serializable):
         voucher.creator_address = creator_address
         voucher.creator_gender = creator_gender # unknown = 0, male = 1, female = 2
         voucher.amount = amount_precision(amount)
-        voucher.description = f"Voucher for goods or services worth {amount_precision(amount)} minutes of quality work."
-        voucher.footnote = "Voucher redemption for Minuto players only."
+        if description == "":
+            voucher.description = f"Voucher for goods or services worth {amount_precision(amount)} minutes of quality work."
+        else:
+            voucher.description = description
+        if footnote == "":
+            voucher.footnote = "Voucher redemption for Minuto players only."
+        else:
+            voucher.footnote = footnote
         voucher.service_offer = service_offer
         voucher.validit_until = get_timestamp(validity, end_of_year=True)
         voucher.region = region
@@ -170,7 +176,7 @@ class MinutoVoucher(Serializable):
 
         # Ensure there are transactions to evaluate
         if not voucher.transactions:
-            raise ValueError("No transactions exist for this voucher.")
+            return 0
 
         # Retrieve the last transaction
         last_transaction = voucher.transactions[-1]

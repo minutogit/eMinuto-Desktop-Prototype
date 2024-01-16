@@ -37,10 +37,10 @@ class Person:
         from src.models.minuto_voucher import MinutoVoucher
         self.current_voucher = MinutoVoucher.create(self.id, self.first_name, self.last_name, self.organization, self.address, self.gender, self.email, self.phone, self.service_offer, self.coordinates, amount, region, years_valid, is_test_voucher)
 
-    def create_voucher_from_gui(self, first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher=False):
+    def create_voucher_from_gui(self, first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher=False, description='', footnote=''):
         """ used to create voucher from gui """
         from src.models.minuto_voucher import MinutoVoucher
-        self.current_voucher = MinutoVoucher.create(self.id, first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher)
+        self.current_voucher = MinutoVoucher.create(self.id, first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher, description, footnote)
 
     def check_double_spending(self):
         """

@@ -122,15 +122,16 @@ class UserProfile(Serializable):
         except Exception: # Exception when password is wrong
             return False
 
-    def create_voucher(self, first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher):
+    def create_voucher(self, first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher, description='', footnote=''):
         unfinished_subfolder = "unfinished"
-        self.person.create_voucher_from_gui(first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher)
+        self.person.create_voucher_from_gui(first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher, description, footnote)
         file_path = join_path(self.data_folder, unfinished_subfolder)
         voucher_name = f"voucher-{self.person.current_voucher.creation_date}.txt"
         self.person.save_voucher(voucher_name, file_path)
         self.person.unfinished_vouchers.append(self.person.current_voucher)
+        voucher = self.person.current_voucher
         self.person.current_voucher = None
-
+        return voucher
 
     def to_dict(self):
         """
