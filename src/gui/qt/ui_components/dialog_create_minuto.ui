@@ -25,7 +25,7 @@
      <x>20</x>
      <y>280</y>
      <width>461</width>
-     <height>30</height>
+     <height>31</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_first_name">
@@ -48,7 +48,13 @@
      </widget>
     </item>
     <item>
-     <widget class="QLineEdit" name="lineEdit_creator_first_name"/>
+     <widget class="QLineEdit" name="lineEdit_creator_first_name">
+      <property name="font">
+       <font>
+        <pointsize>11</pointsize>
+       </font>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>

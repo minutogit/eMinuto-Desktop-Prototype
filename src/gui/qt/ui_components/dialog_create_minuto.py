@@ -32,7 +32,7 @@ class Ui_DialogCreateMinuto(object):
         DialogCreateMinuto.setSizePolicy(sizePolicy)
         self.widget_creator_first_name = QWidget(DialogCreateMinuto)
         self.widget_creator_first_name.setObjectName(u"widget_creator_first_name")
-        self.widget_creator_first_name.setGeometry(QRect(20, 280, 461, 30))
+        self.widget_creator_first_name.setGeometry(QRect(20, 280, 461, 31))
         self.horizontalLayout_first_name = QHBoxLayout(self.widget_creator_first_name)
         self.horizontalLayout_first_name.setObjectName(u"horizontalLayout_first_name")
         self.horizontalLayout_first_name.setContentsMargins(0, 0, 0, 0)
@@ -47,6 +47,7 @@ class Ui_DialogCreateMinuto(object):
 
         self.lineEdit_creator_first_name = QLineEdit(self.widget_creator_first_name)
         self.lineEdit_creator_first_name.setObjectName(u"lineEdit_creator_first_name")
+        self.lineEdit_creator_first_name.setFont(font)
 
         self.horizontalLayout_first_name.addWidget(self.lineEdit_creator_first_name)
 

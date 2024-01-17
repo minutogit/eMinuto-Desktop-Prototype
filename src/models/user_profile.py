@@ -29,7 +29,7 @@ class UserProfile(Serializable):
             'zip_code': '',
             'city': '',
             'state_or_region': '',
-            'country': 'Land',
+            'country': '',
             'gender': 0,
             'email': '',
             'phone': '',
@@ -60,6 +60,7 @@ class UserProfile(Serializable):
         unfinished_subfolder = "unfinished"
         import os
         file_path = os.path.join(self.data_folder, unfinished_subfolder)
+        os.makedirs(file_path, exist_ok=True)
 
         # List all files in the directory
         for filename in os.listdir(file_path):
@@ -126,7 +127,7 @@ class UserProfile(Serializable):
         unfinished_subfolder = "unfinished"
         self.person.create_voucher_from_gui(first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher, description, footnote)
         file_path = join_path(self.data_folder, unfinished_subfolder)
-        voucher_name = f"voucher-{self.person.current_voucher.creation_date}.txt"
+        voucher_name = f"voucher-{self.person.current_voucher.creation_date}.txt".replace(':', '_')
         self.person.save_voucher(voucher_name, file_path)
         self.person.unfinished_vouchers.append(self.person.current_voucher)
         voucher = self.person.current_voucher
