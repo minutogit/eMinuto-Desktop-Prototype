@@ -192,19 +192,11 @@ class TestPerson(unittest.TestCase):
 
 
         # Test encryption with Diffie-Hellman key exchange
-        filehandler.encrypt_with_shared_secret_and_save(
-            sim.persons[1].vouchers[0],
-            "secure_voucher2.txt",
-            sim.persons[1].key.private_key,
-            sim.persons[2].id
-        )
+        filehandler.encrypt_with_shared_secret_and_save(sim.persons[1].vouchers[0], "secure_voucher2.txt",
+                                                        sim.persons[2].id, sim.persons[1].key.private_key)
 
-        decrypted_data = filehandler.decrypt_with_shared_secret_and_load(
-            "secure_voucher2.txt",
-            sim.persons[2].key.private_key,
-            sim.persons[1].id,
-            MinutoVoucher
-        )
+        decrypted_data = filehandler.decrypt_with_shared_secret_and_load("secure_voucher2.txt", sim.persons[1].id,
+                                                                         sim.persons[2].key.private_key, MinutoVoucher)
 
         # Verify the integrity of the decrypted data
         self.assertTrue(

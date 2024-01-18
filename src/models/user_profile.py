@@ -18,6 +18,7 @@ class UserProfile(Serializable):
     def __init__(self):
         # Initialize the profile state
         self.initialize_state()
+        self._secure_file_handler = None
 
     def initialize_state(self):
         """Initialize or reset the state of the profile."""
@@ -53,6 +54,7 @@ class UserProfile(Serializable):
             return False
         seed = symmetric_decrypt(self.encrypted_seed_words, password)
         self.person = Person(self.person_data, seed=seed)
+        self._secure_file_handler= SecureFileHandler(self.person.key.private_key) # prvate key needed for encrytion with other users
         self.read_vouchers_from_disk()
         return True
 
@@ -100,14 +102,13 @@ class UserProfile(Serializable):
         return True
 
     def save_profile_to_disk(self, password="", second_password=None):
-        filehandler = SecureFileHandler()
         # always use seed as recovery_password (needed when password is lost)
         if second_password == None:
             recovery_password = symmetric_decrypt(self.encrypted_seed_words, key=self.encryption_key.encode('utf-8'))
         else:
             recovery_password = second_password
         file_path = join_path(self.data_folder, self.profile_filename)
-        filehandler.encrypt_and_save(self, file_path, password=password,  second_password=recovery_password,key=self.encryption_key.encode('utf-8'), salt=b64d(self.encryption_salt))
+        self._secure_file_handler.encrypt_and_save(self, file_path, password=password, second_password=recovery_password, key=self.encryption_key.encode('utf-8'), salt=b64d(self.encryption_salt))
 
     def profile_logout(self):
         self.save_profile_to_disk()
