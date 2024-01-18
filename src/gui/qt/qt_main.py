@@ -1,7 +1,7 @@
 # qt_main.py
 from PySide6.QtCore import QSortFilterProxyModel, Qt, QSize
 from PySide6.QtGui import QAction, QShowEvent, QIcon
-from PySide6.QtWidgets import QApplication, QStatusBar, QLabel, QHBoxLayout, QWidget, QPushButton
+from PySide6.QtWidgets import QApplication, QStatusBar, QLabel, QHBoxLayout, QWidget, QPushButton, QFileDialog
 from PySide6.QtWidgets import QMainWindow, QMenu, QHeaderView
 
 from src.gui.qt.profile_dialogs import Dialog_Generate_Profile
@@ -16,25 +16,23 @@ from src.gui.qt.ui_components.main_window import Ui_MainWindow
 from src.gui.qt.ui_components.form_send_to_guarantor import Ui_FormSendToGuarantor
 from src.services.crypto_utils import verify_user_ID
 
-from src.gui.qt.utils import apply_global_styles
+from src.gui.qt.utils import apply_global_styles, show_message_box
 from src.models.user_profile import user_profile
 from src.models.minuto_voucher import MinutoVoucher
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import QAbstractItemView
 
 
-
 class FormSendToGuarantor(QMainWindow, Ui_FormSendToGuarantor):
     """
     A window form to send a voucher for signing to a guarantor or save the voucher as a file for obtaining a signature.
     """
-
     def __init__(self):
         super().__init__()
         self.setupUi(self)
         self.voucher = None
-        self.lineEdit_user_ID.setText(user_profile.person.id)
         self.pushButton_copy_user_ID.clicked.connect(self.copyUserIDToClipboard)
+        self.pushButton_save_as_file.clicked.connect(self.save_voucher_as_file)
         self.lineEdit_guarantor_ID.textChanged.connect(self.check_guarantor_ID)
 
     def copyUserIDToClipboard(self):
@@ -45,18 +43,62 @@ class FormSendToGuarantor(QMainWindow, Ui_FormSendToGuarantor):
         """
         Check the entered guarantor ID and update the label with a green check or red cross based on validity.
         """
-        if self.lineEdit_guarantor_ID.text().strip() == "":
+        guarantor_id = self.lineEdit_guarantor_ID.text().strip()
+        if guarantor_id == "":
             self.label_guarantor_id_check.setText("")  # Clear label if input is empty
             return
 
         # Set label based on the validity of the guarantor ID
-        if verify_user_ID(self.lineEdit_guarantor_ID.text().strip()):
+        if verify_user_ID(guarantor_id):
+            if guarantor_id == user_profile.person.id:
+                show_message_box("Fehler!", "Nicht die eigene ID verwenden!")
+                return
             self.label_guarantor_id_check.setText("✅")  # Green check emoji for valid ID
+
         else:
             self.label_guarantor_id_check.setText("❌")  # Red cross emoji for invalid ID
 
+    def save_voucher_as_file(self):
+        """
+        Save the voucher as a file, either encrypted or plain based on the user's choice.
+        """
+
+        # Set the suggested file name and extension based on encryption choice
+        encrypt_data = self.checkBox_encrypt_voucher.isChecked()
+        if verify_user_ID(self.lineEdit_guarantor_ID.text().strip()):
+            guarantor_id = self.lineEdit_guarantor_ID.text().strip()
+        elif encrypt_data:
+            show_message_box("Fehler!", "Gültige ID des Bürgen wird für Verschlüsselung benötigt!")
+            return
+
+        suggested_filename = f"Gutschein-unfertig_{user_profile.person.id[:8]}.mv"
+        file_filter = "Minuto Voucher (*.mv)"
+        if encrypt_data:
+            suggested_filename = f"Gutschein-unfertig_{user_profile.person.id[:4]}-{guarantor_id[:4]}.cmv"
+            file_filter = "Encrypted Minuto Voucher (*.cmv)"
+
+        # Open file save dialog
+        filename_with_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Voucher speichern",
+            suggested_filename,
+            file_filter
+        )
+
+        # Check if the user has entered a file name
+        if filename_with_path:
+            if encrypt_data:
+                # Encrypt and save the voucher
+                user_profile._secure_file_handler.encrypt_with_shared_secret_and_save(
+                    self.voucher, filename_with_path, guarantor_id)
+            else:
+                # Save the voucher unencrypted
+                user_profile.person.save_voucher(filename=filename_with_path, voucher=self.voucher)
+
+
     def show_form(self, voucher):
         self.voucher = voucher
+        self.lineEdit_user_ID.setText(user_profile.person.id)
         self.show()
 
 

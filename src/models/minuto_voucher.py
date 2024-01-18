@@ -113,7 +113,7 @@ class MinutoVoucher(Serializable):
         If simulation mode is activated, the file_path is ignored and the serialized data is returned instead.
 
         :param file_path: Optional. The path of the file where the voucher data will be saved when not in simulation mode.
-        :param subfolder: Optional. The subfolder under the script directory where the file will be saved.
+        :param subfolder: Optional. The subfolder under the script directory where the file will be saved. If no subfolder the file_path contains path and filename.
         :param simulation: If True, operates in simulation mode and returns the serialized data; otherwise, saves to the specified file path.
         :return: The serialized data if simulation mode is activated.
         """
@@ -126,7 +126,7 @@ class MinutoVoucher(Serializable):
                 full_path = os.path.join(base_dir, subfolder, file_path)
                 os.makedirs(os.path.dirname(full_path), exist_ok=True)
             else:
-                full_path = os.path.join(base_dir, file_path)
+                full_path = file_path # if no subfolder, file_path contains the full path and name of file
 
             with open(full_path, 'w', encoding='utf-8') as file:
                 file.write(data_to_save)
