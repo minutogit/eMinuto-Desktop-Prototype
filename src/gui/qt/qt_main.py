@@ -1,6 +1,6 @@
 # qt_main.py
-from PySide6.QtCore import QSortFilterProxyModel, Qt
-from PySide6.QtGui import QAction, QShowEvent
+from PySide6.QtCore import QSortFilterProxyModel, Qt, QSize
+from PySide6.QtGui import QAction, QShowEvent, QIcon
 from PySide6.QtWidgets import QApplication, QStatusBar, QLabel, QHBoxLayout, QWidget, QPushButton
 from PySide6.QtWidgets import QMainWindow, QMenu, QHeaderView
 
@@ -13,17 +13,56 @@ from src.gui.qt.ui_components.dialog_voucher_list import Ui_DialogVoucherList
 from src.gui.qt.ui_components.form_show_raw_data import Ui_FormShowRawData
 from src.gui.qt.ui_components.form_show_voucher import Ui_FormShowVoucher
 from src.gui.qt.ui_components.main_window import Ui_MainWindow
+from src.gui.qt.ui_components.form_send_to_guarantor import Ui_FormSendToGuarantor
+from src.services.crypto_utils import verify_user_ID
+
 from src.gui.qt.utils import apply_global_styles
 from src.models.user_profile import user_profile
 from src.models.minuto_voucher import MinutoVoucher
-
-
-
-
-
-
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import QAbstractItemView
+
+
+
+class FormSendToGuarantor(QMainWindow, Ui_FormSendToGuarantor):
+    """
+    A window form to send a voucher for signing to a guarantor or save the voucher as a file for obtaining a signature.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.voucher = None
+        self.lineEdit_user_ID.setText(user_profile.person.id)
+        self.pushButton_copy_user_ID.clicked.connect(self.copyUserIDToClipboard)
+        self.lineEdit_guarantor_ID.textChanged.connect(self.check_guarantor_ID)
+
+    def copyUserIDToClipboard(self):
+        clipboard = QApplication.clipboard()
+        clipboard.setText(self.lineEdit_user_ID.text())
+
+    def check_guarantor_ID(self):
+        """
+        Check the entered guarantor ID and update the label with a green check or red cross based on validity.
+        """
+        if self.lineEdit_guarantor_ID.text().strip() == "":
+            self.label_guarantor_id_check.setText("")  # Clear label if input is empty
+            return
+
+        # Set label based on the validity of the guarantor ID
+        if verify_user_ID(self.lineEdit_guarantor_ID.text().strip()):
+            self.label_guarantor_id_check.setText("✅")  # Green check emoji for valid ID
+        else:
+            self.label_guarantor_id_check.setText("❌")  # Red cross emoji for invalid ID
+
+    def show_form(self, voucher):
+        self.voucher = voucher
+        self.show()
+
+
+
+
+
 
 class FormShowRawData(QMainWindow, Ui_FormShowRawData):
     def __init__(self):
@@ -51,6 +90,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         self.voucher = None
         self.pushButtonClose.clicked.connect(self.close)
         self.pushButtonRawData.clicked.connect(self.show_raw_data)
+        self.pushButtonSendToGuarantor.clicked.connect(self.send_to_guarantor)
         self.apply_stylesheet_to_buttons()
 
     def apply_stylesheet_to_buttons(self):
@@ -66,6 +106,9 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
             """
         for button in self.findChildren(QPushButton):
             button.setStyleSheet(button_stylesheet)
+
+    def send_to_guarantor(self):
+        form_send_to_guarantor.show_form(self.voucher)
 
     def update_status(self, voucher: MinutoVoucher):
         """
@@ -579,6 +622,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
 app = QApplication([])
 apply_global_styles(app)
 
+form_send_to_guarantor = FormSendToGuarantor()
 form_show_raw_data = FormShowRawData()
 dialog_profile_login = Dialog_Profile_Login()
 dialog_profile_create_selection = Dialog_Profile_Create_Selection()
