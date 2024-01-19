@@ -135,12 +135,12 @@ class Person:
 
         if voucher.creator_id == self.id:
             print("Guarantors cannot sign their own vouchers.")
-            return
+            return False
 
         for g_sign in voucher.guarantor_signatures:
             if g_sign[0]["id"] == self.id:
                 print("Vouchers cannot be signed by the same guarantor more than once.")
-                return
+                return False
 
         # Prepare guarantor information for signature
         guarantor_info = {
@@ -154,7 +154,6 @@ class Person:
             "email": self.email,
             "phone": self.phone,
             "coordinates": self.coordinates,
-            "temp_voucher_id": voucher.temp_voucher_id,
             "signature_time": get_timestamp()
         }
 
@@ -169,6 +168,51 @@ class Person:
         voucher.guarantor_signatures.sort(key=lambda x: x[0]["id"])
 
         self.current_voucher_signature = (guarantor_info, signature)
+        return True
+
+    def get_own_guarantor_signature(self, voucher=None):
+        """ Returns the own signature tuple from the voucher. Need for gui to send only the signature to the creator"""
+        voucher = voucher or self.current_voucher
+
+        for guarantor_info, signature in voucher.guarantor_signatures:
+            if guarantor_info["id"] == self.id:
+                return (guarantor_info, signature)
+
+        return None
+
+
+    def append_guarantor_signature(self, guarantor_signature, voucher=None):
+        """ Appends the guarantor signature tuple to the voucher, ensuring specific conditions are met.
+        Returns True if successful, False otherwise.
+        """
+        voucher = voucher or self.current_voucher
+        guarantor_info, signature = guarantor_signature
+
+        # Check if the guarantor's ID matches the voucher's temporary ID
+        if guarantor_info["id"] != voucher.temp_voucher_id:
+            return False
+
+        # Check if the guarantor is the creator of the voucher (creator can't be guarantor)
+        if guarantor_info["id"] == voucher.creator_id:
+            return False
+
+        # Check if already has a signature from this guarantor
+        for existing_guarantor_info, _ in voucher.guarantor_signatures:
+            if existing_guarantor_info["id"] == guarantor_info["id"]:
+                return False
+
+        # Append the guarantor's signature
+        voucher.guarantor_signatures.append(guarantor_signature)
+
+        #sort signatures (required for valid voucher)
+        voucher.guarantor_signatures.sort(key=lambda x: x[0]["id"])
+
+        # check signatures
+        if not self.verify_guarantor_signatures():
+            return False
+
+        return True
+
 
     def verify_guarantor_signatures(self, voucher=None):
         """ Validates all guarantor signatures on the voucher. """

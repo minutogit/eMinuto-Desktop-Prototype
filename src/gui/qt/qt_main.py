@@ -14,6 +14,7 @@ from src.gui.qt.ui_components.form_show_raw_data import Ui_FormShowRawData
 from src.gui.qt.ui_components.form_show_voucher import Ui_FormShowVoucher
 from src.gui.qt.ui_components.main_window import Ui_MainWindow
 from src.gui.qt.ui_components.form_send_to_guarantor import Ui_FormSendToGuarantor
+from src.gui.qt.ui_components.form_sign_as_guarantor import Ui_FormSignVoucherAsGuarantor
 from src.services.crypto_utils import verify_user_ID
 
 from src.gui.qt.utils import apply_global_styles, show_message_box
@@ -21,6 +22,82 @@ from src.models.user_profile import user_profile
 from src.models.minuto_voucher import MinutoVoucher
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import QAbstractItemView
+
+
+
+class FormSignAsGuarantor(QMainWindow, Ui_FormSignVoucherAsGuarantor):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.voucher = None
+        self.guarantor_signature = None
+        self.checkBox_liability_acceptance.stateChanged.connect(self.liability_acceptance)
+        self.pushButton_sign_as_guarantor.clicked.connect(self.sign_as_guarantor)
+        self.pushButton_save_as_file.clicked.connect(self.save_signature_as_file)
+
+        self.apply_stylesheet_to_buttons()
+
+    def apply_stylesheet_to_buttons(self):
+        """ Apply custom stylesheet to buttons in the form. """
+        button_stylesheet = """
+                    QPushButton {
+                        /* Stylesheet for normal button states */
+                    }
+                    QPushButton:disabled {
+                        background-color: #d3d3d3;
+                        color: #a0a0a0;
+                    }
+                """
+        for button in self.findChildren(QPushButton):
+            button.setStyleSheet(button_stylesheet)
+
+    def liability_acceptance(self):
+        # when checkbox for liability acceptance is checked / unchecked
+        liability_accepted = self.checkBox_liability_acceptance.isChecked()
+        self.pushButton_sign_as_guarantor.setEnabled(liability_accepted)
+
+    def sign_as_guarantor(self):
+        # if sign successful
+        if user_profile.person.sign_voucher_as_guarantor(self.voucher):
+            self.guarantor_signature = user_profile.person.get_own_guarantor_signature(self.voucher)
+            self.checkBox_liability_acceptance.setEnabled(False)
+            self.pushButton_sign_as_guarantor.setEnabled(False)
+            self.pushButton_save_as_file.setEnabled(True)
+
+    def save_signature_as_file(self):
+        """
+        Save the signature as a file, either encrypted or plain based on the user's choice.
+        """
+
+        creator_id = self.voucher.creator_id
+
+        suggested_filename = f"Gutschein-Unterschrift_{user_profile.person.id[:4]}-{creator_id[:4]}.cms"
+        file_filter = "Encrypted Minuto Unterschrift (*.cms)"
+
+        # Open file save dialog
+        filename_with_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Unterschrift speichern",
+            suggested_filename,
+            file_filter
+        )
+
+         # Check if the user has entered a file name
+        if filename_with_path:
+            user_profile._secure_file_handler.encrypt_with_shared_secret_and_save(
+                self.guarantor_signature, filename_with_path, creator_id)
+
+
+
+    def show_form(self, voucher):
+        self.voucher = voucher
+        self.guarantor_signature = None
+        self.pushButton_sign_as_guarantor.setEnabled(False)
+        self.pushButton_save_as_file.setEnabled(False)
+        self.pushButton_send_as_email.setEnabled(False)
+        self.checkBox_liability_acceptance.setChecked(False)
+        self.show()
+
 
 
 class FormSendToGuarantor(QMainWindow, Ui_FormSendToGuarantor):
@@ -132,7 +209,9 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         self.voucher = None
         self.pushButtonClose.clicked.connect(self.close)
         self.pushButtonRawData.clicked.connect(self.show_raw_data)
+        self.pushButtonSignAsGuarantor.clicked.connect(self.sing_as_guarantor)
         self.pushButtonSendToGuarantor.clicked.connect(self.send_to_guarantor)
+
         self.apply_stylesheet_to_buttons()
 
     def apply_stylesheet_to_buttons(self):
@@ -148,6 +227,9 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
             """
         for button in self.findChildren(QPushButton):
             button.setStyleSheet(button_stylesheet)
+
+    def sing_as_guarantor(self):
+        form_sing_as_guarantor.show_form(self.voucher)
 
     def send_to_guarantor(self):
         form_send_to_guarantor.show_form(self.voucher)
@@ -664,6 +746,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
 app = QApplication([])
 apply_global_styles(app)
 
+form_sing_as_guarantor = FormSignAsGuarantor()
 form_send_to_guarantor = FormSendToGuarantor()
 form_show_raw_data = FormShowRawData()
 dialog_profile_login = Dialog_Profile_Login()
