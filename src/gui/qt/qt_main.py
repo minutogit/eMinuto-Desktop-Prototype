@@ -85,7 +85,7 @@ class FormSignAsGuarantor(QMainWindow, Ui_FormSignVoucherAsGuarantor):
          # Check if the user has entered a file name
         if filename_with_path:
             user_profile._secure_file_handler.encrypt_with_shared_secret_and_save(
-                self.guarantor_signature, filename_with_path, creator_id)
+                self.guarantor_signature, filename_with_path, creator_id, user_profile.person.id)
 
 
 
@@ -167,7 +167,7 @@ class FormSendToGuarantor(QMainWindow, Ui_FormSendToGuarantor):
             if encrypt_data:
                 # Encrypt and save the voucher
                 user_profile._secure_file_handler.encrypt_with_shared_secret_and_save(
-                    self.voucher, filename_with_path, guarantor_id)
+                    self.voucher, filename_with_path, guarantor_id, user_profile.person.id)
             else:
                 # Save the voucher unencrypted
                 user_profile.person.save_voucher(filename=filename_with_path, voucher=self.voucher)
