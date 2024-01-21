@@ -46,7 +46,7 @@ class SecureFileHandler:
     def encrypt_with_shared_secret_and_save(self, obj, file_path, peer_user_id, own_user_id=None, private_key=None):
         """
         Encrypts an object with a shared secret derived from ECDH using symmetric encryption and saves it to a file,
-        using the encrypt_and_save method. Optionally, appends the own user ID with a special marker.
+        using the encrypt_and_save method. Optionally, encrypts and appends the own user ID with a special marker.
 
         Args:
             obj (Serializable or dict): The object to encrypt.
@@ -54,7 +54,7 @@ class SecureFileHandler:
             peer_user_id (str): The user ID of the peer with whom communication is intended.
             private_key (bytes, optional): The private key used in ECDH to generate the shared secret.
                                           If not provided, the instance's private key is used.
-            own_user_id (str, optional): The own user ID to append to the encrypted data. (for shared secred generation of peer)
+            own_user_id (str, optional): The own user ID to encrypt and append to the encrypted data.
 
         Raises:
             ValueError: If the private key is not provided and not set in the instance.
@@ -70,22 +70,25 @@ class SecureFileHandler:
 
         encrypted_data = symmetric_encrypt(obj, password=shared_secret)
 
-        # append the own user ID with the special marker '@' if provided
+        # Encrypt and append the own user ID with a special marker if provided
         if own_user_id is not None:
-            encrypted_data += '@' + own_user_id
+            encrypted_own_user_id = symmetric_encrypt(own_user_id, password=peer_user_id)
+            encrypted_data += '@' + encrypted_own_user_id
 
         with open(file_path, 'w') as file:
             file.write(encrypted_data)
 
-    def decrypt_with_shared_secret_and_load(self, file_path, peer_user_id=None, private_key=None,
+    def decrypt_with_shared_secret_and_load(self, file_path, peer_user_id=None, own_user_id=None, private_key=None,
                                             obj=None):
         """
         Decrypts data from a file using a shared secret derived from ECDH with symmetric encryption.
-        If 'peer_user_id' is not provided, attempts to extract it from file content with the special marker.
+        If 'peer_user_id' is not provided, attempts to decrypt and extract it using 'own_user_id'.
+        The function handles data optionally appended with an encrypted 'own_user_id'.
 
         Args:
             file_path (str): Path to the file containing the encrypted data.
             peer_user_id (str, optional): The user ID of the peer. Used if provided.
+            own_user_id (str, optional): The own user ID used to decrypt the peer user ID if it is not provided.
             private_key (bytes, optional): The private key used in ECDH to generate the shared secret.
                                           If not provided, the instance's private key is used.
             obj (Serializable or dict, optional): The object type to which the decrypted data will be converted.
@@ -105,10 +108,13 @@ class SecureFileHandler:
         with open(file_path, 'r') as file:
             encrypted_data = file.read()
 
-        # Check for the special marker '@' and user ID if present
+        # Check for the special marker '@' and extract encrypted user ID if present
         uid_marker = '@'
         if uid_marker in encrypted_data:
-            _, peer_user_id = encrypted_data.split(uid_marker, 1)
+            encrypted_data, encrypted_own_user_id = encrypted_data.split(uid_marker, 1)
+            if not peer_user_id and own_user_id:
+                # Decrypt the peer_user_id using the own_user_id
+                peer_user_id = symmetric_decrypt(encrypted_own_user_id, password=own_user_id)
 
         if peer_user_id:
             peer_compressed_public_key = extract_compressed_pubkey_from_public_ID(peer_user_id)
