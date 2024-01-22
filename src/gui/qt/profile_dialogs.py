@@ -7,6 +7,7 @@ from src.gui.qt.utils import show_message_box
 from src.models.user_profile import user_profile
 from src.services.crypto_utils import generate_seed
 from src.services.utils import is_password_valid
+from src import config
 
 
 class Dialog_Generate_Profile(QMainWindow, Ui_DialogGenerateProfile):
@@ -42,7 +43,7 @@ class Dialog_Generate_Profile(QMainWindow, Ui_DialogGenerateProfile):
         if password != password_confirmed:
             show_message_box("Fehler!", "Passwörter stimmen nicht überein.")
             return
-        if not is_password_valid(password):
+        if not is_password_valid(password) and not config.TEST_MODE:
             show_message_box("Fehler!", "Passwort muss mindestens 8 Zeichen haben.")
             return
 
