@@ -322,3 +322,29 @@ def symmetric_decrypt(encrypted_string, password="", cls=None, key=None):
         return deserialized_data
 
 
+def is_encrypted_string(s):
+    """
+    Checks if the given string is formatted as an encrypted string from symmetric_encrypt.
+
+    Args:
+        s (str): The string to check.
+
+    Returns:
+        bool: True if the string is formatted correctly, False otherwise.
+    """
+    # Split the string on '@' in case of double encryption
+    encrypted_parts = s.split('@')
+
+    for part in encrypted_parts:
+        # Split on '|' and check if each segment is a valid base64-encoded string
+        segments = part.split('|')
+
+        # Check for correct number of segments
+        if len(segments) not in [2, 3]:
+            return False
+
+        # Check each segment for valid base64 encoding
+        if not all(is_base64(seg) for seg in segments):
+            return False
+
+    return True

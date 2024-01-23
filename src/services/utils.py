@@ -1,7 +1,55 @@
 # utils.py
 import inspect
+import json
 from datetime import datetime
 import os, random, string
+
+def read_file_content(file_path):
+    """
+    Reads the content of a file and returns it as a string.
+
+    Args:
+        file_path (str): The path to the file to be read.
+
+    Returns:
+        str: The content of the file as a string, or an empty string if the content
+             cannot be read as text.
+    """
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            return file.read()
+    except Exception as e:
+        # Logging the exception can be helpful for debugging
+        print(f"Error reading file: {e}")
+        return ""
+
+
+def is_dict_or_valid_json_string(obj):
+    """
+    Checks if the given object is a dictionary or a valid JSON string
+    that represents a dictionary.
+
+    Args:
+        obj: The object to check. Can be a dict or a string.
+
+    Returns:
+        bool: True if the object is a dict or a valid JSON string representing a dict,
+              False otherwise.
+    """
+    # If obj is already a dict, return True
+    if isinstance(obj, dict):
+        return True
+
+    # If obj is a string, try to parse it as JSON
+    if isinstance(obj, str):
+        try:
+            parsed = json.loads(obj)
+            return isinstance(parsed, dict)
+        except ValueError:
+            return False
+
+    # If obj is neither a dict nor a string, return False
+    return False
 
 def random_string(length):
     """Generate a random string of specified length."""
