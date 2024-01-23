@@ -57,9 +57,9 @@ def b64e(data):
 
 def is_base64(s):
     try:
-        base64.b64decode(s)
+        base64.b64decode(s, validate=True)
         return True
-    except Exception:
+    except base64.binascii.Error:
         return False
 
 def sign_message(private_key, message):
