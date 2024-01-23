@@ -6,13 +6,14 @@ from pathlib import Path
 
 
 class SecureFileHandler:
-    def __init__(self, private_key=None):
+    def __init__(self, private_key=None, own_user_id = ""):
         """
         Initialize the SecureFileHandler with an optional private key.
 
         :param private_key: Optional. The private key used for encryption/decryption.
         """
         self.private_key = private_key
+        self.own_user_id = own_user_id
 
     def encrypt_and_save(self, obj, file_path, password="", second_password=None, key=None, salt=None):
         """
@@ -59,6 +60,9 @@ class SecureFileHandler:
         Raises:
             ValueError: If the private key is not provided and not set in the instance.
         """
+        if own_user_id is None:
+            own_user_id = self.own_user_id
+
         if private_key is None:
             private_key = self.private_key
 
@@ -99,6 +103,9 @@ class SecureFileHandler:
         Raises:
             ValueError: If the private key is not provided and not set in the instance.
         """
+        if own_user_id is None:
+            own_user_id = self.own_user_id
+
         if private_key is None:
             private_key = self.private_key
 
