@@ -632,12 +632,19 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.actionClose.triggered.connect(self.close)
         self.set_gui_depending_profile_status()
 
+        self.pushButton_copy_user_ID.clicked.connect(self.copyUserIDToClipboard)
+
+    def copyUserIDToClipboard(self):
+        clipboard = QApplication.clipboard()
+        clipboard.setText(user_profile.person.id)
+
     def onProfileCreated(self):
         self.profile_logout()
         dialog_profile_login.show()
 
     def update_values(self):
         self.setWindowTitle(f"eMinuto - Profil: {user_profile.profile_name}")
+        self.label_user_id.setText(f"{user_profile.person.id[:16]}...")
         self.label_username.setText(f"{user_profile.person_data['first_name']} {user_profile.person_data['last_name']}")
         self.lineEdit_own_balance.setText(user_profile.get_own_minuto_balance())
         self.lineEdit_other_balance.setText(user_profile.get_other_minuto_balance())

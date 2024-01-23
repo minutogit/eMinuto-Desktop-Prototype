@@ -18,13 +18,14 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
     QLineEdit, QMainWindow, QMenu, QMenuBar,
-    QSizePolicy, QStatusBar, QVBoxLayout, QWidget)
+    QPushButton, QSizePolicy, QSpacerItem, QStatusBar,
+    QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(551, 534)
+        MainWindow.resize(621, 364)
         self.actionProfile = QAction(MainWindow)
         self.actionProfile.setObjectName(u"actionProfile")
         self.actionClose = QAction(MainWindow)
@@ -43,16 +44,76 @@ class Ui_MainWindow(object):
         self.actionVoucherList.setObjectName(u"actionVoucherList")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
-        self.label_username = QLabel(self.centralwidget)
+        self.widget = QWidget(self.centralwidget)
+        self.widget.setObjectName(u"widget")
+        self.widget.setGeometry(QRect(10, 10, 581, 301))
+        self.verticalLayout_2 = QVBoxLayout(self.widget)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout_3 = QHBoxLayout()
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.label_username = QLabel(self.widget)
         self.label_username.setObjectName(u"label_username")
-        self.label_username.setGeometry(QRect(10, 10, 781, 21))
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label_username.sizePolicy().hasHeightForWidth())
+        self.label_username.setSizePolicy(sizePolicy)
         font = QFont()
         font.setPointSize(14)
         font.setBold(True)
         self.label_username.setFont(font)
-        self.frame = QFrame(self.centralwidget)
+
+        self.horizontalLayout_3.addWidget(self.label_username)
+
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.horizontalLayout_3.addItem(self.horizontalSpacer)
+
+        self.label_user_id_text = QLabel(self.widget)
+        self.label_user_id_text.setObjectName(u"label_user_id_text")
+        sizePolicy1 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.label_user_id_text.sizePolicy().hasHeightForWidth())
+        self.label_user_id_text.setSizePolicy(sizePolicy1)
+        self.label_user_id_text.setFont(font)
+
+        self.horizontalLayout_3.addWidget(self.label_user_id_text)
+
+        self.label_user_id = QLabel(self.widget)
+        self.label_user_id.setObjectName(u"label_user_id")
+        sizePolicy1.setHeightForWidth(self.label_user_id.sizePolicy().hasHeightForWidth())
+        self.label_user_id.setSizePolicy(sizePolicy1)
+        self.label_user_id.setMinimumSize(QSize(50, 0))
+        self.label_user_id.setFrameShape(QFrame.Box)
+
+        self.horizontalLayout_3.addWidget(self.label_user_id)
+
+        self.pushButton_copy_user_ID = QPushButton(self.widget)
+        self.pushButton_copy_user_ID.setObjectName(u"pushButton_copy_user_ID")
+        icon = QIcon()
+        iconThemeName = u"edit-copy"
+        if QIcon.hasThemeIcon(iconThemeName):
+            icon = QIcon.fromTheme(iconThemeName)
+        else:
+            icon.addFile(u".", QSize(), QIcon.Normal, QIcon.Off)
+
+        self.pushButton_copy_user_ID.setIcon(icon)
+        self.pushButton_copy_user_ID.setIconSize(QSize(18, 18))
+
+        self.horizontalLayout_3.addWidget(self.pushButton_copy_user_ID)
+
+
+        self.verticalLayout_2.addLayout(self.horizontalLayout_3)
+
+        self.frame = QFrame(self.widget)
         self.frame.setObjectName(u"frame")
-        self.frame.setGeometry(QRect(10, 40, 781, 121))
+        sizePolicy2 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.frame.sizePolicy().hasHeightForWidth())
+        self.frame.setSizePolicy(sizePolicy2)
         self.frame.setFrameShape(QFrame.StyledPanel)
         self.frame.setFrameShadow(QFrame.Raised)
         self.label = QLabel(self.frame)
@@ -65,7 +126,7 @@ class Ui_MainWindow(object):
         self.label.setFont(font1)
         self.layoutWidget = QWidget(self.frame)
         self.layoutWidget.setObjectName(u"layoutWidget")
-        self.layoutWidget.setGeometry(QRect(10, 40, 341, 70))
+        self.layoutWidget.setGeometry(QRect(10, 40, 431, 70))
         self.verticalLayout = QVBoxLayout(self.layoutWidget)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -111,10 +172,13 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addLayout(self.horizontalLayout_2)
 
+
+        self.verticalLayout_2.addWidget(self.frame)
+
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 551, 22))
+        self.menubar.setGeometry(QRect(0, 0, 621, 22))
         self.menuStart = QMenu(self.menubar)
         self.menuStart.setObjectName(u"menuStart")
         self.menuProfile = QMenu(self.menubar)
@@ -153,6 +217,12 @@ class Ui_MainWindow(object):
         self.actionCreateMinuto.setText(QCoreApplication.translate("MainWindow", u"Minuto sch\u00f6pfen", None))
         self.actionVoucherList.setText(QCoreApplication.translate("MainWindow", u"Gutscheinliste", None))
         self.label_username.setText("")
+        self.label_user_id_text.setText(QCoreApplication.translate("MainWindow", u"ID:", None))
+        self.label_user_id.setText("")
+#if QT_CONFIG(tooltip)
+        self.pushButton_copy_user_ID.setToolTip(QCoreApplication.translate("MainWindow", u"Kopieren", None))
+#endif // QT_CONFIG(tooltip)
+        self.pushButton_copy_user_ID.setText("")
         self.label.setText(QCoreApplication.translate("MainWindow", u"Kontostand", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"eigene Minuto", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"andere Minuto", None))
