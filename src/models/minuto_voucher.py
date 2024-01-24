@@ -161,6 +161,26 @@ class MinutoVoucher(Serializable):
 
         return voucher
 
+    @classmethod
+    def read_from_dict(cls, data):
+        """
+        Creates an instance of MinutoVoucher from a dictionary.
+
+        Args:
+            data (dict): The dictionary containing voucher data.
+
+        Returns:
+            MinutoVoucher: An instance of MinutoVoucher initialized with the data.
+        """
+        voucher = cls()
+
+        # Set attributes from the dictionary
+        for key, value in data.items():
+            setattr(voucher, key, value)
+
+        return voucher
+
+
     def get_voucher_amount(self, sender_id, voucher=None):
         """
         Calculates the available amount of the last transaction of the voucher based on the sender_id.

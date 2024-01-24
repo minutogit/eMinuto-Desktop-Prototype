@@ -1,6 +1,6 @@
 # user_profile.py
-from src.services.utils import file_exists, join_path, Serializable
-from src.services.crypto_utils import generate_symmetric_key, symmetric_encrypt, symmetric_decrypt, b64d
+from src.services.utils import convert_json_string_to_dict, file_exists, join_path, Serializable, read_file_content, is_valid_object
+from src.services.crypto_utils import generate_symmetric_key, symmetric_encrypt, symmetric_decrypt, b64d, is_encrypted_string
 from src.models.secure_file_handler import SecureFileHandler
 from src.models.person import Person
 
@@ -72,6 +72,47 @@ class UserProfile(Serializable):
                 self.person.unfinished_vouchers.append(self.person.current_voucher)
                 self.person.current_voucher = None
 
+    def open_file(self,file_path):
+        # open and reads vouchers, signatures or transactions
+        return_info = ""
+        file_content = read_file_content(file_path)
+
+        if is_encrypted_string(file_content):
+            file_content = self._secure_file_handler.decrypt_with_shared_secret_and_load(file_path)
+
+        if is_valid_object(file_content):
+            # if string then convert to dict
+            if isinstance(file_content, str):
+                file_content = convert_json_string_to_dict(file_content)
+
+            print(file_content)
+
+            # check if voucher
+            if "voucher_id" in file_content:
+                self.person.read_voucher_from_dict(file_content)
+                if self.person.current_voucher.verify_complete_voucher():
+                    return_info =  "Todo - Ready Voucher"
+                else:
+                    self.person.unfinished_vouchers.append(self.person.current_voucher)
+                    return_info = "Unfertigen Gutschein hinzugefügt."
+                    unfinished_subfolder = "unfinished"
+                    voucher_path = join_path(self.data_folder, unfinished_subfolder)
+                    voucher_name = f"voucher-{self.person.current_voucher.creation_date}.txt".replace(':', '_')
+                    self.person.save_voucher(voucher_name, voucher_path)
+
+                self.person.current_voucher = None
+
+
+            # check if guarantor signature
+            if isinstance(file_content, list) and isinstance(file_content[0], dict) and "signature_time" in \
+                    file_content[0]:
+                return_info = "Todo Read Signature"
+
+
+        else:
+            return_info = "Ungültige Datei"
+
+        return return_info
 
     def create_new_profile(self, profile_name, first_name, last_name, organization, seed, profile_password):
         # storekey and salt in object for saving to disk

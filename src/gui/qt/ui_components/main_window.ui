@@ -262,6 +262,7 @@
     <property name="title">
      <string>Start</string>
     </property>
+    <addaction name="actionOpenFile"/>
     <addaction name="actionClose"/>
    </widget>
    <widget class="QMenu" name="menuProfile">
@@ -323,6 +324,11 @@
   <action name="actionVoucherList">
    <property name="text">
     <string>Gutscheinliste</string>
+   </property>
+  </action>
+  <action name="actionOpenFile">
+   <property name="text">
+    <string>Datei öffnen</string>
    </property>
   </action>
  </widget>

@@ -23,32 +23,47 @@ def read_file_content(file_path):
         print(f"Error reading file: {e}")
         return ""
 
-
-def is_dict_or_valid_json_string(obj):
+def convert_json_string_to_dict(json_string):
     """
-    Checks if the given object is a dictionary or a valid JSON string
-    that represents a dictionary.
+    Converts a JSON string to a Python dictionary.
 
     Args:
-        obj: The object to check. Can be a dict or a string.
+        json_string (str): The JSON string to convert.
 
     Returns:
-        bool: True if the object is a dict or a valid JSON string representing a dict,
+        dict: The converted dictionary, or None if the conversion fails.
+    """
+    try:
+        return json.loads(json_string)
+    except ValueError as e:
+        print(f"Error converting JSON string to dict: {e}")
+        return None
+
+def is_valid_object(obj):
+    """
+    Checks if the given object is a dictionary, a list, or a valid JSON string
+    that represents a dictionary or a list. Needed in gui for checking file content.
+
+    Args:
+        obj: The object to check. Can be a dict, a list, or a string.
+
+    Returns:
+        bool: True if the object is a dict, a list, or a valid JSON string representing a dict or a list,
               False otherwise.
     """
-    # If obj is already a dict, return True
-    if isinstance(obj, dict):
+    # If obj is already a dict or list, return True
+    if isinstance(obj, (dict, list)):
         return True
 
     # If obj is a string, try to parse it as JSON
     if isinstance(obj, str):
         try:
             parsed = json.loads(obj)
-            return isinstance(parsed, dict)
+            return isinstance(parsed, (dict, list))
         except ValueError:
             return False
 
-    # If obj is neither a dict nor a string, return False
+    # If obj is neither a dict, list, nor a string, return False
     return False
 
 def random_string(length):

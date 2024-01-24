@@ -111,6 +111,11 @@ class Person:
         self.init_empty_voucher()
         self.current_voucher = self.current_voucher.read_from_file(filename, subfolder, simulation)
 
+    def read_voucher_from_dict(self, data):
+        """read the voucher"""
+        self.init_empty_voucher()
+        self.current_voucher = self.current_voucher.read_from_dict(data)
+
     def save_voucher(self, filename = None, subfolder=None, voucher=None, simulation = False):
         if voucher == None:
             return self.current_voucher.save_to_disk(filename, subfolder, simulation)

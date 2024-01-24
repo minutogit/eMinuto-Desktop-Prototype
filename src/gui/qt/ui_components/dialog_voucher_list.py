@@ -16,13 +16,14 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QDialog, QHeaderView, QLabel,
-    QSizePolicy, QTableView, QWidget)
+    QPushButton, QSizePolicy, QTableView, QVBoxLayout,
+    QWidget)
 
 class Ui_DialogVoucherList(object):
     def setupUi(self, DialogVoucherList):
         if not DialogVoucherList.objectName():
             DialogVoucherList.setObjectName(u"DialogVoucherList")
-        DialogVoucherList.resize(820, 648)
+        DialogVoucherList.resize(838, 685)
         sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -35,12 +36,25 @@ class Ui_DialogVoucherList(object):
         font = QFont()
         font.setPointSize(12)
         self.label_voucher_list.setFont(font)
-        self.tableView_vouchers = QTableView(DialogVoucherList)
+        self.widget = QWidget(DialogVoucherList)
+        self.widget.setObjectName(u"widget")
+        self.widget.setGeometry(QRect(10, 35, 802, 636))
+        self.verticalLayout = QVBoxLayout(self.widget)
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.tableView_vouchers = QTableView(self.widget)
         self.tableView_vouchers.setObjectName(u"tableView_vouchers")
-        self.tableView_vouchers.setGeometry(QRect(10, 35, 800, 600))
         sizePolicy.setHeightForWidth(self.tableView_vouchers.sizePolicy().hasHeightForWidth())
         self.tableView_vouchers.setSizePolicy(sizePolicy)
         self.tableView_vouchers.setMinimumSize(QSize(800, 600))
+
+        self.verticalLayout.addWidget(self.tableView_vouchers)
+
+        self.pushButton_open_voucher_or_signature = QPushButton(self.widget)
+        self.pushButton_open_voucher_or_signature.setObjectName(u"pushButton_open_voucher_or_signature")
+
+        self.verticalLayout.addWidget(self.pushButton_open_voucher_or_signature)
+
 
         self.retranslateUi(DialogVoucherList)
 
@@ -50,5 +64,6 @@ class Ui_DialogVoucherList(object):
     def retranslateUi(self, DialogVoucherList):
         DialogVoucherList.setWindowTitle(QCoreApplication.translate("DialogVoucherList", u"Gutscheinliste", None))
         self.label_voucher_list.setText(QCoreApplication.translate("DialogVoucherList", u"Gutscheinliste", None))
+        self.pushButton_open_voucher_or_signature.setText(QCoreApplication.translate("DialogVoucherList", u"Gutschein oder B\u00fcrgenunterschrift aus Datei \u00f6ffen", None))
     # retranslateUi
 

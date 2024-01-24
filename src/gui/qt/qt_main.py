@@ -24,6 +24,28 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import QAbstractItemView
 
 
+def open_data_file():
+    """
+    Opens a file dialog to select a voucher or signature file and adds the voucher
+    or signature to a voucher.
+    """
+    # Create a file dialog
+    file_dialog = QFileDialog()
+
+    # Set the accepted file extensions
+    file_filter = "Voucher/Signature Files (*.mv *.ms);;All Files (*)"
+
+    # Open the dialog and get the file path
+    file_path, _ = file_dialog.getOpenFileName(None, "Open File", "", file_filter)
+
+    if file_path:
+        print(f"Selected file: {file_path}")
+        info_msg = user_profile.open_file(file_path)
+        dialog_voucher_list.init_values()
+        show_message_box("Info", info_msg)
+
+
+
 
 class FormSignAsGuarantor(QMainWindow, Ui_FormSignVoucherAsGuarantor):
     def __init__(self):
@@ -71,8 +93,8 @@ class FormSignAsGuarantor(QMainWindow, Ui_FormSignVoucherAsGuarantor):
 
         creator_id = self.voucher.creator_id
 
-        suggested_filename = f"Gutschein-Unterschrift_{user_profile.person.id[:4]}-{creator_id[:4]}.cms"
-        file_filter = "Encrypted Minuto Unterschrift (*.cms)"
+        suggested_filename = f"Gutschein-Unterschrift_{user_profile.person.id[:4]}-{creator_id[:4]}.ms"
+        file_filter = "Minuto Unterschrift (*.ms)"
 
         # Open file save dialog
         filename_with_path, _ = QFileDialog.getSaveFileName(
@@ -150,9 +172,6 @@ class FormSendToGuarantor(QMainWindow, Ui_FormSendToGuarantor):
 
         suggested_filename = f"Gutschein-unfertig_{user_profile.person.id[:8]}.mv"
         file_filter = "Minuto Voucher (*.mv)"
-        if encrypt_data:
-            suggested_filename = f"Gutschein-unfertig_{user_profile.person.id[:4]}-{guarantor_id[:4]}.cmv"
-            file_filter = "Encrypted Minuto Voucher (*.cmv)"
 
         # Open file save dialog
         filename_with_path, _ = QFileDialog.getSaveFileName(
@@ -349,7 +368,6 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         return item
 
 
-
 class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
     def __init__(self):
         super().__init__()
@@ -419,7 +437,6 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
             self.label_voucher_description.setText("Gutschein für Waren oder Dienstleistungen")
 
 
-
 class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
     def __init__(self):
         super().__init__()
@@ -436,6 +453,7 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         self.isTableViewConnected = False
         self.tableView_vouchers.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableView_vouchers.horizontalHeader().customContextMenuRequested.connect(self.openContextMenu)
+        self.pushButton_open_voucher_or_signature.clicked.connect(open_data_file)
 
     def init_show(self):
         self.init_values()
@@ -628,6 +646,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.actionProfileLogin.triggered.connect(dialog_profile_login.login)
         self.actionProfileLogout.triggered.connect(self.profile_logout)
         self.actionVoucherList.triggered.connect(dialog_voucher_list.init_show)
+        self.actionOpenFile.triggered.connect(open_data_file)
 
         self.actionClose.triggered.connect(self.close)
         self.set_gui_depending_profile_status()
