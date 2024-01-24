@@ -18,7 +18,7 @@ class UserProfile(Serializable):
     def __init__(self):
         # Initialize the profile state
         self.initialize_state()
-        self._secure_file_handler = None
+        self._secure_file_handler: SecureFileHandler = None
 
     def initialize_state(self):
         """Initialize or reset the state of the profile."""
@@ -54,7 +54,7 @@ class UserProfile(Serializable):
             return False
         seed = symmetric_decrypt(self.encrypted_seed_words, password)
         self.person = Person(self.person_data, seed=seed)
-        self._secure_file_handler= SecureFileHandler(self.person.key.private_key) # prvate key needed for encrytion with other users
+        self._secure_file_handler = SecureFileHandler(self.person.key.private_key, self.person.id) # prvate key needed for encrytion with other users
         self.read_vouchers_from_disk()
         return True
 
@@ -125,6 +125,7 @@ class UserProfile(Serializable):
         self.person_data['last_name'] = last_name
         self.person_data['organization'] = organization
         self.person = Person(self.person_data,seed=seed)
+        self._secure_file_handler = SecureFileHandler()
         self.save_profile_to_disk(second_password=seed)
         self._profile_initialized = True
 
