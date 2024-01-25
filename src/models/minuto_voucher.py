@@ -13,7 +13,7 @@ class MinutoVoucher(Serializable):
         self.region = ''
         self.amount = 0
         self.description = ""
-        self.validit_until = ''
+        self.valid_until = ''
         self.creator_id = ''
         self.creator_organization = ''
         self.creator_first_name = ''
@@ -57,7 +57,7 @@ class MinutoVoucher(Serializable):
         else:
             voucher.footnote = footnote
         voucher.service_offer = service_offer
-        voucher.validit_until = get_timestamp(validity, end_of_year=True)
+        voucher.valid_until = get_timestamp(validity, end_of_year=True)
         voucher.region = region
         voucher.coordinates = coordinates
         voucher.email = email
@@ -475,7 +475,7 @@ class MinutoVoucher(Serializable):
                 print("Creator signature verification failed.")
             return False
 
-        # Verify all transactions
+        # Verify all transactions (at least initial transaction need to be done)
         if not self.verify_all_transactions(verbose):
             if verbose:
                 print("Voucher Transaction verification failed.")
@@ -496,3 +496,25 @@ class MinutoVoucher(Serializable):
             return False
 
         return str(self) == str(other)
+
+def is_voucher_dict(data):
+    """
+    Checks if the dictionary contains all essential keys that are necessary to represent
+    a MinutoVoucher. This method is designed to identify if a given dictionary is likely
+    to be a representation of a MinutoVoucher instance. The method does not utilize all keys
+    as future versions might add new keys or discontinue the use of existing ones. To ensure
+    accurate classification of vouchers in the future, only the most critical keys, which are
+    likely to remain consistent, are checked.
+
+    Args:
+        data (dict): The dictionary to check.
+
+    Returns:
+        bool: True if the dictionary contains all essential keys, False otherwise.
+    """
+    # The most important parameters of the class, which are likely to always remain.
+    required_keys = [
+        'valid_until', 'creator_id', 'creator_signature', 'guarantor_signatures',
+        'transactions', 'creation_date', 'voucher_id'
+    ]
+    return all(key in data for key in required_keys)

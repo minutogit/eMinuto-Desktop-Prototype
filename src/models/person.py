@@ -185,6 +185,35 @@ class Person:
 
         return None
 
+    def add_received_signature_to_unfinished_voucher(self, signature):
+        """
+        Adds a received signature to the corresponding unfinished voucher.
+
+        Iterates through all unfinished vouchers and, if a matching voucher is found for
+        the signature, adds the signature to that voucher.
+
+        Args:
+            signature: The signature to be added.
+
+        Returns:
+            A message indicating whether the signature was successfully added or not.
+        """
+        # Finding a matching voucher based on the temporary ID in the signature
+        self.current_voucher = None
+        signature_temp_id = signature[0]['temp_voucher_id']
+        for v in self.unfinished_vouchers:
+            if v.temp_voucher_id == signature_temp_id:
+                self.current_voucher = v
+                break
+
+        if self.current_voucher is None:
+            return "Keinen passenden Gutschein für die Bürgenunterschrift gefunden"
+        else:
+            success, message = self.append_guarantor_signature(signature)
+            if success:
+                return "Unterschrift wurde hinzugefügt"
+            else:
+                return f"Unterschrift konnte nicht hinzugefügt werden. ({message})"
 
     def append_guarantor_signature(self, guarantor_signature, voucher=None):
         """ Appends the guarantor signature tuple to the voucher, ensuring specific conditions are met.
@@ -193,18 +222,19 @@ class Person:
         voucher = voucher or self.current_voucher
         guarantor_info, signature = guarantor_signature
 
-        # Check if the guarantor's ID matches the voucher's temporary ID
-        if guarantor_info["id"] != voucher.temp_voucher_id:
-            return False
+        # Check if the guarantor's temporary ID matches the voucher's temporary ID
+        if guarantor_info["temp_voucher_id"] != voucher.temp_voucher_id:
+            return False, "Kein passender Gutschein gefunden."
 
         # Check if the guarantor is the creator of the voucher (creator can't be guarantor)
         if guarantor_info["id"] == voucher.creator_id:
-            return False
+            return False, "Ersteller kann kein Bürge sein."
 
         # Check if already has a signature from this guarantor
         for existing_guarantor_info, _ in voucher.guarantor_signatures:
             if existing_guarantor_info["id"] == guarantor_info["id"]:
-                return False
+                print("already has a signature from this guarantor")
+                return False, "Unterschrift schon vorhanden."
 
         # Append the guarantor's signature
         voucher.guarantor_signatures.append(guarantor_signature)
@@ -214,9 +244,9 @@ class Person:
 
         # check signatures
         if not self.verify_guarantor_signatures():
-            return False
+            return False, "Unterschrift ungültig."
 
-        return True
+        return True, ""
 
 
     def verify_guarantor_signatures(self, voucher=None):

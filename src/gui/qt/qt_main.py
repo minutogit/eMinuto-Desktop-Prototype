@@ -39,10 +39,11 @@ def open_data_file():
     file_path, _ = file_dialog.getOpenFileName(None, "Open File", "", file_filter)
 
     if file_path:
-        print(f"Selected file: {file_path}")
-        info_msg = user_profile.open_file(file_path)
+        voucher, info_msg = user_profile.open_file(file_path)
         dialog_voucher_list.init_values()
         show_message_box("Info", info_msg)
+        if voucher is not None:
+            form_show_voucher.show_voucher(voucher)
 
 
 
@@ -320,7 +321,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
             'description': 'Beschreibung',
             'footnote': 'Fußnote',
             'service_offer': 'Serviceangebot',
-            'validit_until': 'Gültig bis',
+            'valid_until': 'Gültig bis',
             'region': 'Region',
             'coordinates': 'Koordinaten',
             'email': 'E-Mail',
@@ -495,7 +496,7 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
             self.create_non_editable_item(voucher.description),
             self.create_non_editable_item(voucher.footnote),
             self.create_non_editable_item(voucher.service_offer),
-            self.create_non_editable_item(voucher.validit_until),
+            self.create_non_editable_item(voucher.valid_until),
             self.create_non_editable_item(voucher.region),
             self.create_non_editable_item(voucher.coordinates),
             self.create_non_editable_item(voucher.email),

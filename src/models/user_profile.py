@@ -3,6 +3,7 @@ from src.services.utils import convert_json_string_to_dict, file_exists, join_pa
 from src.services.crypto_utils import generate_symmetric_key, symmetric_encrypt, symmetric_decrypt, b64d, is_encrypted_string
 from src.models.secure_file_handler import SecureFileHandler
 from src.models.person import Person
+from src.models.minuto_voucher import is_voucher_dict
 
 class UserProfile(Serializable):
     # Singleton instance of UserProfile.
@@ -78,6 +79,7 @@ class UserProfile(Serializable):
         file_content = read_file_content(file_path)
 
         if is_encrypted_string(file_content):
+            # todo catch if decryption fails
             file_content = self._secure_file_handler.decrypt_with_shared_secret_and_load(file_path)
 
         if is_valid_object(file_content):
@@ -85,13 +87,26 @@ class UserProfile(Serializable):
             if isinstance(file_content, str):
                 file_content = convert_json_string_to_dict(file_content)
 
-            print(file_content)
 
             # check if voucher
-            if "voucher_id" in file_content:
+            if is_voucher_dict(file_content):
                 self.person.read_voucher_from_dict(file_content)
+                # if valid and ready voucher
                 if self.person.current_voucher.verify_complete_voucher():
-                    return_info =  "Todo - Ready Voucher"
+                    voucher_amount = self.person.current_voucher.get_voucher_amount(self.person.id)
+                    if voucher_amount > 0:
+                        # todo some checks needed is voucher already added?
+                        # dont add voucher with same id and same last transaction_id
+                        # special case that user owns an voucher that had been send and the new voucher_is the the update version (longer transaction list)
+                        # (the last transaction hash of current voucher, will be a prev_hast transaction / with my sender in transaction list)
+                        # (in real world if the user would have been used this voucher again this would be a double spend, so this can helb to reduce double spending)
+                        self.person.vouchers.append(self.person.current_voucher)
+                        return_info = f"Gutschein mit {voucher_amount}M Guthaben hinzugefügt."
+                    else:
+                        return_info = "Gutschein hat kein Guthaben."
+                        pass
+                        # todo check if also the same special case above (to reduce double spend posibility by user mistake)
+
                 else:
                     self.person.unfinished_vouchers.append(self.person.current_voucher)
                     return_info = "Unfertigen Gutschein hinzugefügt."
@@ -100,19 +115,26 @@ class UserProfile(Serializable):
                     voucher_name = f"voucher-{self.person.current_voucher.creation_date}.txt".replace(':', '_')
                     self.person.save_voucher(voucher_name, voucher_path)
 
-                self.person.current_voucher = None
+
 
 
             # check if guarantor signature
-            if isinstance(file_content, list) and isinstance(file_content[0], dict) and "signature_time" in \
+            elif isinstance(file_content, list) and isinstance(file_content[0], dict) and "signature_time" in \
                     file_content[0]:
-                return_info = "Todo Read Signature"
+                # try to find voucher and add guarantor signature
+                return_info = self.person.add_received_signature_to_unfinished_voucher(file_content)
+
+            else:
+                return_info = "unbekanntes Format"
+
 
 
         else:
             return_info = "Ungültige Datei"
 
-        return return_info
+        voucher = self.person.current_voucher
+        self.person.current_voucher = None
+        return voucher ,return_info
 
     def create_new_profile(self, profile_name, first_name, last_name, organization, seed, profile_password):
         # storekey and salt in object for saving to disk
