@@ -43,12 +43,13 @@ class UserProfile(Serializable):
         self.balance = 0
         self.transaction_pin = None
         self.encrypted_seed_words = None
-        self.encryption_key = None
+        self.encryption_key = None # key for profile encryption
         self.encryption_salt = None
         self.data_folder = 'mdata'  # static folder for the app
         self.profile_filename = 'userprofile.dat'
         self.person = Person()
         self._profile_initialized = False
+        self.file_enc_key_salt = None # tuple which safe key and salt for encyption of local files (vouchers)
 
     def init_existing_profile(self,password):
         if not self.load_profile_from_disk(password):
@@ -140,6 +141,8 @@ class UserProfile(Serializable):
         # storekey and salt in object for saving to disk
         seed = " ".join(str(seed).lower().split())  # remove multiple white spaces, lower case
         self.encryption_key, self.encryption_salt = generate_symmetric_key(profile_password, b64_string=True)
+        # key and salt derived deterministic from seed to ensure decryption of files after profile recovery
+        self.file_enc_key_salt = generate_symmetric_key(seed, b64_string=True, deterministic_salt=True)
         # when password lost, seed is second password for recovery
         self.encrypted_seed_words = symmetric_encrypt(seed, second_password=seed, key=self.encryption_key.encode('utf-8'), salt=b64d(self.encryption_salt))
         self.profile_name = profile_name

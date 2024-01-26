@@ -193,21 +193,31 @@ def generate_shared_secret(private_key, peer_compressed_public_key):
     return shared_secret
 
 
-def generate_symmetric_key(password, salt=None, b64_string=False):
+def generate_symmetric_key(password, salt=None, b64_string=False, deterministic_salt=False):
     """
-    Generates a symmetric key using a password and optional salt.
+    Generates a symmetric key using a password and optional salt. If deterministic_salt is True,
+    the salt is deterministically generated from the password.
 
     Args:
         password (str): The password used to generate the key.
-        salt (bytes, optional): A salt for the key derivation. If None, a random salt is generated.
-        b64_string (bool, optional): If True, both key and salt are returned as Base64 encoded strings. Defaults to False.
+        salt (bytes, optional): A salt for the key derivation. If None and deterministic_salt is False,
+                                a random salt is generated. If deterministic_salt is True,
+                                salt is derived from the password.
+        b64_string (bool, optional): If True, both key and salt are returned as Base64 encoded strings.
+                                     Defaults to False.
+        deterministic_salt (bool, optional): If True, generates salt deterministically from the password.
+                                             Defaults to False.
 
     Returns:
         Tuple[str | bytes, str | bytes]: The generated key and salt, either as bytes or Base64 encoded strings.
     """
     if isinstance(password, str):
         password = password.encode()
-    if salt is None:
+
+    if deterministic_salt:
+        # Generating a deterministic salt using a hash of the password
+        salt = hashlib.sha256(password).digest()[:16]
+    elif salt is None:
         salt = secrets.token_bytes(16)
 
     kdf = PBKDF2HMAC(
@@ -219,7 +229,7 @@ def generate_symmetric_key(password, salt=None, b64_string=False):
     key = base64.urlsafe_b64encode(kdf.derive(password))
 
     if b64_string:
-        return key.decode(), b64e(salt)
+        return key.decode(), base64.urlsafe_b64encode(salt).decode()
 
     return key, salt
 
