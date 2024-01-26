@@ -2,7 +2,7 @@
 import json
 import os
 from src.models.key import Key
-from src.services.utils import get_timestamp, dprint, amount_precision, Serializable, random_string
+from src.services.utils import get_timestamp, dprint, amount_precision, Serializable, random_string, get_years_valid
 from src.services.crypto_utils import get_hash
 from src.models.voucher_transaction import VoucherTransaction
 
@@ -482,6 +482,59 @@ class MinutoVoucher(Serializable):
             return False
 
         return True
+
+    def voucher_status(self, user_id):  # -> str
+        """
+        Returns the status of vouchers such as 'used', 'unfinished', etc.
+        This method is used for storing vouchers.
+
+        Args:
+            user_id: The user ID to check if own voucher.
+
+        Returns:
+            str: The status of the vouchers.
+        """
+        own_voucher = (self.voucher_id == user_id)
+        if not self.transactions:
+            return "unfinished"
+
+        if self.verify_complete_voucher():
+            # Own vouchers can only be used when older than 3 years
+            if own_voucher:
+                if get_years_valid(self.valid_until) < 3:
+                    return "used_vouchers"
+                else:
+                    return "own_vouchers"
+
+            # Other valid vouchers
+            if self.get_voucher_amount(user_id) > 0:
+                return "vouchers"  # Vouchers with amount
+            elif self.transactions[-1]['sender_id'] == user_id:
+                return "used_vouchers"
+            else:
+                return "deleted_vouchers"
+        else:
+            return "corrupt_vouchers"
+
+    def get_voucher_name(self, voucher=None):
+        """
+        Generates a unique name for the voucher. Needed when vouchers saved to disk.
+
+        Args:
+            voucher: The voucher instance to generate a name for.
+
+        Returns:
+            str: A unique name for the voucher.
+        """
+        if voucher is None:
+            voucher = self
+        if not voucher.voucher_id:
+            return voucher.temp_voucher_id
+        elif not voucher.transactions:
+            return voucher.voucher_id[:16]
+        else:
+            last_transaction_id = voucher.transactions[-1]['t_id']
+            return voucher.voucher_id[:8] + last_transaction_id[:8]
 
     def __str__(self):
         # Dynamische Erstellung des String-Formats für alle Attribute

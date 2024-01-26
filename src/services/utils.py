@@ -94,6 +94,24 @@ def get_timestamp(years_to_add=0, end_of_year=False):
 
     return future_time.isoformat() + "Z"
 
+def get_years_valid(timestamp):
+    """
+    Calculates the number of years from the current time to the given timestamp.
+    The result can be negative if the timestamp is in the past.
+
+    Args:
+        timestamp (str): The timestamp in ISO 8601 format in UTC.
+
+    Returns:
+        float: The number of years from now to the timestamp. Negative if the timestamp is in the past.
+    """
+    current_time = datetime.utcnow()
+    timestamp_time = datetime.fromisoformat(timestamp.rstrip("Z"))
+
+    # todo should be more accurate
+    difference_in_years = (timestamp_time - current_time).total_seconds() / (365.25 * 24 * 60 * 60)
+    return difference_in_years
+
 def file_exists(folder, filename):
     file_path = os.path.join(folder, filename)
     return os.path.exists(file_path)
