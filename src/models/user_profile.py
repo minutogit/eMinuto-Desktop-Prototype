@@ -1,6 +1,7 @@
 # user_profile.py
-from src.services.utils import convert_json_string_to_dict, file_exists, join_path, Serializable, read_file_content, is_valid_object
-from src.services.crypto_utils import generate_symmetric_key, symmetric_encrypt, symmetric_decrypt, b64d, is_encrypted_string
+from src.services.utils import convert_json_string_to_dict, file_exists, join_path, Serializable, read_file_content, \
+    is_valid_object, dprint
+from src.services.crypto_utils import generate_symmetric_key, symmetric_encrypt, symmetric_decrypt, b64d, is_encrypted_string, hash_bytes
 from src.models.secure_file_handler import SecureFileHandler
 from src.models.person import Person
 from src.models.minuto_voucher import is_voucher_dict
@@ -49,7 +50,7 @@ class UserProfile(Serializable):
         self.profile_filename = 'userprofile.dat'
         self.person = Person()
         self._profile_initialized = False
-        self.file_enc_key_salt = None # tuple which safe key and salt for encyption of local files (vouchers)
+        self.file_enc_key = None # key for encyption of local files (vouchers)
 
     def init_existing_profile(self,password):
         if not self.load_profile_from_disk(password):
@@ -61,36 +62,41 @@ class UserProfile(Serializable):
         return True
 
     def read_vouchers_from_disk(self):
-        folders = [
-            "unfinished",
-            "used_vouchers",
-            "own_vouchers",
-            "vouchers",
-            "deleted_vouchers",
-            "corrupt_vouchers"
+        voucher_types = [
+            "unfinished",  # list of vouchers which not ready because of missing guarantor sign etc
+            "used",  # List of used vouchers after transaction without amount
+            "own",  # List of own created vouchers with ammount
+            "other",  # List of vouchers from other users with amount
+            "temp",  # temp vouchers
+            "deleted",  # deleted vouchers (to keep until full deletion)
+            "corrupt"  # vouchers where the verification fails (signature etc)
         ]
+        import os # todo improve without import
+        for folder in voucher_types: # folders named from voucher types
+            folder_path = os.path.join(self.data_folder, folder)
+            os.makedirs(folder_path, exist_ok=True)
 
-        unfinished_subfolder = "unfinished"
-        import os
-        file_path = os.path.join(self.data_folder, unfinished_subfolder)
-        os.makedirs(file_path, exist_ok=True)
+            # List all files in the directory
+            for filename in os.listdir(folder_path):
+                # Check if the file is a .mv file
+                if filename.endswith('.mv'):
 
-        # List all files in the directory
-        for filename in os.listdir(file_path):
-            # Check if the file is a .txt file
-            if filename.endswith('.txt'):
-                self.person.read_voucher(filename,file_path)
-                self.person.voucherlist["unfinished"].append(self.person.current_voucher)
-                self.person.current_voucher = None
+                    full_file_path = os.path.join(folder_path, filename)
+                    self.open_file(full_file_path, startup=True)
 
-    def open_file(self,file_path):
-        # open and reads vouchers, signatures or transactions
+    # todo extra func to open vouchers on startup
+    def open_file(self,file_path, startup=False):
+        # open and reads vouchers, signatures or transactions from user interaction in gui
         return_info = ""
         file_content = read_file_content(file_path)
-
         if is_encrypted_string(file_content):
-            # todo catch if decryption fails
-            file_content = self._secure_file_handler.decrypt_with_shared_secret_and_load(file_path)
+            if startup: # on startup load local encrypted vouchers
+                try:
+                    file_content = symmetric_decrypt(file_content, key=self.file_enc_key)
+                except:
+                    pass
+            else:
+                file_content = self._secure_file_handler.decrypt_with_shared_secret_and_load(file_path)
 
         if is_valid_object(file_content):
             # if string then convert to dict
@@ -119,11 +125,12 @@ class UserProfile(Serializable):
 
                 else:
                     self.person.voucherlist["unfinished"].append(self.person.current_voucher)
-                    return_info = "Unfertigen Gutschein hinzugefügt."
-                    unfinished_subfolder = "unfinished"
-                    voucher_path = join_path(self.data_folder, unfinished_subfolder)
-                    voucher_name = f"voucher-{self.person.current_voucher.creation_date}.txt".replace(':', '_')
-                    self.person.save_voucher(voucher_name, voucher_path)
+                    if not startup: # on startup file loaded from disk (dont save them again)
+                        return_info = "Unfertigen Gutschein hinzugefügt."
+                        unfinished_subfolder = "unfinished"
+                        voucher_path = join_path(self.data_folder, unfinished_subfolder)
+                        voucher_name = f"voucher-{self.person.current_voucher.creation_date}.txt".replace(':', '_')
+                        self.person.save_voucher(voucher_name, voucher_path) # todo encrypted save
 
 
 
@@ -146,12 +153,25 @@ class UserProfile(Serializable):
         self.person.current_voucher = None
         return voucher ,return_info
 
+
+    def save_file(self, voucher, encrypted=True):
+        # save vouher to disk
+        name = voucher.get_voucher_name()
+        voucher_status = voucher.voucher_status(self.person.id)
+        import os
+        file_path = os.path.join(self.data_folder, voucher_status)
+        os.makedirs(file_path, exist_ok=True)
+        self._secure_file_handler.encrypt_and_save(voucher, f"minuto-{name}.mv", key=self.file_enc_key.encode('utf-8'), subfolder=file_path)
+
+
+
+
     def create_new_profile(self, profile_name, first_name, last_name, organization, seed, profile_password):
         # storekey and salt in object for saving to disk
         seed = " ".join(str(seed).lower().split())  # remove multiple white spaces, lower case
         self.encryption_key, self.encryption_salt = generate_symmetric_key(profile_password, b64_string=True)
-        # key and salt derived deterministic from seed to ensure decryption of files after profile recovery
-        self.file_enc_key_salt = generate_symmetric_key(seed, b64_string=True, deterministic_salt=True)
+        # derive deterministic key from seed to ensure decryption of files after profile recovery
+        self.file_enc_key, _ = generate_symmetric_key(seed, salt=hash_bytes(seed), b64_string=True)
         # when password lost, seed is second password for recovery
         self.encrypted_seed_words = symmetric_encrypt(seed, second_password=seed, key=self.encryption_key.encode('utf-8'), salt=b64d(self.encryption_salt))
         self.profile_name = profile_name
@@ -203,9 +223,10 @@ class UserProfile(Serializable):
     def create_voucher(self, first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher, description='', footnote=''):
         unfinished_subfolder = "unfinished"
         self.person.create_voucher_from_gui(first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher, description, footnote)
-        file_path = join_path(self.data_folder, unfinished_subfolder)
-        voucher_name = f"voucher-{self.person.current_voucher.creation_date}.txt".replace(':', '_')
-        self.person.save_voucher(voucher_name, file_path)
+        #file_path = join_path(self.data_folder, unfinished_subfolder)
+        #voucher_name = f"voucher-{self.person.current_voucher.creation_date}.txt".replace(':', '_')
+        #self.person.save_voucher(voucher_name, file_path)
+        self.save_file(self.person.current_voucher)
         self.person.voucherlist["unfinished"].append(self.person.current_voucher)
         voucher = self.person.current_voucher
         self.person.current_voucher = None

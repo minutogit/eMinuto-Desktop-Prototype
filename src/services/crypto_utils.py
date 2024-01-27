@@ -56,11 +56,25 @@ def b64e(data):
     return base64.b64encode(data).decode()
 
 def is_base64(s):
+    """
+    Checks if the given string is composed of characters in the Base64 character set.
+    This is a lenient check and does not strictly validate the string as proper Base64-encoded data.
+    It's designed to detect strings that are likely to be Base64 without being overly strict,
+    which is suitable for the purpose of detection where strict adherence to full Base64 encoding standards
+    is not necessary.
+
+    Args:
+        s (str): The string to be checked.
+
+    Returns:
+        bool: True if the string is composed of Base64 characters, False otherwise.
+    """
     try:
-        base64.b64decode(s, validate=True)
+        base64.b64decode(s)
         return True
-    except base64.binascii.Error:
+    except Exception:
         return False
+
 
 def sign_message(private_key, message):
     """ Signs a message using the private key. """
@@ -176,6 +190,26 @@ def get_hash(data):
     hash_base58 = base58.b58encode(hash_digest)
     return hash_base58.decode()
 
+
+def hash_bytes(input_string, length=16):
+    """
+    Generates a hash from the input string and returns it as bytes truncated to the specified length.
+
+    Args:
+        input_string (str): The input string to hash.
+        length (int): The desired length of the output bytes. Defaults to 16.
+
+    Returns:
+        bytes: The hashed output truncated to the specified length.
+    """
+    # Calculate the SHA256 hash of the input string
+    hash_obj = hashlib.sha256(input_string.encode())
+
+    # Get the hash bytes and truncate to the desired length
+    hash_bytes = hash_obj.digest()[:length]
+
+    return hash_bytes
+
 def generate_shared_secret(private_key, peer_compressed_public_key):
     """
     Generates a shared secret using Elliptic Curve Diffie-Hellman Key Exchange (ECDH).
@@ -193,31 +227,21 @@ def generate_shared_secret(private_key, peer_compressed_public_key):
     return shared_secret
 
 
-def generate_symmetric_key(password, salt=None, b64_string=False, deterministic_salt=False):
+def generate_symmetric_key(password, salt=None, b64_string=False):
     """
-    Generates a symmetric key using a password and optional salt. If deterministic_salt is True,
-    the salt is deterministically generated from the password.
+    Generates a symmetric key using a password and optional salt.
 
     Args:
         password (str): The password used to generate the key.
-        salt (bytes, optional): A salt for the key derivation. If None and deterministic_salt is False,
-                                a random salt is generated. If deterministic_salt is True,
-                                salt is derived from the password.
-        b64_string (bool, optional): If True, both key and salt are returned as Base64 encoded strings.
-                                     Defaults to False.
-        deterministic_salt (bool, optional): If True, generates salt deterministically from the password.
-                                             Defaults to False.
+        salt (bytes, optional): A salt for the key derivation. If None, a random salt is generated.
+        b64_string (bool, optional): If True, both key and salt are returned as Base64 encoded strings. Defaults to False.
 
     Returns:
         Tuple[str | bytes, str | bytes]: The generated key and salt, either as bytes or Base64 encoded strings.
     """
     if isinstance(password, str):
         password = password.encode()
-
-    if deterministic_salt:
-        # Generating a deterministic salt using a hash of the password
-        salt = hashlib.sha256(password).digest()[:16]
-    elif salt is None:
+    if salt is None:
         salt = secrets.token_bytes(16)
 
     kdf = PBKDF2HMAC(
@@ -229,7 +253,7 @@ def generate_symmetric_key(password, salt=None, b64_string=False, deterministic_
     key = base64.urlsafe_b64encode(kdf.derive(password))
 
     if b64_string:
-        return key.decode(), base64.urlsafe_b64encode(salt).decode()
+        return key.decode(), b64e(salt)
 
     return key, salt
 
@@ -257,8 +281,11 @@ def symmetric_encrypt(obj, password="", second_password=None, key=None, salt=Non
     if key is not None and not isinstance(key, bytes):
         raise TypeError("Key must be a byte string.")
 
-    if key is None or salt is None:
-        key, salt = generate_symmetric_key(password, salt)
+    if salt is None:
+        salt = secrets.token_bytes(16)
+
+    if key is None:
+        key, _ = generate_symmetric_key(password, salt)
 
     f = Fernet(key)
     obj_dict = obj.to_dict() if isinstance(obj, Serializable) else obj

@@ -14,33 +14,52 @@ class SecureFileHandler:
         """
         self.private_key = private_key
         self.own_user_id = own_user_id
+        self.data_folder = os.getcwd()
 
-    def encrypt_and_save(self, obj, file_path, password="", second_password=None, key=None, salt=None):
+    def encrypt_and_save(self, obj, file_path, password="", second_password=None, key=None, salt=None, subfolder=None):
         """
         Encrypts an object using symmetric encryption and saves it to a file.
 
-        :param obj: The object to encrypt.
-        :param file_path: Path to the file where the encrypted data will be saved.
-        :param password: The password used for encryption.
+        Args:
+            obj: The object to encrypt.
+            file_path: Path to the file where the encrypted data will be saved.
+            password: The password used for encryption.
+            subfolder: Optional. The subfolder under the script directory where the file will be saved.
         """
 
-        # create folder if not exist
-        directory = os.path.dirname(file_path)
-        Path(directory).mkdir(parents=True, exist_ok=True)
+        # Create full file path including subfolder if provided
+        if subfolder:
+            full_path = os.path.join(self.data_folder, subfolder, file_path)
+        else:
+            full_path = os.path.join(self.data_folder, file_path)
 
+        # Create folder if not exist
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+
+        # Encrypt the data
         encrypted_data = symmetric_encrypt(obj, password=password, second_password=second_password, key=key, salt=salt)
-        with open(file_path, 'w') as file:
+        with open(full_path, 'w') as file:
             json.dump(encrypted_data, file)
 
-    def decrypt_and_load(self, file_path, password, obj=None):
+    def decrypt_and_load(self, file_path, password, obj=None, subfolder=None):
         """
         Decrypts data from a file using symmetric encryption.
 
-        :param file_path: Path to the file containing the encrypted data.
-        :param password: The password used for decryption.
-        :return: The decrypted object.
+        Args:
+            file_path: Path to the file containing the encrypted data.
+            password: The password used for decryption.
+            subfolder: Optional. The subfolder under the script directory from where the file will be read.
+        Returns:
+            The decrypted object.
         """
-        with open(file_path, 'r') as file:
+
+        # Create full file path including subfolder if provided
+        if subfolder:
+            full_path = os.path.join(self.data_folder, subfolder, file_path)
+        else:
+            full_path = os.path.join(self.data_folder, file_path)
+
+        with open(full_path, 'r') as file:
             encrypted_data = json.load(file)
         return symmetric_decrypt(encrypted_data, password, obj)
 
