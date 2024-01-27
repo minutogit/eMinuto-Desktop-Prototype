@@ -23,10 +23,18 @@ class Person:
         self.coordinates = person_data.get('coordinates')
         self.current_voucher = None  # Initialization of current_voucher
         self.current_voucher_signature = None # signature of current_voucher (set when a voucher is signed as guarantor)
-        self.vouchers = []  # List of vouchers with amount
-        self.unfinished_vouchers = [] # list of vouchers which not ready because of missing guarantor sign
-        self.used_vouchers = []  # List of used vouchers after transaction without amount
         self.usertransaction = UserTransaction()
+
+        voucher_types = [
+            "unfinished", # list of vouchers which not ready because of missing guarantor sign etc
+            "used", # List of used vouchers after transaction without amount
+            "own", # List of own created vouchers with ammount
+            "other", # List of vouchers from other users with amount
+            "temp", # temp vouchers
+            "deleted",  # deleted vouchers (to keep until full deletion)
+            "corrupt" # vouchers where the verification fails (signature etc)
+        ]
+        self.voucherlist = {folder_name: [] for folder_name in voucher_types}
 
     def init_empty_voucher(self):
         from src.models.minuto_voucher import MinutoVoucher
@@ -58,7 +66,8 @@ class Person:
                       Returns an empty list if no double spending is detected.
         """
         from src.models.minuto_voucher import MinutoVoucher
-        all_vouchers = self.vouchers + self.used_vouchers
+        # todo look in all lists
+        all_vouchers = self.voucherlist["temp"] + self.voucherlist["used"]
         double_spends = get_double_spending_vtransaction_ids(all_vouchers)
         number_of_double_spends = len(double_spends)
         if number_of_double_spends == 0:
@@ -104,7 +113,7 @@ class Person:
     def read_voucher_and_save_voucher(self, filename, subfolder=None, simulation = False):
         """read the voucher and stores it to persons voucher list"""
         self.read_voucher(filename, subfolder, simulation)
-        self.vouchers.append(self.current_voucher)
+        self.voucherlist["temp"].append(self.current_voucher)
 
     def read_voucher(self, filename, subfolder=None, simulation = False):
         """read the voucher"""
@@ -125,7 +134,7 @@ class Person:
         """saves all vouchers to disk"""
         filename = ''
         i = 0
-        for voucher in self.vouchers:
+        for voucher in self.voucherlist["temp"]: # todo all lists (func still needed?)
             i += 1
             if len(fileprefix) > 0:
                 filename = f"{str(fileprefix)}-"
@@ -201,7 +210,7 @@ class Person:
         # Finding a matching voucher based on the temporary ID in the signature
         self.current_voucher = None
         signature_temp_id = signature[0]['temp_voucher_id']
-        for v in self.unfinished_vouchers:
+        for v in self.voucherlist["unfinished"]:
             if v.temp_voucher_id == signature_temp_id:
                 self.current_voucher = v
                 break
@@ -309,14 +318,14 @@ class Person:
         # Create a new list for the remaining vouchers
         remaining_vouchers = []
 
-        for voucher in self.vouchers:
+        for voucher in self.voucherlist["temp"]:
             if voucher.get_voucher_amount(self.id) == 0:
-                self.used_vouchers.append(voucher)  # Add empty voucher to the empty vouchers list
+                self.voucherlist["used"].append(voucher)  # Add empty voucher to the empty vouchers list
             else:
                 remaining_vouchers.append(voucher)  # Keep the voucher if it's not empty
 
         # Update the self.vouchers list with the remaining vouchers
-        self.vouchers = remaining_vouchers
+        self.voucherlist["temp"] = remaining_vouchers
 
         return transaction
 
@@ -336,8 +345,8 @@ class Person:
     def list_vouchers(self):
         """prints a short list of all vouchers"""
         full_amount = amount_precision(self.get_amount_of_all_vouchers())
-        print(f"\033[1m{self.name} {self.id[:6]}.. - {len(self.vouchers)} Vouchers  (Full Amount: {full_amount} Min)\033[0m")
-        sorted_vouchers = sorted(self.vouchers, key=lambda voucher: voucher.creator_id)
+        print(f"\033[1m{self.name} {self.id[:6]}.. - {len(self.voucherlist['temp'])} Vouchers  (Full Amount: {full_amount} Min)\033[0m")
+        sorted_vouchers = sorted(self.voucherlist["temp"], key=lambda voucher: voucher.creator_id)
         creator_id = ''
         linetext = ''
         for voucher in sorted_vouchers:
@@ -354,7 +363,8 @@ class Person:
     def get_amount_of_all_vouchers(self):
         """calculates the full amount of all vouchers of the person"""
         full_amount = 0
-        for voucher in self.vouchers:
+        # todo not only temp vouchers
+        for voucher in self.voucherlist["temp"]:
             full_amount += voucher.get_voucher_amount(self.id)
         return full_amount
 
@@ -366,7 +376,7 @@ class Person:
         """
 
         v_object_id_counts = {}
-        for voucher in self.vouchers:
+        for voucher in self.voucherlist["temp"]:
             voucher_id = id(voucher)
             if voucher_id in v_object_id_counts:
                 v_object_id_counts[voucher_id] += 1

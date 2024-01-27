@@ -25,7 +25,7 @@ class UserTransaction:
         remaining_amount_to_send = amount
         selected_vouchers = []
 
-        for voucher in person.vouchers:
+        for voucher in person.voucherlist["temp"]:
             if not voucher.verify_complete_voucher(verbose):
                 continue  # Use only valid vouchers
 
@@ -81,7 +81,7 @@ class UserTransaction:
             if v_amount > 0:  # Only use vouchers with a positive amount
                 if verbose:
                     print(f"Received voucher with {v_amount} amount.")
-                person.vouchers.append(voucher)
+                person.voucherlist["temp"].append(voucher)
                 transaction.transaction_amount += v_amount
         return True  # Transaction successfully received
 

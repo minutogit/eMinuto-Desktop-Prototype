@@ -61,6 +61,15 @@ class UserProfile(Serializable):
         return True
 
     def read_vouchers_from_disk(self):
+        folders = [
+            "unfinished",
+            "used_vouchers",
+            "own_vouchers",
+            "vouchers",
+            "deleted_vouchers",
+            "corrupt_vouchers"
+        ]
+
         unfinished_subfolder = "unfinished"
         import os
         file_path = os.path.join(self.data_folder, unfinished_subfolder)
@@ -71,7 +80,7 @@ class UserProfile(Serializable):
             # Check if the file is a .txt file
             if filename.endswith('.txt'):
                 self.person.read_voucher(filename,file_path)
-                self.person.unfinished_vouchers.append(self.person.current_voucher)
+                self.person.voucherlist["unfinished"].append(self.person.current_voucher)
                 self.person.current_voucher = None
 
     def open_file(self,file_path):
@@ -101,7 +110,7 @@ class UserProfile(Serializable):
                         # special case that user owns an voucher that had been send and the new voucher_is the the update version (longer transaction list)
                         # (the last transaction hash of current voucher, will be a prev_hast transaction / with my sender in transaction list)
                         # (in real world if the user would have been used this voucher again this would be a double spend, so this can helb to reduce double spending)
-                        self.person.vouchers.append(self.person.current_voucher)
+                        self.person.voucherlist["temp"].append(self.person.current_voucher)
                         return_info = f"Gutschein mit {voucher_amount}M Guthaben hinzugefügt."
                     else:
                         return_info = "Gutschein hat kein Guthaben."
@@ -109,7 +118,7 @@ class UserProfile(Serializable):
                         # todo check if also the same special case above (to reduce double spend posibility by user mistake)
 
                 else:
-                    self.person.unfinished_vouchers.append(self.person.current_voucher)
+                    self.person.voucherlist["unfinished"].append(self.person.current_voucher)
                     return_info = "Unfertigen Gutschein hinzugefügt."
                     unfinished_subfolder = "unfinished"
                     voucher_path = join_path(self.data_folder, unfinished_subfolder)
@@ -197,7 +206,7 @@ class UserProfile(Serializable):
         file_path = join_path(self.data_folder, unfinished_subfolder)
         voucher_name = f"voucher-{self.person.current_voucher.creation_date}.txt".replace(':', '_')
         self.person.save_voucher(voucher_name, file_path)
-        self.person.unfinished_vouchers.append(self.person.current_voucher)
+        self.person.voucherlist["unfinished"].append(self.person.current_voucher)
         voucher = self.person.current_voucher
         self.person.current_voucher = None
         return voucher

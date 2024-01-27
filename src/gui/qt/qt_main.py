@@ -461,7 +461,7 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         self.show()
 
     def init_values(self):
-        self.all_vouchers = user_profile.person.unfinished_vouchers
+        self.all_vouchers = user_profile.person.voucherlist["unfinished"]
 
         model = QStandardItemModel()
         model.setHorizontalHeaderLabels(self.headers)

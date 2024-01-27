@@ -164,11 +164,11 @@ class SimulationHelper:
             voucher.transactions.pop()  # Remove the latest transaction
 
         # Re-add vouchers to available list for reuse (to enable double spending)
-        self.persons[sender].vouchers = used_vouchers + self.persons[sender].vouchers
+        self.persons[sender].voucherlist["temp"] = used_vouchers + self.persons[sender].voucherlist["temp"]
 
         # Filter out vouchers that have been double spent
-        self.persons[sender].used_vouchers = [
-            voucher for voucher in self.persons[sender].used_vouchers
+        self.persons[sender].voucherlist["used"] = [
+            voucher for voucher in self.persons[sender].voucherlist["used"]
             if voucher.transactions[-1]['t_id'] not in last_transaction_ids_of_used_vouchers
         ]
 
