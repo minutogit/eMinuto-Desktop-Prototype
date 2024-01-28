@@ -1,5 +1,6 @@
 # person.py
 from src.models.key import Key
+from src.models.minuto_voucher import VoucherStatus
 from src.models.voucher_transaction import VoucherTransaction
 from src.models.user_transaction import UserTransaction
 from src.services.utils import get_timestamp, dprint, amount_precision, get_double_spending_vtransaction_ids
@@ -25,16 +26,8 @@ class Person:
         self.current_voucher_signature = None # signature of current_voucher (set when a voucher is signed as guarantor)
         self.usertransaction = UserTransaction()
 
-        voucher_types = [
-            "unfinished", # list of vouchers which not ready because of missing guarantor sign etc
-            "used", # List of used vouchers after transaction without amount
-            "own", # List of own created vouchers with ammount
-            "other", # List of vouchers from other users with amount
-            "temp", # temp vouchers
-            "deleted",  # deleted vouchers (to keep until full deletion)
-            "corrupt" # vouchers where the verification fails (signature etc)
-        ]
-        self.voucherlist = {folder_name: [] for folder_name in voucher_types}
+        # Initialize voucherlist using VoucherStatus enum
+        self.voucherlist = {status.value: [] for status in VoucherStatus}
 
     def init_empty_voucher(self):
         from src.models.minuto_voucher import MinutoVoucher
@@ -66,8 +59,10 @@ class Person:
                       Returns an empty list if no double spending is detected.
         """
         from src.models.minuto_voucher import MinutoVoucher
-        # todo look in all lists
-        all_vouchers = self.voucherlist["temp"] + self.voucherlist["used"]
+        # Accumulate all vouchers from all categories
+        all_vouchers = []
+        for status in VoucherStatus:
+            all_vouchers += self.voucherlist[status.value]
         double_spends = get_double_spending_vtransaction_ids(all_vouchers)
         number_of_double_spends = len(double_spends)
         if number_of_double_spends == 0:
@@ -113,7 +108,7 @@ class Person:
     def read_voucher_and_save_voucher(self, filename, subfolder=None, simulation = False):
         """read the voucher and stores it to persons voucher list"""
         self.read_voucher(filename, subfolder, simulation)
-        self.voucherlist["temp"].append(self.current_voucher)
+        self.voucherlist[VoucherStatus.TEMP.value].append(self.current_voucher)
 
     def read_voucher(self, filename, subfolder=None, simulation = False):
         """read the voucher"""
@@ -210,7 +205,7 @@ class Person:
         # Finding a matching voucher based on the temporary ID in the signature
         self.current_voucher = None
         signature_temp_id = signature[0]['temp_voucher_id']
-        for v in self.voucherlist["unfinished"]:
+        for v in self.voucherlist[VoucherStatus.UNFINISHED.value]:
             if v.temp_voucher_id == signature_temp_id:
                 self.current_voucher = v
                 break

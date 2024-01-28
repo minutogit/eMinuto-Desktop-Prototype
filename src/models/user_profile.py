@@ -4,7 +4,7 @@ from src.services.utils import convert_json_string_to_dict, file_exists, join_pa
 from src.services.crypto_utils import generate_symmetric_key, symmetric_encrypt, symmetric_decrypt, b64d, is_encrypted_string, hash_bytes
 from src.models.secure_file_handler import SecureFileHandler
 from src.models.person import Person
-from src.models.minuto_voucher import is_voucher_dict
+from src.models.minuto_voucher import is_voucher_dict, VoucherStatus
 
 class UserProfile(Serializable):
     # Singleton instance of UserProfile.
@@ -62,18 +62,14 @@ class UserProfile(Serializable):
         return True
 
     def read_vouchers_from_disk(self):
-        voucher_types = [
-            "unfinished",  # list of vouchers which not ready because of missing guarantor sign etc
-            "used",  # List of used vouchers after transaction without amount
-            "own",  # List of own created vouchers with ammount
-            "other",  # List of vouchers from other users with amount
-            "temp",  # temp vouchers
-            "deleted",  # deleted vouchers (to keep until full deletion)
-            "corrupt"  # vouchers where the verification fails (signature etc)
-        ]
-        import os # todo improve without import
-        for folder in voucher_types: # folders named from voucher types
-            folder_path = os.path.join(self.data_folder, folder)
+        """
+        Reads vouchers from disk and categorizes them based on their types.
+        It expects the folders to be named according to the VoucherStatus enum.
+        """
+        import os
+        for status in VoucherStatus:  # Iterate over each status in the VoucherStatus enum
+            folder_name = status.value  # Get the folder name corresponding to the voucher status
+            folder_path = os.path.join(self.data_folder, folder_name)
             os.makedirs(folder_path, exist_ok=True)
 
             # List all files in the directory
@@ -83,8 +79,7 @@ class UserProfile(Serializable):
                     full_file_path = os.path.join(folder_path, filename)
                     self.open_voucher(full_file_path)
 
-
-    def open_file(self,file_path):
+    def open_file(self, file_path):
         # open and reads vouchers, signatures or transactions from user interaction in gui
         return_info = ""
         file_content = read_file_content(file_path)
@@ -112,14 +107,14 @@ class UserProfile(Serializable):
                 # todo avoid adding duplicates - add func in person to check if voucher already loaded
                 voucher_status = self.person.current_voucher.voucher_status(self.person.id)
                 dprint(voucher_status)
-                self.person.voucherlist[voucher_status].append(self.person.current_voucher)
+                self.person.voucherlist[voucher_status.value].append(self.person.current_voucher)
                 voucher_amount = self.person.current_voucher.get_voucher_amount(self.person.id)
 
-                if voucher_status in ["own", "other"]:
+                if voucher_status in [VoucherStatus.OWN, VoucherStatus.OTHER]:
                     return_info = f"Gutschein mit {voucher_amount}M Guthaben hinzugefügt."
-                elif voucher_status == "used":
+                elif voucher_status == VoucherStatus.USED:
                     return_info = "Gutschein hat kein Guthaben."
-                elif voucher_status == "unfinished":
+                elif voucher_status == VoucherStatus.UNFINISHED:
                     return_info = "Unfertigen Gutschein hinzugefügt."
 
                 self.save_file(self.person.current_voucher)
@@ -164,7 +159,7 @@ class UserProfile(Serializable):
                 self.person.read_voucher_from_dict(file_content)
                 voucher_status = self.person.current_voucher.voucher_status(self.person.id)
                 dprint(voucher_status)
-                self.person.voucherlist[voucher_status].append(self.person.current_voucher)
+                self.person.voucherlist[voucher_status.value].append(self.person.current_voucher)
                 self.person.current_voucher = None
 
 
@@ -173,7 +168,7 @@ class UserProfile(Serializable):
         name = voucher.get_voucher_name()
         voucher_status = voucher.voucher_status(self.person.id)
         import os
-        file_path = os.path.join(self.data_folder, voucher_status)
+        file_path = os.path.join(self.data_folder, voucher_status.value)
         os.makedirs(file_path, exist_ok=True)
         self._secure_file_handler.encrypt_and_save(voucher, f"minuto-{name}.mv", key=self.file_enc_key.encode('utf-8'), subfolder=file_path)
 
@@ -234,13 +229,9 @@ class UserProfile(Serializable):
             return False
 
     def create_voucher(self, first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher, description='', footnote=''):
-        unfinished_subfolder = "unfinished"
         self.person.create_voucher_from_gui(first_name, last_name, organization, address, gender, email, phone, service_offer, coordinates, amount, region, years_valid, is_test_voucher, description, footnote)
-        #file_path = join_path(self.data_folder, unfinished_subfolder)
-        #voucher_name = f"voucher-{self.person.current_voucher.creation_date}.txt".replace(':', '_')
-        #self.person.save_voucher(voucher_name, file_path)
         self.save_file(self.person.current_voucher)
-        self.person.voucherlist["unfinished"].append(self.person.current_voucher)
+        self.person.voucherlist[VoucherStatus.UNFINISHED.value].append(self.person.current_voucher)
         voucher = self.person.current_voucher
         self.person.current_voucher = None
         return voucher

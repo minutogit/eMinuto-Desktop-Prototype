@@ -5,6 +5,16 @@ from src.models.key import Key
 from src.services.utils import get_timestamp, dprint, amount_precision, Serializable, random_string, get_years_valid
 from src.services.crypto_utils import get_hash
 from src.models.voucher_transaction import VoucherTransaction
+from enum import Enum
+
+class VoucherStatus(Enum):
+    UNFINISHED = "unfinished"  # List of vouchers which are not ready because of missing guarantor sign etc.
+    USED = "used"  # List of used vouchers without amount
+    OWN = "own"  # List of own created vouchers with amount.
+    OTHER = "other"  # List of vouchers from other users with amount.
+    TEMP = "temp"  # Temporary vouchers.
+    DELETED = "deleted"  # Deleted vouchers (to keep until full deletion).
+    CORRUPT = "corrupt"  # Vouchers where the verification fails (signature etc).
 
 
 class MinutoVoucher(Serializable):
@@ -483,7 +493,8 @@ class MinutoVoucher(Serializable):
 
         return True
 
-    def voucher_status(self, user_id):  # -> str
+
+    def voucher_status(self, user_id):  # -> VoucherStatus
         """
         Returns the status of vouchers such as 'used', 'unfinished', etc.
         This method is used for storing vouchers.
@@ -492,29 +503,29 @@ class MinutoVoucher(Serializable):
             user_id: The user ID to check if own voucher.
 
         Returns:
-            str: The status of the vouchers.
+            VoucherStatus: The status of the vouchers.
         """
         own_voucher = (self.voucher_id == user_id)
         if not self.transactions:
-            return "unfinished"
+            return VoucherStatus.UNFINISHED
 
         if self.verify_complete_voucher():
             # Own vouchers can only be used when older than 3 years
             if own_voucher:
                 if get_years_valid(self.valid_until) > 3 or self.get_voucher_amount(user_id) > 0:
-                    return "own"
+                    return VoucherStatus.OWN
                 else:
-                    return "used"
+                    return VoucherStatus.USED
 
             # Other valid vouchers
             if self.get_voucher_amount(user_id) > 0:
-                return "other"  # Vouchers from other users with amount
+                return VoucherStatus.OTHER  # Vouchers from other users with amount
             elif self.transactions[-1]['sender_id'] == user_id:
-                return "used"
+                return VoucherStatus.USED
             else:
-                return "deleted"
+                return VoucherStatus.DELETED
         else:
-            return "corrupt"
+            return VoucherStatus.CORRUPT
 
     def get_voucher_name(self, voucher=None):
         """
