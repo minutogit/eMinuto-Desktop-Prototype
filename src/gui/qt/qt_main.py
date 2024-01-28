@@ -17,9 +17,9 @@ from src.gui.qt.ui_components.form_send_to_guarantor import Ui_FormSendToGuarant
 from src.gui.qt.ui_components.form_sign_as_guarantor import Ui_FormSignVoucherAsGuarantor
 from src.services.crypto_utils import verify_user_ID
 
-from src.gui.qt.utils import apply_global_styles, show_message_box
+from src.gui.qt.utils import apply_global_styles, show_message_box, show_yes_no_box
 from src.models.user_profile import user_profile
-from src.models.minuto_voucher import MinutoVoucher
+from src.models.minuto_voucher import MinutoVoucher, VoucherStatus
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import QAbstractItemView
 
@@ -231,6 +231,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         self.pushButtonRawData.clicked.connect(self.show_raw_data)
         self.pushButtonSignAsGuarantor.clicked.connect(self.sing_as_guarantor)
         self.pushButtonSendToGuarantor.clicked.connect(self.send_to_guarantor)
+        self.pushButtonSignAsCreator.clicked.connect(self.sign_as_creator)
 
         self.apply_stylesheet_to_buttons()
 
@@ -247,6 +248,20 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
             """
         for button in self.findChildren(QPushButton):
             button.setStyleSheet(button_stylesheet)
+
+    def sign_as_creator(self):
+        sign = show_yes_no_box("Gutschein selbst unterschreiben", "Soll der Gutschein unterschrieben werden? Damit ist er gültig und kann für Transaktionen verwenden werden.")
+        if sign:
+            signed, message = user_profile.person.sign_voucher_as_creator(self.voucher)
+
+            if signed:
+                user_profile.save_file(self.voucher)
+                user_profile.person.current_voucher = None
+                show_message_box("Unterschrift erfolgreich", "Unterschrift war erfolgreich. Der Gutschein ist nun fertig und kann verwendet werden.")
+                self.update_status(self.voucher)
+            else:
+                show_message_box("Fehler", f"Unterschrift fehlgeschlagen. {message}")
+
 
     def sing_as_guarantor(self):
         # check if gender is set
@@ -266,31 +281,46 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         """
         # Check conditions for voucher status
         own_voucher = (voucher.creator_id == user_profile.person.id)
-        enough_guarantors = (len(voucher.guarantor_signatures) >= 2)
+        number_of_guarantors =  len(voucher.guarantor_signatures)
+        enough_guarantors = (number_of_guarantors >= 2)
+
         no_creator_signature = (voucher.creator_signature is None)
+
+        # check if at least one male and one female guarantor exist
+        guarantor_genders = {str(g_sign[0]['gender']) for g_sign in voucher.guarantor_signatures}
+        both_genders_present = '1' in guarantor_genders and '2' in guarantor_genders
 
         # Enable or disable buttons based on voucher status
         self.pushButtonSendToGuarantor.setEnabled(own_voucher and not enough_guarantors)
-        self.pushButtonSignAsCreator.setEnabled(own_voucher and enough_guarantors and no_creator_signature)
+        self.pushButtonSignAsCreator.setEnabled(own_voucher and enough_guarantors and both_genders_present and no_creator_signature)
         self.pushButtonSignAsGuarantor.setEnabled(not own_voucher and not enough_guarantors)
 
         voucher_status = ""
         if own_voucher:
             voucher_status += "<b>Eigener Gutschein"
-            if not enough_guarantors:
-                voucher_status += " (Nicht genug Bürgen)"
+            if number_of_guarantors == 0:
+                voucher_status += " (Bürgen fehlen)"
+            elif not '1' in guarantor_genders:
+                voucher_status += " (männlicher Bürge fehlt)"
+            elif not '2' in guarantor_genders:
+                voucher_status += " (weiblicher Bürge fehlt)"
             elif no_creator_signature is None:
                 voucher_status += " (Eigene Unterschrift fehlt)"
+            elif voucher.verify_complete_voucher():
+                voucher_status += " (Gültig)"
             else:
-                voucher_status += " (gültig)"
+                voucher_status += " (Ungültig!)"
+
         else:
             voucher_status += "<b>Erhaltener Gutschein"
             if not enough_guarantors:
                 voucher_status += " (Nicht genug Bürgen)"
             elif no_creator_signature is None:
                 voucher_status += " (Ersteller Unterschrift fehlt)"
-            else:
+            elif voucher.verify_complete_voucher():
                 voucher_status += " (Gültig)"
+            else:
+                voucher_status += " (Ungültig!)"
         voucher_status += "</b>"
 
         self.labelInfoTextLeft.setText(voucher_status)
@@ -466,7 +496,10 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         self.show()
 
     def init_values(self):
-        self.all_vouchers = user_profile.person.voucherlist["unfinished"]
+        # Accumulate all vouchers from all categories
+        self.all_vouchers = []
+        for status in VoucherStatus:
+            self.all_vouchers += user_profile.person.voucherlist[status.value]
 
         model = QStandardItemModel()
         model.setHorizontalHeaderLabels(self.headers)
@@ -616,6 +649,7 @@ class Dialog_Profile(QMainWindow, Ui_Form_Profile):
         user_profile.person_data['phone'] = self.lineEdit_phone.text()
         user_profile.person_data['service_offer'] = self.textEdit_service_offer.toPlainText()
         user_profile.person_data['coordinates'] = self.lineEdit_coordinates.text()
+        user_profile.person.set_person_data(user_profile.person_data) # update person from person_data in profile
         frm_main_window.update_values()
         user_profile.save_profile_to_disk()
 

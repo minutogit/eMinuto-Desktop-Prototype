@@ -12,7 +12,23 @@ class Person:
         self.id = self.key.id
         self.pubkey_short = self.key.get_compressed_public_key()
 
-        # Setting attributes from the person_data dictionary
+        # Set attributes from person_data using a separate method
+        self.set_person_data(person_data)
+
+        self.current_voucher = None  # Initialization of current_voucher
+        self.current_voucher_signature = None  # signature of current_voucher (set when a voucher is signed as guarantor)
+        self.usertransaction = UserTransaction()
+
+        # Initialize voucherlist using VoucherStatus enum
+        self.voucherlist = {status.value: [] for status in VoucherStatus}
+
+    def set_person_data(self, person_data):
+        """
+        Sets the attributes of the Person object based on the provided person_data dictionary.
+
+        Args:
+            person_data (dict): A dictionary containing the data to be set for the person.
+        """
         self.first_name = person_data.get('first_name')
         self.last_name = person_data.get('last_name')
         self.organization = person_data.get('organization')
@@ -22,12 +38,6 @@ class Person:
         self.phone = person_data.get('phone')
         self.service_offer = person_data.get('service_offer')  # Offer / Skills
         self.coordinates = person_data.get('coordinates')
-        self.current_voucher = None  # Initialization of current_voucher
-        self.current_voucher_signature = None # signature of current_voucher (set when a voucher is signed as guarantor)
-        self.usertransaction = UserTransaction()
-
-        # Initialize voucherlist using VoucherStatus enum
-        self.voucherlist = {status.value: [] for status in VoucherStatus}
 
     def init_empty_voucher(self):
         from src.models.minuto_voucher import MinutoVoucher
@@ -267,15 +277,15 @@ class Person:
         guarantor_genders = {str(g_sign[0]['gender']) for g_sign in voucher.guarantor_signatures}
         if '1' not in guarantor_genders or '2' not in guarantor_genders:
             print("One male and one female guarantor required before signing as creator.")
-            return
+            return False, "Männlicher und weiblicher Bürge wird benötigt"
 
-        if not self.verify_guarantor_signatures():
+        if not self.verify_guarantor_signatures(voucher):
             print("Signatures of guarantors are invalid.")
-            return
+            return False, "ungültige Bürgenunterschrift(en)"
 
         if voucher.creator_id != self.id:
             print("Can only sign own voucher as creator!")
-            return
+            return False, "Nur eigene Gutscheine können unterschrieben werden"
 
         """
         Important! Signatures must be ordered by the guarantor's ID to prevent the possibility of creating multiple
@@ -293,6 +303,7 @@ class Person:
         transaction = VoucherTransaction(voucher)
         transaction_data = transaction.get_initial_transaction(self.key)
         voucher.transactions.append(transaction_data)
+        return True, ""
 
     def verify_creator_signature(self, voucher=None):
         """ Verifies the signature of the voucher's creator. """
