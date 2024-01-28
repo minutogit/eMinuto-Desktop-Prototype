@@ -501,20 +501,20 @@ class MinutoVoucher(Serializable):
         if self.verify_complete_voucher():
             # Own vouchers can only be used when older than 3 years
             if own_voucher:
-                if get_years_valid(self.valid_until) < 3:
-                    return "used_vouchers"
+                if get_years_valid(self.valid_until) > 3 or self.get_voucher_amount(user_id) > 0:
+                    return "own"
                 else:
-                    return "own_vouchers"
+                    return "used"
 
             # Other valid vouchers
             if self.get_voucher_amount(user_id) > 0:
-                return "vouchers"  # Vouchers with amount
+                return "other"  # Vouchers from other users with amount
             elif self.transactions[-1]['sender_id'] == user_id:
-                return "used_vouchers"
+                return "used"
             else:
-                return "deleted_vouchers"
+                return "deleted"
         else:
-            return "corrupt_vouchers"
+            return "corrupt"
 
     def get_voucher_name(self, voucher=None):
         """

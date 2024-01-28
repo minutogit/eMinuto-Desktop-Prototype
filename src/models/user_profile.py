@@ -80,71 +80,61 @@ class UserProfile(Serializable):
             for filename in os.listdir(folder_path):
                 # Check if the file is a .mv file
                 if filename.endswith('.mv'):
-
                     full_file_path = os.path.join(folder_path, filename)
-                    self.open_file(full_file_path, startup=True)
+                    self.open_voucher(full_file_path)
 
-    # todo extra func to open vouchers on startup
-    def open_file(self,file_path, startup=False):
+
+    def open_file(self,file_path):
         # open and reads vouchers, signatures or transactions from user interaction in gui
         return_info = ""
         file_content = read_file_content(file_path)
         if is_encrypted_string(file_content):
-            if startup: # on startup load local encrypted vouchers
+
+            try:
+                # first try to encrypt received files from other users with shared secret
+                file_content = self._secure_file_handler.decrypt_with_shared_secret_and_load(file_path)
+            except:
                 try:
+                    # if decryption from other user fails, try to decrypt with own file key
                     file_content = symmetric_decrypt(file_content, key=self.file_enc_key)
                 except:
-                    pass
-            else:
-                file_content = self._secure_file_handler.decrypt_with_shared_secret_and_load(file_path)
+                    print("decryption fails")
+                    return None, "Entschlüsselung fehlgeschlagen"
 
         if is_valid_object(file_content):
             # if string then convert to dict
             if isinstance(file_content, str):
                 file_content = convert_json_string_to_dict(file_content)
 
-
             # check if voucher
             if is_voucher_dict(file_content):
                 self.person.read_voucher_from_dict(file_content)
-                # if valid and ready voucher
-                if self.person.current_voucher.verify_complete_voucher():
-                    voucher_amount = self.person.current_voucher.get_voucher_amount(self.person.id)
-                    if voucher_amount > 0:
-                        # todo some checks needed is voucher already added?
-                        # dont add voucher with same id and same last transaction_id
-                        # special case that user owns an voucher that had been send and the new voucher_is the the update version (longer transaction list)
-                        # (the last transaction hash of current voucher, will be a prev_hast transaction / with my sender in transaction list)
-                        # (in real world if the user would have been used this voucher again this would be a double spend, so this can helb to reduce double spending)
-                        self.person.voucherlist["temp"].append(self.person.current_voucher)
-                        return_info = f"Gutschein mit {voucher_amount}M Guthaben hinzugefügt."
-                    else:
-                        return_info = "Gutschein hat kein Guthaben."
-                        pass
-                        # todo check if also the same special case above (to reduce double spend posibility by user mistake)
+                # todo avoid adding duplicates - add func in person to check if voucher already loaded
+                voucher_status = self.person.current_voucher.voucher_status(self.person.id)
+                dprint(voucher_status)
+                self.person.voucherlist[voucher_status].append(self.person.current_voucher)
+                voucher_amount = self.person.current_voucher.get_voucher_amount(self.person.id)
 
-                else:
-                    self.person.voucherlist["unfinished"].append(self.person.current_voucher)
-                    if not startup: # on startup file loaded from disk (dont save them again)
-                        return_info = "Unfertigen Gutschein hinzugefügt."
-                        unfinished_subfolder = "unfinished"
-                        voucher_path = join_path(self.data_folder, unfinished_subfolder)
-                        voucher_name = f"voucher-{self.person.current_voucher.creation_date}.txt".replace(':', '_')
-                        self.person.save_voucher(voucher_name, voucher_path) # todo encrypted save
+                if voucher_status in ["own", "other"]:
+                    return_info = f"Gutschein mit {voucher_amount}M Guthaben hinzugefügt."
+                elif voucher_status == "used":
+                    return_info = "Gutschein hat kein Guthaben."
+                elif voucher_status == "unfinished":
+                    return_info = "Unfertigen Gutschein hinzugefügt."
 
-
-
+                self.save_file(self.person.current_voucher)
+                self.person.current_voucher = None
 
             # check if guarantor signature
             elif isinstance(file_content, list) and isinstance(file_content[0], dict) and "signature_time" in \
                     file_content[0]:
                 # try to find voucher and add guarantor signature
-                return_info = self.person.add_received_signature_to_unfinished_voucher(file_content)
-
+                self.person.current_voucher, return_info = self.person.add_received_signature_to_unfinished_voucher(file_content)
+                # save updated voucher to disk
+                if self.person.current_voucher is not None:
+                    self.save_file(self.person.current_voucher)
             else:
                 return_info = "unbekanntes Format"
-
-
 
         else:
             return_info = "Ungültige Datei"
@@ -152,6 +142,30 @@ class UserProfile(Serializable):
         voucher = self.person.current_voucher
         self.person.current_voucher = None
         return voucher ,return_info
+
+
+    def open_voucher(self,file_path):
+        # open and reads vouchers on startup
+        # todo for later: Check if a new voucher has already been sent to reduce the possibility of double spending when users make mistakes.
+        file_content = read_file_content(file_path)
+        if is_encrypted_string(file_content):
+            try:
+                file_content = symmetric_decrypt(file_content, key=self.file_enc_key)
+            except:
+                print(f"local voucher decryption failed. ")
+
+        if is_valid_object(file_content):
+            # if string then convert to dict
+            if isinstance(file_content, str):
+                file_content = convert_json_string_to_dict(file_content)
+
+            # check if voucher format
+            if is_voucher_dict(file_content):
+                self.person.read_voucher_from_dict(file_content)
+                voucher_status = self.person.current_voucher.voucher_status(self.person.id)
+                dprint(voucher_status)
+                self.person.voucherlist[voucher_status].append(self.person.current_voucher)
+                self.person.current_voucher = None
 
 
     def save_file(self, voucher, encrypted=True):
@@ -164,12 +178,11 @@ class UserProfile(Serializable):
         self._secure_file_handler.encrypt_and_save(voucher, f"minuto-{name}.mv", key=self.file_enc_key.encode('utf-8'), subfolder=file_path)
 
 
-
-
     def create_new_profile(self, profile_name, first_name, last_name, organization, seed, profile_password):
         # storekey and salt in object for saving to disk
         seed = " ".join(str(seed).lower().split())  # remove multiple white spaces, lower case
         self.encryption_key, self.encryption_salt = generate_symmetric_key(profile_password, b64_string=True)
+        # todo test if files can be decrypted after profile recovery oder password recovery
         # derive deterministic key from seed to ensure decryption of files after profile recovery
         self.file_enc_key, _ = generate_symmetric_key(seed, salt=hash_bytes(seed), b64_string=True)
         # when password lost, seed is second password for recovery

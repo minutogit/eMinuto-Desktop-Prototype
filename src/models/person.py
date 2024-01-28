@@ -216,13 +216,13 @@ class Person:
                 break
 
         if self.current_voucher is None:
-            return "Keinen passenden Gutschein für die Bürgenunterschrift gefunden"
+            return None, "Keinen passenden Gutschein für die Bürgenunterschrift gefunden"
         else:
             success, message = self.append_guarantor_signature(signature)
             if success:
-                return "Unterschrift wurde hinzugefügt"
+                return self.current_voucher, "Unterschrift wurde hinzugefügt"
             else:
-                return f"Unterschrift konnte nicht hinzugefügt werden. ({message})"
+                return self.current_voucher, f"Unterschrift konnte nicht hinzugefügt werden. ({message})"
 
     def append_guarantor_signature(self, guarantor_signature, voucher=None):
         """ Appends the guarantor signature tuple to the voucher, ensuring specific conditions are met.

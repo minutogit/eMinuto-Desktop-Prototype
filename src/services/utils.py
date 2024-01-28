@@ -42,7 +42,7 @@ def convert_json_string_to_dict(json_string):
 def is_valid_object(obj):
     """
     Checks if the given object is a dictionary, a list, or a valid JSON string
-    that represents a dictionary or a list. Needed in gui for checking file content.
+    that represents a dictionary or a list. Needed for checking file content.
 
     Args:
         obj: The object to check. Can be a dict, a list, or a string.
