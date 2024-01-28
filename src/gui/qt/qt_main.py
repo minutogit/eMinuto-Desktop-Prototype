@@ -345,7 +345,6 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         # Translate and display each voucher attribute
         translations = {
             'voucher_id': 'Gutschein-ID',
-            'temp_voucher_id': 'Temporäre Gutschein-ID',
             'creator_id': 'Ersteller-ID',
             'creator_first_name': 'Vorname',
             'creator_last_name': 'Nachname',
@@ -365,7 +364,8 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
             'is_test_voucher': 'Ist Testgutschein',
             'guarantor_signatures': 'Anzahl Bürgen',
             'creator_signature': 'Unterschrift des Erstellers',
-            'transactions': 'Transaktionen'
+            'transactions': 'Transaktionen',
+            'needed_guarantors': "benötigte Bürgenanzahl"
         }
 
         for attr, value in vars(voucher).items():

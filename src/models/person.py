@@ -162,8 +162,9 @@ class Person:
                 return False
 
         # Prepare guarantor information for signature
+        # important is the voucher_id, because this is the link between voucher and this signature
         guarantor_info = {
-            "temp_voucher_id": voucher.temp_voucher_id,
+            "voucher_id": voucher.voucher_id, # voucher_id is the hash of the voucher
             "id": self.id,
             "first_name": self.first_name,
             "last_name": self.last_name,
@@ -176,15 +177,16 @@ class Person:
             "signature_time": get_timestamp()
         }
 
+        if voucher.creation_date > guarantor_info["signature_time"]:
+            print("signature time can only be after creation date of voucher")
+            return False
+
         # get voucher data for signing
-        data_to_sign = voucher.get_voucher_data(type="guarantor_signature")
-        data_to_sign += json.dumps(guarantor_info, sort_keys=True, ensure_ascii=False)
+        data_to_sign = json.dumps(guarantor_info, sort_keys=True, ensure_ascii=False)
         signature = self.key.sign(data_to_sign, base64_encode=True)
 
         # Append the signed guarantor information to the voucher
         voucher.guarantor_signatures.append((guarantor_info, signature))
-        # Important! Signatures must be ordered by the guarantor's ID to prevent the possibility of creating multiple valid vouchers with the same signatures.
-        voucher.guarantor_signatures.sort(key=lambda x: x[0]["id"])
 
         self.current_voucher_signature = (guarantor_info, signature)
         return True
@@ -214,9 +216,9 @@ class Person:
         """
         # Finding a matching voucher based on the temporary ID in the signature
         self.current_voucher = None
-        signature_temp_id = signature[0]['temp_voucher_id']
+        signature_voucher_id = signature[0]['voucher_id']
         for v in self.voucherlist[VoucherStatus.UNFINISHED.value]:
-            if v.temp_voucher_id == signature_temp_id:
+            if v.voucher_id == signature_voucher_id:
                 self.current_voucher = v
                 break
 
@@ -237,7 +239,7 @@ class Person:
         guarantor_info, signature = guarantor_signature
 
         # Check if the guarantor's temporary ID matches the voucher's temporary ID
-        if guarantor_info["temp_voucher_id"] != voucher.temp_voucher_id:
+        if guarantor_info["voucher_id"] != voucher.voucher_id:
             return False, "Kein passender Gutschein gefunden."
 
         # Check if the guarantor is the creator of the voucher (creator can't be guarantor)
@@ -252,9 +254,6 @@ class Person:
 
         # Append the guarantor's signature
         voucher.guarantor_signatures.append(guarantor_signature)
-
-        #sort signatures (required for valid voucher)
-        voucher.guarantor_signatures.sort(key=lambda x: x[0]["id"])
 
         # check signatures
         if not self.verify_guarantor_signatures():
@@ -271,7 +270,6 @@ class Person:
     def sign_voucher_as_creator(self, voucher=None):
         """ Calculates voucher_id signs the voucher as its creator and initialize the transaction list"""
         voucher = voucher or self.current_voucher
-        voucher.voucher_id = voucher.calculate_voucher_id()  # set voucher_id
 
         # Check if male and female guarantor exist
         guarantor_genders = {str(g_sign[0]['gender']) for g_sign in voucher.guarantor_signatures}

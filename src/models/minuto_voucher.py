@@ -36,10 +36,10 @@ class MinutoVoucher(Serializable):
         self.creator_signature = None  # Creator's signature
         self.coordinates = ''
         self.guarantor_signatures = []  # Guarantor signatures
+        self.needed_guarantors = 2 # minimum number of needed guarators signatures (included for possible future feature requests of more guarantors)
         self.transactions = []  # list of transactions
         self.creation_date = ''
         self.voucher_id = ''
-        self.temp_voucher_id = ""  # Temporary voucher ID, to be used until the final voucher is ready
         self.footnote = ""
         self.is_test_voucher = False  # Indicates if the voucher is a test voucher
 
@@ -49,8 +49,6 @@ class MinutoVoucher(Serializable):
         # Create a new voucher instance with provided details
         voucher = cls()
         voucher.creator_id = creator_id
-        voucher.voucher_id = ""  # voucher ID will be generated from hash when creator signs the voucher
-        voucher.temp_voucher_id = random_string(16)
         voucher.creation_date = get_timestamp()
         voucher.creator_first_name = creator_first_name
         voucher.creator_last_name = creator_last_name
@@ -73,6 +71,8 @@ class MinutoVoucher(Serializable):
         voucher.email = email
         voucher.phone = phone
         voucher.is_test_voucher = is_test_voucher
+        voucher.voucher_id = voucher.calculate_voucher_id()  # set voucher_id
+
         return voucher
 
     def get_voucher_data(self, type):
@@ -84,27 +84,21 @@ class MinutoVoucher(Serializable):
         # By doing this, unknown keys are also dynamically included in the hash, enabling older versions to correctly verify hashes of newer versions with additional parameters.
         data = {key: value for key, value in self.__dict__.items() if key not in excluded_keys}
 
-        guarantor_signs = ''
-        guarantor_data = json.dumps(data, sort_keys=True, ensure_ascii=False)
-        if type == "guarantor_signature":
-            return guarantor_data
-
-        # for voucher_id_hashing add guarantor_signatures
-        data["guarantor_signatures"] = self.guarantor_signatures
-        if type == "voucher_id_hashing":
+        # voucher id is hash from all key without the excluded
+        if type in ["voucher_id_hashing"]:
             return json.dumps(data, sort_keys=True, ensure_ascii=False)
 
-        # for creator_signing add voucher_id
-        data["voucher_id"] = self.voucher_id
-        if type == "creator_signing":
+        # guarantor and creator only signs the voucher id, the initial_transaction_hash is hash from voucher_id
+        data = {'voucher_id': self.voucher_id}
+        if type in ["guarantor_signature",  "creator_signing", "initial_transaction_hash"]:
             return json.dumps(data, sort_keys=True, ensure_ascii=False)
 
-        # Important: For the initial_transaction_hash, exclude the creator_signature (which changes with each signing)
-        # from the hashing process. This ensures a consistent previous_hash for the initial transaction.
+        # Important: The initial_transaction_hash have to exclude the creator_signature (which changes with each signing)
+        # from the hashing process. Also have exclude guarantor_signatures, because different signature from the same guarantor would lead to different previous_hash.
+        #
+        # This ensures a consistent previous_hash for the initial transaction.
         # A consistent previous_hash is necessary to detect double spending, particularly in cases of multiple
         # initializations of the initial transaction.
-        if type == "initial_transaction_hash":
-            return json.dumps(data, sort_keys=True, ensure_ascii=False)
 
         # if unknown type raise error
         raise ValueError("Unknown type")
@@ -251,33 +245,29 @@ class MinutoVoucher(Serializable):
         return 0
 
     def verify_all_guarantor_signatures(self, voucher=None):
-        """ Validates all guarantor signatures on the given voucher. """
+        """ Validates all guarantor signatures on the given voucher.
+        Does only check the signature of every single signature. Not if enough signatures etc."""
         if voucher is None:
             voucher = self
         if not voucher.guarantor_signatures:
             return False
         sign_number = 0
 
-        last_id = ""
-
         for guarantor_info, signature in voucher.guarantor_signatures:
-            # Ensure the order of IDs is maintained to prevent creation of multiple correct vouchers by the creator
+            # check if the signature belongs to this voucher
+            if voucher.voucher_id != guarantor_info["voucher_id"]:
+                return False
+
             try:
-                current_id = guarantor_info["id"]
-                # Check if the current ID is not in the correct order or if it's invalid, then return False
-                if current_id < last_id or not Key.check_user_id(current_id):
-                    return False
-                pubkey_short = Key.get_pubkey_from_id(current_id)
+                pubkey_short = Key.get_pubkey_from_id(guarantor_info["id"])
             except:
                 return False
 
-            data_to_verify = voucher.get_voucher_data(type="guarantor_signature")
-            data_to_verify += json.dumps(guarantor_info, sort_keys=True, ensure_ascii=False)
+            data_to_verify = json.dumps(guarantor_info, sort_keys=True, ensure_ascii=False)
 
             if not Key.verify_signature(data_to_verify, signature, pubkey_short):
                 return False
 
-            last_id = current_id
             sign_number += 1
 
         return True
@@ -308,11 +298,17 @@ class MinutoVoucher(Serializable):
             print("male and female guarantor needed")
             return False
 
+        # check if enough guarantor signatures
+        if len(voucher.guarantor_signatures) < voucher.needed_guarantors:
+            print("not enough guarantors")
+            return False
+
         signature = voucher.creator_signature
         if not signature:
             if verbose:
                 print("missing creator signature")
             return False
+
         if Key.check_user_id(voucher.creator_id) == False:
             if verbose:
                 print("creator id incorrect. wrong checksum")
@@ -349,7 +345,7 @@ class MinutoVoucher(Serializable):
                     initial_transaction['sender_id'] != self.creator_id:
                 return False
 
-            # Verify the linkage to the voucher - verify hash from complete voucher data
+            # Verify the linkage to the voucher - verify hash from voucher id
             data_for_prev_hash = self.get_voucher_data(type="initial_transaction_hash").encode()
             if get_hash(data_for_prev_hash) != initial_transaction['previous_hash']:
                 return False
@@ -480,6 +476,7 @@ class MinutoVoucher(Serializable):
             return False
 
         # Verify creator's signature
+        # Checks also the number of guarantor signatures and if at least one male and female guarantor
         if not self.verify_creator_signature(self):
             if verbose:
                 print("Creator signature verification failed.")
@@ -539,9 +536,7 @@ class MinutoVoucher(Serializable):
         """
         if voucher is None:
             voucher = self
-        if not voucher.voucher_id:
-            return voucher.temp_voucher_id
-        elif not voucher.transactions:
+        if not voucher.transactions:
             return voucher.voucher_id[:16]
         else:
             last_transaction_id = voucher.transactions[-1]['t_id']
