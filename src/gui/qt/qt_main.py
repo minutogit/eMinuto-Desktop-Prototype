@@ -249,7 +249,12 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
             button.setStyleSheet(button_stylesheet)
 
     def sing_as_guarantor(self):
-        form_sing_as_guarantor.show_form(self.voucher)
+        # check if gender is set
+        sign_voucher = (user_profile.person.gender != 0)
+        if not sign_voucher:
+            sign_voucher = show_yes_no_box("Geschlecht fehlt", "Im Profil muss das Geschlecht angegeben werden. Dennoch unterschreiben? (nicht empfohlen)")
+        if sign_voucher:
+            form_sing_as_guarantor.show_form(self.voucher)
 
     def send_to_guarantor(self):
         form_send_to_guarantor.show_form(self.voucher)

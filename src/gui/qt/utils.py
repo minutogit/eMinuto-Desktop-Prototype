@@ -6,6 +6,19 @@ def show_message_box(title, text):
     dlg.setText(text)
     dlg.exec()
 
+def show_yes_no_box(title, text):
+    dlg = QMessageBox()
+    dlg.setWindowTitle(title)
+    dlg.setText(text)
+    dlg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+    dlg.setDefaultButton(QMessageBox.No)
+    dlg.setIcon(QMessageBox.Question)
+    result = dlg.exec()
+
+    if result == QMessageBox.Yes:
+        return True
+    else:
+        return False
 
 def apply_global_styles(app):
     app.setStyleSheet("""
