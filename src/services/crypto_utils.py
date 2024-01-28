@@ -177,17 +177,24 @@ def decompress_public_key(compressed_public_key):
 
 def get_hash(data):
     """
-    Calculates the SHA-256 hash of the given data and encodes it in Base58.
+    Calculates the double SHA-256 hash of the given data and encodes it in Base58.
+    Double hashing is used to increase the resistance against attacks on the hash function
+    and to mitigate potential vulnerabilities.
 
-    :param data: The data to be hashed. This should be in bytes.
-    :return: A Base58 encoded string representing the hash of the data.
+    Args:
+        data (bytes): The data to be hashed. This should be in bytes.
+
+    Returns:
+        str: A Base58 encoded string representing the double hash of the data.
     """
-    # Berechnen des SHA-256 Hashes
-    hash_obj = hashlib.sha256(data)
-    hash_digest = hash_obj.digest()
+    # Calculate the first SHA-256 hash
+    first_hash = hashlib.sha256(data).digest()
 
-    # Kodierung des Hashes in Base58
-    hash_base58 = base58.b58encode(hash_digest)
+    # Calculate the second SHA-256 hash on the result of the first hash
+    double_hash = hashlib.sha256(first_hash).digest()
+
+    # Encode the double hash in Base58
+    hash_base58 = base58.b58encode(double_hash)
     return hash_base58.decode()
 
 
