@@ -43,6 +43,11 @@ class MinutoVoucher(Serializable):
         self.footnote = ""
         self.is_test_voucher = False  # Indicates if the voucher is a test voucher
 
+        # local management values (not stored in voucher files)
+        self._file_path = None # to store the local file locattion
+        self._local_voucher_id = None # determined from the voucher
+
+
     @classmethod
     def create(cls, creator_id: str, creator_first_name: str, creator_last_name: str, creator_organization: str, creator_address, creator_gender: int, email: str, phone: str, service_offer: str, coordinates: str,
                amount: float, region: str, validity: int, is_test_voucher: bool = False, description='', footnote=''):
@@ -82,7 +87,9 @@ class MinutoVoucher(Serializable):
         excluded_keys = ['guarantor_signatures', 'voucher_id', 'creator_signature',
                          'transactions']
         # By doing this, unknown keys are also dynamically included in the hash, enabling older versions to correctly verify hashes of newer versions with additional parameters.
-        data = {key: value for key, value in self.__dict__.items() if key not in excluded_keys}
+        # removed keys which  start with _ are only locally needed. Not for hash or signatures.
+        data = {key: value for key, value in self.__dict__.items()
+                if key not in excluded_keys and not key.startswith('_')}
 
         # voucher id is hash from all key without the excluded
         if type in ["voucher_id_hashing"]:
@@ -524,23 +531,44 @@ class MinutoVoucher(Serializable):
         else:
             return VoucherStatus.CORRUPT
 
-    def get_voucher_name(self, voucher=None):
+    def get_local_voucher_id(self, user_id, voucher=None):
         """
-        Generates a unique name for the voucher. Needed when vouchers saved to disk.
+        Generates a current local identifier and a list of old local identifiers for a voucher.
+        The first element of the returned list is the current local ID (current_local_id), and the following IDs are the old IDs of the voucher.
+        Each identifier is constructed from parts of the voucher's global ID and the transaction IDs in which the user was involved as sender or recipient.
+
+        This approach provides a list of all (including previous) local IDs, making it possible to detect and replace older versions
+        of the voucher if they exist. This further reduces the likelihood of unintended double spendings due to possible
+        program errors or outdated backups being restored.
+        If a string of 16 zeros is returned, the voucher was not intended for the local user and is therefore irrelevant. The calling function can use this information to completely delete such vouchers,
+        maintaining the integrity of the local voucher data.
 
         Args:
-            voucher: The voucher instance to generate a name for.
+            user_id: The user ID to check the voucher transactions against.
+            voucher (optional): The voucher instance from which to generate the local IDs. If not provided, 'self' is used.
 
         Returns:
-            str: A unique name for the voucher.
+            tuple: A tuple containing the current local ID and a list of old local IDs.
         """
+        old_local_ids = []
         if voucher is None:
             voucher = self
-        if not voucher.transactions:
-            return voucher.voucher_id[:16]
-        else:
-            last_transaction_id = voucher.transactions[-1]['t_id']
-            return voucher.voucher_id[:8] + last_transaction_id[:8]
+        if voucher.transactions:
+            # Iterate through transactions from the last to the first and add a local ID for each transaction involving the user
+            for transaction in reversed(voucher.transactions):
+                if user_id == transaction['recipient_id'] or user_id == transaction['sender_id']:
+                    last_transaction_id = transaction['t_id']
+                    old_local_ids.append(voucher.voucher_id[:8] + '-' + last_transaction_id[:8])
+
+            # Add a default identifier based on the voucher_id if there are no transactions involving the user
+            # and if the voucher's creator is not the user, then the voucher was not intended for the local user and is therefore irrelevant.
+            if not old_local_ids and voucher.creator_id != user_id:
+                old_local_ids.append('0' * 16)
+
+        # always append this to have always a local_id
+        old_local_ids.append(voucher.voucher_id[:16])
+        current_local_id = old_local_ids.pop(0) # removes first element of the list and set current_local_id to first element
+        return current_local_id, old_local_ids
 
     def __str__(self):
         # Dynamische Erstellung des String-Formats für alle Attribute

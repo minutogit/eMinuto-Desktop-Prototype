@@ -150,4 +150,26 @@ class SecureFileHandler:
 
         return symmetric_decrypt(encrypted_data, shared_secret, obj)
 
+    def delete_file(self, file_path, subfolder=None):
+        """
+        Deletes a file at the given file path within the data_folder.
+        If the file does not exist, no error is raised.
+
+        Args:
+            file_path: Path to the file to be deleted relative to data_folder.
+            subfolder: Optional. The subfolder under data_folder where the file is located.
+        """
+
+        # Create full file path including subfolder if provided
+        full_path = os.path.join(self.data_folder, subfolder, file_path) if subfolder else os.path.join(
+            self.data_folder, file_path)
+
+        try:
+            os.remove(full_path)
+            print(f"File {full_path} has been deleted.")
+        except FileNotFoundError:
+            print(f"File {full_path} does not exist, nothing to delete.")
+
+
+
 

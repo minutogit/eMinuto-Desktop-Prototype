@@ -155,7 +155,13 @@ class UserProfile(Serializable):
 
             # check if voucher format
             if is_voucher_dict(file_content):
+                # todo check if not the correct file name format (save new file with correct name and delete old file)
+                # todo just check and save the voucher again (an let the save function do correct the file name)
+                # todo check if voucher already loaded (add list off all loaded local_voucher_ids) or new version (use old_local_ids) loaded
                 self.person.read_voucher_from_dict(file_content)
+                self.person.current_voucher._file_path = str(file_path) # store current file location
+                local_id, old_local_ids = self.person.current_voucher.get_local_voucher_id(self.person.id)
+                self.person.current_voucher._local_voucher_id = local_id # store local_id
                 voucher_status = self.person.current_voucher.voucher_status(self.person.id)
                 self.person.voucherlist[voucher_status.value].append(self.person.current_voucher)
                 self.person.current_voucher = None
@@ -163,12 +169,30 @@ class UserProfile(Serializable):
 
     def save_file(self, voucher, encrypted=True):
         # save vouher to disk
-        name = voucher.get_voucher_name()
+        voucher_stored_on_disk = (voucher._file_path is not None)
+        #dprint("voucher_stored_on_disk", voucher_stored_on_disk)
+        local_id, old_local_ids = voucher.get_local_voucher_id(self.person.id)
         voucher_status = voucher.voucher_status(self.person.id)
         import os
+
         file_path = os.path.join(self.data_folder, voucher_status.value)
-        os.makedirs(file_path, exist_ok=True)
-        self._secure_file_handler.encrypt_and_save(voucher, f"minuto-{name}.mv", key=self.file_enc_key.encode('utf-8'), subfolder=file_path)
+        voucher_name = f"eMinuto-{local_id}.mv"
+        new_full_file_path = str(os.path.join(self.data_folder, voucher_status.value, voucher_name))
+        old_path = None
+        if voucher_stored_on_disk and voucher._file_path != new_full_file_path:
+            dprint(f"voucher hat neuen pfad/namen {voucher._file_path} -> {new_full_file_path}")
+            old_path = voucher._file_path
+
+        voucher._file_path = new_full_file_path
+        voucher._local_voucher_id = local_id
+        #os.makedirs(file_path, exist_ok=True)
+        self._secure_file_handler.encrypt_and_save(voucher, voucher_name, key=self.file_enc_key.encode('utf-8'), subfolder=file_path)
+
+        # todo improve and do chek of new file before deletion of old file
+
+        # delete old file
+        if old_path:
+            self._secure_file_handler.delete_file(old_path)
 
 
     def create_new_profile(self, profile_name, first_name, last_name, organization, seed, profile_password):
