@@ -118,7 +118,6 @@ class UserProfile(Serializable):
                     return_info = "Unfertigen Gutschein hinzugefügt."
 
                 self.save_file(self.person.current_voucher)
-                self.person.current_voucher = None
 
             # check if guarantor signature
             elif isinstance(file_content, list) and isinstance(file_content[0], dict) and "signature_time" in \
@@ -158,7 +157,6 @@ class UserProfile(Serializable):
             if is_voucher_dict(file_content):
                 self.person.read_voucher_from_dict(file_content)
                 voucher_status = self.person.current_voucher.voucher_status(self.person.id)
-                dprint(voucher_status)
                 self.person.voucherlist[voucher_status.value].append(self.person.current_voucher)
                 self.person.current_voucher = None
 

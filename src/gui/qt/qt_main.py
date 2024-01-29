@@ -93,8 +93,9 @@ class FormSignAsGuarantor(QMainWindow, Ui_FormSignVoucherAsGuarantor):
         """
 
         creator_id = self.voucher.creator_id
+        creator_name = self.voucher.creator_first_name
 
-        suggested_filename = f"Gutschein-Unterschrift_{user_profile.person.id[:4]}-{creator_id[:4]}.ms"
+        suggested_filename = f"eMinuto-{creator_name}_Unterschrift-{user_profile.person.first_name}.ms"
         file_filter = "Minuto Unterschrift (*.ms)"
 
         # Open file save dialog
@@ -105,7 +106,7 @@ class FormSignAsGuarantor(QMainWindow, Ui_FormSignVoucherAsGuarantor):
             file_filter
         )
 
-         # Check if the user has entered a file name
+        # Check if the user has entered a file name
         if filename_with_path:
             user_profile._secure_file_handler.encrypt_with_shared_secret_and_save(
                 self.guarantor_signature, filename_with_path, creator_id, user_profile.person.id)
@@ -119,6 +120,7 @@ class FormSignAsGuarantor(QMainWindow, Ui_FormSignVoucherAsGuarantor):
         self.pushButton_save_as_file.setEnabled(False)
         self.pushButton_send_as_email.setEnabled(False)
         self.checkBox_liability_acceptance.setChecked(False)
+        self.setWindowTitle(f"eMinuto als Bürge unterschreiben - Profil: {user_profile.profile_name}")
         self.show()
 
 
@@ -171,7 +173,7 @@ class FormSendToGuarantor(QMainWindow, Ui_FormSendToGuarantor):
             show_message_box("Fehler!", "Gültige ID des Bürgen wird für Verschlüsselung benötigt!")
             return
 
-        suggested_filename = f"Gutschein-unfertig_{user_profile.person.id[:8]}.mv"
+        suggested_filename = f"eMinuto-{user_profile.person.first_name}.mv"
         file_filter = "Minuto Voucher (*.mv)"
 
         # Open file save dialog
@@ -196,6 +198,7 @@ class FormSendToGuarantor(QMainWindow, Ui_FormSendToGuarantor):
     def show_form(self, voucher):
         self.voucher = voucher
         self.lineEdit_user_ID.setText(user_profile.person.id)
+        self.setWindowTitle(f"eMinuto an Bürge senden - Profil: {user_profile.profile_name}")
         self.show()
 
 
@@ -214,6 +217,7 @@ class FormShowRawData(QMainWindow, Ui_FormShowRawData):
         # Convert the object's dictionary to a JSON-formatted string
         json_representation = json.dumps(object.__dict__, sort_keys=False, indent=4, ensure_ascii=False)
         self.textEdit_text_data.setText(json_representation)
+        self.setWindowTitle(f"eMinuto Rohdaten - Profil: {user_profile.profile_name}")
         self.show()
 
 
@@ -257,8 +261,9 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
             if signed:
                 user_profile.save_file(self.voucher)
                 user_profile.person.current_voucher = None
+                self.show_voucher(self.voucher) # to update all values
                 show_message_box("Unterschrift erfolgreich", "Unterschrift war erfolgreich. Der Gutschein ist nun fertig und kann verwendet werden.")
-                self.update_status(self.voucher)
+
             else:
                 show_message_box("Fehler", f"Unterschrift fehlgeschlagen. {message}")
 
@@ -304,7 +309,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
                 voucher_status += " (männlicher Bürge fehlt)"
             elif not '2' in guarantor_genders:
                 voucher_status += " (weiblicher Bürge fehlt)"
-            elif no_creator_signature is None:
+            elif no_creator_signature:
                 voucher_status += " (Eigene Unterschrift fehlt)"
             elif voucher.verify_complete_voucher():
                 voucher_status += " (Gültig)"
@@ -315,7 +320,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
             voucher_status += "<b>Erhaltener Gutschein"
             if not enough_guarantors:
                 voucher_status += " (Nicht genug Bürgen)"
-            elif no_creator_signature is None:
+            elif no_creator_signature:
                 voucher_status += " (Ersteller Unterschrift fehlt)"
             elif voucher.verify_complete_voucher():
                 voucher_status += " (Gültig)"
@@ -332,12 +337,10 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         """ Display raw data of the voucher. """
         form_show_raw_data.show_data(self.voucher)
 
-    def show_voucher(self, voucher: MinutoVoucher):
-        """
-        Display voucher details in a table view.
-        Translates attribute names and formats values for presentation.
-        """
-        self.voucher = voucher
+    def init_table(self, voucher: MinutoVoucher = None):
+        if voucher is None:
+            voucher = self.voucher
+
         model = QStandardItemModel(self)
         model.setColumnCount(2)
         model.setHorizontalHeaderLabels(["Inhalt", "Wert"])
@@ -394,7 +397,16 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         self.tableView_voucher.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.tableView_voucher.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
 
+    def show_voucher(self, voucher: MinutoVoucher):
+        """
+        Display voucher details in a table view.
+        Translates attribute names and formats values for presentation.
+        """
+        self.voucher = voucher
+        self.init_table(voucher)
+
         self.update_status(voucher)
+        self.setWindowTitle(f"eMinuto Details - Profil: {user_profile.profile_name}")
         self.show()
 
     def create_non_editable_item(self, text):
@@ -463,6 +475,8 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
         self.lineEdit_phone.setText(user_profile.person_data['phone'])
         self.textEdit_service_offer.setText(user_profile.person_data['service_offer'])
         self.label_footnote.setText("Gutschein-Nutzung nur für Mitspieler/innen.")
+        self.setWindowTitle(f"eMinuto erstellen - Profil: {user_profile.profile_name}")
+
 
     def update_voucher_description(self, amount):
         """Update the voucher description based on the amount."""
@@ -496,6 +510,8 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         self.show()
 
     def init_values(self):
+        self.setWindowTitle(f"eMinuto-Liste - Profil: {user_profile.profile_name}")
+
         # Accumulate all vouchers from all categories
         self.all_vouchers = []
         for status in VoucherStatus:
