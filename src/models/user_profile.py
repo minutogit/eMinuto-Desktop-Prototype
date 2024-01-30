@@ -1,6 +1,6 @@
 # user_profile.py
 from src.services.utils import convert_json_string_to_dict, file_exists, join_path, Serializable, read_file_content, \
-    is_valid_object, dprint
+    is_valid_object, dprint, display_balance
 from src.services.crypto_utils import generate_symmetric_key, symmetric_encrypt, symmetric_decrypt, b64d, is_encrypted_string, hash_bytes
 from src.models.secure_file_handler import SecureFileHandler
 from src.models.person import Person
@@ -267,17 +267,22 @@ class UserProfile(Serializable):
         return {key: value for key, value in self.__dict__.items()
                 if not key.startswith('_') and key not in exclude}
 
-    def get_own_minuto_balance(self):
+    def get_minuto_balance(self,type):
+        # calculate total balances for gui
         if not self._profile_initialized:
             return "0,00"
+        if type == "own":
+            value = 0
+            for v in self.person.voucherlist[VoucherStatus.OWN.value]:
+                value += v.get_voucher_amount(self.person.id)
+            return display_balance(value)
 
-        return "123,00" # todo
+        if type == "other":
+            value = 0
+            for v in self.person.voucherlist[VoucherStatus.OTHER.value]:
+                value += v.get_voucher_amount(self.person.id)
+            return display_balance(value)
 
-    def get_other_minuto_balance(self):
-        if not self._profile_initialized:
-            return "0,00"
-
-        return "123,00" # todo
 
 
     def profile_exists(self):

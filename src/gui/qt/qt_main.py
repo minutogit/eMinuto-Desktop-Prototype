@@ -750,10 +750,10 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
 
     def update_values(self):
         self.setWindowTitle(f"eMinuto - Profil: {user_profile.profile_name}")
+        self.set_vouchers_balances()
         self.label_user_id.setText(f"{user_profile.person.id[:16]}...")
         self.label_username.setText(f"{user_profile.person_data['first_name']} {user_profile.person_data['last_name']}")
-        self.lineEdit_own_balance.setText(user_profile.get_own_minuto_balance())
-        self.lineEdit_other_balance.setText(user_profile.get_other_minuto_balance())
+
 
     def profile_login(self):
         self.update_values()
@@ -769,8 +769,8 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
     def on_enter(self):
         """Update the screen when entering."""
         self.title = self.get_title()
-        self.balance_other_vouchers = str(self.get_balance_other_vouchers())
-        self.balance_own_vouchers = str(self.get_balance_own_vouchers())
+        self.set_vouchers_balances()
+
 
     def get_title(self):
         """Get the user's full name for the title."""
@@ -778,13 +778,11 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         surname = user_profile.person_data['last_name']
         return f"{name} {surname}"
 
-    def get_balance_other_vouchers(self):
-        """Demo function to get balance of other vouchers."""
-        return "123.45"
+    def set_vouchers_balances(self):
+        """Demo function set balance of vouchers."""
+        self.lineEdit_own_balance.setText(user_profile.get_minuto_balance("own"))
+        self.lineEdit_other_balance.setText(user_profile.get_minuto_balance("other"))
 
-    def get_balance_own_vouchers(self):
-        """Demo function to get balance of own vouchers."""
-        return "500.00"
 
     def set_gui_depending_profile_status(self):
         """changes the gui depending on whether the profile exists and is active or inactive."""

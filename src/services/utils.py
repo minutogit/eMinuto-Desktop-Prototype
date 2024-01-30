@@ -164,6 +164,43 @@ def amount_precision(amount, precision=2):
     else:
         return f"{rounded_amount:.{precision}f}"
 
+
+def display_balance(number):
+    """
+    Formats a float or integer number to a string with 2 decimal places, a comma as the decimal separator,
+    and a space every three digits for better readability.
+
+    Args:
+        number (float or int): The number to be formatted.
+
+    Returns:
+        str: The formatted string.
+
+    Raises:
+        ValueError: If the input is not a float or integer.
+    """
+    if isinstance(number, (float, int)):
+        # Round the number to 2 decimal places
+        rounded_number = round(number, 2)
+
+        # Convert the number to a string, replacing '.' with ','
+        formatted_string = f"{rounded_number:.2f}".replace(".", ",")
+
+        # Split the string into the integer and decimal parts
+        integer_part, decimal_part = formatted_string.split(",")
+
+        # Reverse the integer part to insert space every three digits
+        reversed_integer = integer_part[::-1]
+        spaced_integer = ' '.join(reversed_integer[i:i + 3] for i in range(0, len(reversed_integer), 3))
+
+        # Reverse back and combine with the decimal part
+        formatted_string = spaced_integer[::-1] + "," + decimal_part
+
+        return formatted_string
+    else:
+        raise ValueError("The function accepts only float or int as input.")
+
+
 def get_double_spending_vtransaction_ids(all_vouchers):
     """
     Extracts transaction IDs (t_id) from voucher transactions that have the same previous_hash and same sender_id
