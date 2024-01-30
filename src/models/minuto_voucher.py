@@ -509,7 +509,7 @@ class MinutoVoucher(Serializable):
         Returns:
             VoucherStatus: The status of the vouchers.
         """
-        own_voucher = (self.voucher_id == user_id)
+        own_voucher = (self.creator_id == user_id)
         if not self.transactions:
             return VoucherStatus.UNFINISHED
 
