@@ -128,7 +128,10 @@ class MinutoVoucher(Serializable):
         :param simulation: If True, operates in simulation mode and returns the serialized data; otherwise, saves to the specified file path.
         :return: The serialized data if simulation mode is activated.
         """
-        data_to_save = json.dumps(self.__dict__.copy(), sort_keys=False, indent=4, ensure_ascii=False)
+        # Filter the __dict__ to remove keys starting with '_'
+        filtered_data = {k: v for k, v in self.__dict__.items() if not k.startswith('_')}
+        data_to_save = json.dumps(filtered_data, sort_keys=False, indent=4, ensure_ascii=False)
+
         if simulation:
             return data_to_save  # Return the serialized data in simulation mode
         else:
@@ -476,6 +479,11 @@ class MinutoVoucher(Serializable):
 
         :return: True if the entire voucher is valid, False otherwise.
         """
+        if not self.calculate_voucher_id() == self.voucher_id:
+            if verbose:
+                print("Incorrect voucher ID.")
+            #return False
+
         # Verify guarantor signatures
         if not self.verify_all_guarantor_signatures(self):
             if verbose:

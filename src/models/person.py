@@ -161,8 +161,15 @@ class Person:
                 print("Vouchers cannot be signed by the same guarantor more than once.")
                 return False
 
-        # Prepare guarantor information for signature
-        # important is the voucher_id, because this is the link between voucher and this signature
+        # Important! Verify that the voucher_id is indeed the hash of the voucher.
+        # This check prevents a situation where a creator could send a voucher with a small amount,
+        # but use the voucher_id from a voucher with a high amount, thereby misusing the signature.
+        if not voucher.calculate_voucher_id() == voucher.voucher_id:
+            print("Incorrect voucher ID.")
+            return False
+
+        # Prepare guarantor information for the signature.
+        # The voucher_id is crucial because it links the voucher to this particular signature.
         guarantor_info = {
             "voucher_id": voucher.voucher_id, # voucher_id is the hash of the voucher
             "id": self.id,
