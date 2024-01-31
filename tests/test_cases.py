@@ -2,7 +2,7 @@
 import unittest
 import os
 from tests.models.simulationhelper import SimulationHelper
-from tests.services.utils import modify_voucher
+from tests.services.utils import modify_voucher, compare_and_highlight_differences
 
 
 class TestPerson(unittest.TestCase):
@@ -100,6 +100,9 @@ class TestPerson(unittest.TestCase):
             modified_voucher_dict = modify_voucher(original_voucher_dict, "all")
             corrupt_voucher = MinutoVoucher()
             corrupt_voucher = corrupt_voucher.read_from_file(modified_voucher_dict, simulation=True)
+            if corrupt_voucher.verify_complete_voucher() == True:
+                compare_and_highlight_differences(original_voucher_dict,modified_voucher_dict)
+
             assert corrupt_voucher.verify_complete_voucher() == False
 
         # random modification only voucher part (one single char)

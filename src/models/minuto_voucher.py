@@ -140,7 +140,7 @@ class MinutoVoucher(Serializable):
                 full_path = os.path.join(base_dir, subfolder, file_path)
                 os.makedirs(os.path.dirname(full_path), exist_ok=True)
             else:
-                full_path = file_path # if no subfolder, file_path contains the full path and name of file
+                full_path = file_path  # if no subfolder, file_path contains the full path and name of file
 
             with open(full_path, 'w', encoding='utf-8') as file:
                 file.write(data_to_save)
@@ -265,7 +265,7 @@ class MinutoVoucher(Serializable):
 
         for guarantor_info, signature in voucher.guarantor_signatures:
             # check if the signature belongs to this voucher
-            if voucher.voucher_id != guarantor_info["voucher_id"]:
+            if voucher.voucher_id != guarantor_info.get("voucher_id", None):
                 return False
 
             try:
@@ -475,14 +475,10 @@ class MinutoVoucher(Serializable):
 
     def verify_complete_voucher(self, verbose=False):
         """
-        Verifies the entire voucher including guarantor signatures, creator's signature, and all transactions.
+        Verifies the entire voucher including voucher_id, guarantor signatures, creator's signature, and all transactions.
 
         :return: True if the entire voucher is valid, False otherwise.
         """
-        if not self.calculate_voucher_id() == self.voucher_id:
-            if verbose:
-                print("Incorrect voucher ID.")
-            #return False
 
         # Verify guarantor signatures
         if not self.verify_all_guarantor_signatures(self):
