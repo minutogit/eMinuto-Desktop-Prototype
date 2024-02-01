@@ -278,7 +278,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
     def delete_voucher(self):
         status = self.voucher.voucher_status(user_profile.person.id)
         amount = self.voucher.get_voucher_amount(user_profile.person.id)
-        if self.voucher._trashed:
+        if user_profile.vouchers[id(self.voucher)]['trashed']:
             if not show_yes_no_box("Gutschein entgültig löschen?",
                             f"Gutschein tatsächlich entgülitig löschen? \n(Guthaben: {amount} Minuto)"):
                 return
@@ -349,7 +349,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         own_voucher = (voucher.creator_id == user_profile.person.id)
         number_of_guarantors = len(voucher.guarantor_signatures)
         enough_guarantors = (number_of_guarantors >= 2)
-        trashed_voucher = self.voucher._trashed
+        trashed_voucher = user_profile.vouchers[id(self.voucher)]['trashed']
 
         no_creator_signature = (voucher.creator_signature is None)
 
@@ -371,7 +371,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         if not own_voucher and not enough_guarantors and not trashed_voucher:
             self.pushButtonSignAsGuarantor.show()
 
-        if self.voucher._trashed == True:
+        if user_profile.vouchers[id(self.voucher)]['trashed'] == True:
             self.pushButtonRecover.show()
             self.pushButtonTrash.setText("Entgültig löschen")
             self.pushButtonRecover.setText("Wiederherstellen")
@@ -381,7 +381,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         voucher_stat_text = ""
         if own_voucher:
             voucher_stat_text += "<b>Eigener Gutschein"
-            if self.voucher._trashed == True:
+            if trashed_voucher == True:
                 voucher_stat_text += " (gelöscht)"
             elif number_of_guarantors == 0:
                 voucher_stat_text += " (Bürgen fehlen)"
@@ -492,7 +492,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         # if ready to sign as creator show message
         if not self.pushButtonSignAsCreator.isHidden():
             show_message_box("Gutschein mit Unterschrift vervollständigen",
-                             "Unterschreibe diesen fast fertigen Gutschein damit dieser genutzt werden kann.")
+                             "Unterschreibe diesen Gutschein damit dieser genutzt werden kann.")
 
     def create_non_editable_item(self, text):
         """ Create a non-editable table item with the provided text. """

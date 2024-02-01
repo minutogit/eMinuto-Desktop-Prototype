@@ -44,10 +44,7 @@ class MinutoVoucher(Serializable):
         self.is_test_voucher = False  # Indicates if the voucher is a test voucher
         self.voucher_version = 1  # Voucher version to handle format changes. Enables backward compatibility with older vouchers.
 
-        # local management values (not stored in voucher files)
-        self._file_path = None # to store the local file locattion
-        self._local_voucher_id = None # determined from the voucher
-        self._trashed = None # local marker when voucher is moved to trash
+
 
 
     @classmethod
@@ -79,8 +76,6 @@ class MinutoVoucher(Serializable):
         voucher.phone = phone
         voucher.is_test_voucher = is_test_voucher
         voucher.voucher_id = voucher.calculate_voucher_id()  # set voucher_id
-
-        voucher._trashed = False
 
         return voucher
 
