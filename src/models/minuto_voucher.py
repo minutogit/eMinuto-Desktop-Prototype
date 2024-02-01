@@ -42,6 +42,7 @@ class MinutoVoucher(Serializable):
         self.voucher_id = ''
         self.footnote = ""
         self.is_test_voucher = False  # Indicates if the voucher is a test voucher
+        self.voucher_version = 1  # Voucher version to handle format changes. Enables backward compatibility with older vouchers.
 
         # local management values (not stored in voucher files)
         self._file_path = None # to store the local file locattion
