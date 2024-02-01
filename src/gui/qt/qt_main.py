@@ -243,12 +243,14 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         """ Initialize the FormShowVoucher window. """
         super().__init__()
         self.setupUi(self)
-        self.voucher = None
+        self.voucher:MinutoVoucher() = None
         self.pushButtonClose.clicked.connect(self.close)
         self.pushButtonRawData.clicked.connect(self.show_raw_data)
         self.pushButtonSignAsGuarantor.clicked.connect(self.sing_as_guarantor)
         self.pushButtonSendToGuarantor.clicked.connect(self.send_to_guarantor)
         self.pushButtonSignAsCreator.clicked.connect(self.sign_as_creator)
+        self.pushButtonTrash.clicked.connect(self.delete_voucher)
+        self.pushButtonRecover.clicked.connect(self.recover_trashed_voucher)
 
         self.apply_stylesheet_to_buttons()
 
@@ -266,6 +268,49 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         for button in self.findChildren(QPushButton):
             button.setStyleSheet(button_stylesheet)
 
+    def recover_trashed_voucher(self):
+        # recover back a trashed voucher
+        user_profile.save_file(self.voucher) # save without trash flag will restore voucher
+        self.show_voucher(self.voucher) # to reload gui
+        frm_main_window.update_values()  # update values in main win (calculate new amount etc)
+
+
+    def delete_voucher(self):
+        status = self.voucher.voucher_status(user_profile.person.id)
+        amount = self.voucher.get_voucher_amount(user_profile.person.id)
+        if self.voucher._trashed:
+            if not show_yes_no_box("Gutschein entgültig löschen?",
+                            f"Gutschein tatsächlich entgülitig löschen? \n(Guthaben: {amount} Minuto)"):
+                return
+
+        # if own voucher with amount
+        elif status == VoucherStatus.OWN:
+            if not show_yes_no_box("Eigenen Gutschein entfernen?",
+                            f"Eigener Gutschein mit {amount} Minuto Guthaben. Soll er wirklich in den Papierkorb verschoben werden?"):
+                return
+        # if voucher from others with amount
+        elif status == VoucherStatus.OTHER:
+            if not show_yes_no_box("Gutschein mit Guthaben entfernen?",
+                            f"Dies Gutschein hat noch {amount} Minuto Guthaben. Soll er wirklich in den Papierkorb verschoben werden?"):
+                return
+        # if voucher from others with amount
+        elif status == VoucherStatus.UNFINISHED:
+            if not show_yes_no_box("Unfertigen Gutschein entfernen?",
+                            "Soll er wirklich in den Papierkorb verschoben werden?"):
+                return
+        # if voucher from others with amount
+        elif status == VoucherStatus.USED:
+            if not show_yes_no_box("Benutzten Gutschein entfernen?",
+                            "Benutzte Gutscheine Werden zu Erkennung von Betrug benötigt. Diese sollten nicht gelöscht werden."):
+                return
+
+        user_profile.save_file(self.voucher, trash=True)
+        self.close()
+        # reload voucher list if open
+        if not win['dialog_voucher_list'].isHidden():
+            win['dialog_voucher_list'].init_show()
+        frm_main_window.update_values() # update values in main win (calculate new amount etc)
+
     def sign_as_creator(self):
         sign = show_yes_no_box("Gutschein selbst unterschreiben",
                                "Soll der Gutschein unterschrieben werden? Damit ist er gültig und kann für Transaktionen verwenden werden.")
@@ -276,6 +321,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
                 user_profile.save_file(self.voucher)
                 user_profile.person.current_voucher = None
                 self.show_voucher(self.voucher)  # to update all values
+                frm_main_window.update_values()
                 show_message_box("Unterschrift erfolgreich",
                                  "Unterschrift war erfolgreich. Der Gutschein ist nun fertig und kann verwendet werden.")
 
@@ -303,6 +349,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         own_voucher = (voucher.creator_id == user_profile.person.id)
         number_of_guarantors = len(voucher.guarantor_signatures)
         enough_guarantors = (number_of_guarantors >= 2)
+        trashed_voucher = self.voucher._trashed
 
         no_creator_signature = (voucher.creator_signature is None)
 
@@ -311,40 +358,57 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         both_genders_present = '1' in guarantor_genders and '2' in guarantor_genders
 
         # Enable or disable buttons based on voucher status
-        self.pushButtonSendToGuarantor.setEnabled(own_voucher and not enough_guarantors)
-        self.pushButtonSignAsCreator.setEnabled(
-            own_voucher and enough_guarantors and both_genders_present and no_creator_signature)
-        self.pushButtonSignAsGuarantor.setEnabled(not own_voucher and not enough_guarantors)
+        self.pushButtonSignAsGuarantor.hide()
+        self.pushButtonSignAsCreator.hide()
+        self.pushButtonSendToGuarantor.hide()
+        self.pushButtonRecover.hide()
+        if own_voucher and not enough_guarantors and not trashed_voucher:
+            self.pushButtonSendToGuarantor.show()
 
-        voucher_status = ""
+        if own_voucher and enough_guarantors and both_genders_present and no_creator_signature and not trashed_voucher:
+            self.pushButtonSignAsCreator.show()
+
+        if not own_voucher and not enough_guarantors and not trashed_voucher:
+            self.pushButtonSignAsGuarantor.show()
+
+        if self.voucher._trashed == True:
+            self.pushButtonRecover.show()
+            self.pushButtonTrash.setText("Entgültig löschen")
+            self.pushButtonRecover.setText("Wiederherstellen")
+        else:
+            self.pushButtonTrash.setText("In Papierkorb verschieben")
+
+        voucher_stat_text = ""
         if own_voucher:
-            voucher_status += "<b>Eigener Gutschein"
-            if number_of_guarantors == 0:
-                voucher_status += " (Bürgen fehlen)"
+            voucher_stat_text += "<b>Eigener Gutschein"
+            if self.voucher._trashed == True:
+                voucher_stat_text += " (gelöscht)"
+            elif number_of_guarantors == 0:
+                voucher_stat_text += " (Bürgen fehlen)"
             elif not '1' in guarantor_genders:
-                voucher_status += " (männlicher Bürge fehlt)"
+                voucher_stat_text += " (männlicher Bürge fehlt)"
             elif not '2' in guarantor_genders:
-                voucher_status += " (weiblicher Bürge fehlt)"
+                voucher_stat_text += " (weiblicher Bürge fehlt)"
             elif no_creator_signature:
-                voucher_status += " (Eigene Unterschrift fehlt)"
+                voucher_stat_text += " (Eigene Unterschrift fehlt)"
             elif voucher.verify_complete_voucher():
-                voucher_status += " (Gültig)"
+                voucher_stat_text += " (Gültig)"
             else:
-                voucher_status += " (Ungültig!)"
+                voucher_stat_text += " (Ungültig!)"
 
         else:
-            voucher_status += "<b>Erhaltener Gutschein"
+            voucher_stat_text += "<b>Erhaltener Gutschein"
             if not enough_guarantors:
-                voucher_status += " (Nicht genug Bürgen)"
+                voucher_stat_text += " (Nicht genug Bürgen)"
             elif no_creator_signature:
-                voucher_status += " (Ersteller Unterschrift fehlt)"
+                voucher_stat_text += " (Ersteller Unterschrift fehlt)"
             elif voucher.verify_complete_voucher():
-                voucher_status += " (Gültig)"
+                voucher_stat_text += " (Gültig)"
             else:
-                voucher_status += " (Ungültig!)"
-        voucher_status += "</b>"
+                voucher_stat_text += " (Ungültig!)"
+        voucher_stat_text += "</b>"
 
-        self.labelInfoTextLeft.setText(voucher_status)
+        self.labelInfoTextLeft.setText(voucher_stat_text)
 
         available_amount = voucher.get_voucher_amount(user_profile.person.id)
         self.labelInfoTextRight.setText(f"<b>Verfügbarer Betrag:  {available_amount} Minuto</b>")
@@ -426,7 +490,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         self.raise_()
 
         # if ready to sign as creator show message
-        if self.pushButtonSignAsCreator.isEnabled():
+        if not self.pushButtonSignAsCreator.isHidden():
             show_message_box("Gutschein mit Unterschrift vervollständigen",
                              "Unterschreibe diesen fast fertigen Gutschein damit dieser genutzt werden kann.")
 
@@ -477,9 +541,13 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
         description = self.label_voucher_description.text()
         voucher = user_profile.create_voucher(first_name, last_name, organization, address, gender, email, phone, service_offer,
                                     coordinates, amount, region, years_valid, is_test_vocher, description, footnote)
+        # reload voucher list if open
+        if not win['dialog_voucher_list'].isHidden():
+            win['dialog_voucher_list'].init_show()
         win['form_show_voucher'].show_voucher(voucher)
         self.initialized = False # to load values from profile on next show
         self.close()
+
 
     def init_values(self):
         address = (f"{user_profile.person_data['street']} {user_profile.person_data['zip_code']} "

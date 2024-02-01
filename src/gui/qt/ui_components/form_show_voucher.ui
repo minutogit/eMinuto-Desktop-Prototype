@@ -98,6 +98,20 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QPushButton" name="pushButtonRecover">
+        <property name="text">
+         <string>PushButton</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButtonTrash">
+        <property name="text">
+         <string>Löschen</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
    </layout>

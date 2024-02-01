@@ -84,6 +84,16 @@ class Ui_FormShowVoucher(object):
 
         self.horizontalLayout_2.addWidget(self.pushButtonClose)
 
+        self.pushButtonRecover = QPushButton(self.layoutWidget)
+        self.pushButtonRecover.setObjectName(u"pushButtonRecover")
+
+        self.horizontalLayout_2.addWidget(self.pushButtonRecover)
+
+        self.pushButtonTrash = QPushButton(self.layoutWidget)
+        self.pushButtonTrash.setObjectName(u"pushButtonTrash")
+
+        self.horizontalLayout_2.addWidget(self.pushButtonTrash)
+
 
         self.verticalLayout.addLayout(self.horizontalLayout_2)
 
@@ -102,5 +112,7 @@ class Ui_FormShowVoucher(object):
         self.pushButtonSendToGuarantor.setText(QCoreApplication.translate("FormShowVoucher", u"An B\u00fcrge senden", None))
         self.pushButtonRawData.setText(QCoreApplication.translate("FormShowVoucher", u"Rohdaten", None))
         self.pushButtonClose.setText(QCoreApplication.translate("FormShowVoucher", u"Schlie\u00dfen", None))
+        self.pushButtonRecover.setText(QCoreApplication.translate("FormShowVoucher", u"PushButton", None))
+        self.pushButtonTrash.setText(QCoreApplication.translate("FormShowVoucher", u"L\u00f6schen", None))
     # retranslateUi
 

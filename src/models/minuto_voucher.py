@@ -13,7 +13,7 @@ class VoucherStatus(Enum):
     OWN = "own"  # List of own created vouchers with amount.
     OTHER = "other"  # List of vouchers from other users with amount.
     TEMP = "temp"  # Temporary vouchers.
-    DELETED = "deleted"  # Deleted vouchers (to keep until full deletion).
+    TRASHED = "trashed"  # Trashed vouchers (to keep until full deletion).
     CORRUPT = "corrupt"  # Vouchers where the verification fails (signature etc).
 
 
@@ -46,6 +46,7 @@ class MinutoVoucher(Serializable):
         # local management values (not stored in voucher files)
         self._file_path = None # to store the local file locattion
         self._local_voucher_id = None # determined from the voucher
+        self._trashed = None # local marker when voucher is moved to trash
 
 
     @classmethod
@@ -77,6 +78,8 @@ class MinutoVoucher(Serializable):
         voucher.phone = phone
         voucher.is_test_voucher = is_test_voucher
         voucher.voucher_id = voucher.calculate_voucher_id()  # set voucher_id
+
+        voucher._trashed = False
 
         return voucher
 
@@ -531,7 +534,7 @@ class MinutoVoucher(Serializable):
             elif self.transactions[-1]['sender_id'] == user_id:
                 return VoucherStatus.USED
             else:
-                return VoucherStatus.DELETED
+                return VoucherStatus.TRASHED
         else:
             return VoucherStatus.CORRUPT
 
@@ -541,6 +544,7 @@ class MinutoVoucher(Serializable):
         The first element of the returned list is the current local ID (current_local_id), and the following IDs are the old IDs of the voucher.
         Each identifier is constructed from parts of the voucher's global ID and the transaction IDs in which the user was involved as sender or recipient.
 
+        # todo the idea needs to be verified! dont use! (this idea "to check if same voucher" is not implement yet)
         This approach provides a list of all (including previous) local IDs, making it possible to detect and replace older versions
         of the voucher if they exist. This further reduces the likelihood of unintended double spendings due to possible
         program errors or outdated backups being restored.
@@ -572,6 +576,8 @@ class MinutoVoucher(Serializable):
         # always append this to have always a local_id
         old_local_ids.append(voucher.voucher_id[:16])
         current_local_id = old_local_ids.pop(0) # removes first element of the list and set current_local_id to first element
+        # FIXME the idea (unintended double spendings) needs to be verified! dont use old_local_ids (could delete the wrong vouchers!)
+        # current_local_id can be used (uncritical)
         return current_local_id, old_local_ids
 
     def __str__(self):
