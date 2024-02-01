@@ -582,9 +582,9 @@ class MinutoVoucher(Serializable):
         return current_local_id, old_local_ids
 
     def __str__(self):
-        # Dynamische Erstellung des String-Formats für alle Attribute
+        # Dynamically create the string representation of all attributes, ignoring attributes that start with '_'
         attrs = vars(self)
-        attrs_str = ', '.join([f"{key}: {value}" for key, value in attrs.items()])
+        attrs_str = ', '.join([f"{key}: {value}" for key, value in attrs.items() if not key.startswith('_')])
 
         return f"MinutoVoucher({attrs_str})"
 
