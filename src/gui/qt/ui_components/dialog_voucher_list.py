@@ -15,15 +15,15 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QDialog, QHeaderView, QLabel,
-    QPushButton, QSizePolicy, QTableView, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QDialog, QHeaderView,
+    QLabel, QPushButton, QSizePolicy, QTableView,
+    QVBoxLayout, QWidget)
 
 class Ui_DialogVoucherList(object):
     def setupUi(self, DialogVoucherList):
         if not DialogVoucherList.objectName():
             DialogVoucherList.setObjectName(u"DialogVoucherList")
-        DialogVoucherList.resize(838, 685)
+        DialogVoucherList.resize(839, 718)
         sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -36,13 +36,18 @@ class Ui_DialogVoucherList(object):
         font = QFont()
         font.setPointSize(12)
         self.label_voucher_list.setFont(font)
-        self.widget = QWidget(DialogVoucherList)
-        self.widget.setObjectName(u"widget")
-        self.widget.setGeometry(QRect(10, 35, 802, 636))
-        self.verticalLayout = QVBoxLayout(self.widget)
+        self.layoutWidget = QWidget(DialogVoucherList)
+        self.layoutWidget.setObjectName(u"layoutWidget")
+        self.layoutWidget.setGeometry(QRect(10, 35, 802, 669))
+        self.verticalLayout = QVBoxLayout(self.layoutWidget)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.tableView_vouchers = QTableView(self.widget)
+        self.statusComboBox = QComboBox(self.layoutWidget)
+        self.statusComboBox.setObjectName(u"statusComboBox")
+
+        self.verticalLayout.addWidget(self.statusComboBox)
+
+        self.tableView_vouchers = QTableView(self.layoutWidget)
         self.tableView_vouchers.setObjectName(u"tableView_vouchers")
         sizePolicy.setHeightForWidth(self.tableView_vouchers.sizePolicy().hasHeightForWidth())
         self.tableView_vouchers.setSizePolicy(sizePolicy)
@@ -50,7 +55,7 @@ class Ui_DialogVoucherList(object):
 
         self.verticalLayout.addWidget(self.tableView_vouchers)
 
-        self.pushButton_open_voucher_or_signature = QPushButton(self.widget)
+        self.pushButton_open_voucher_or_signature = QPushButton(self.layoutWidget)
         self.pushButton_open_voucher_or_signature.setObjectName(u"pushButton_open_voucher_or_signature")
 
         self.verticalLayout.addWidget(self.pushButton_open_voucher_or_signature)

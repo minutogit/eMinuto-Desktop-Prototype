@@ -8,14 +8,17 @@ from src.models.voucher_transaction import VoucherTransaction
 from enum import Enum
 
 class VoucherStatus(Enum):
-    UNFINISHED = "unfinished"  # List of vouchers which are not ready because of missing guarantor sign etc.
-    USED = "used"  # List of used vouchers without amount
+      # List of vouchers which are not ready because of missing guarantor sign etc.
+
     OWN = "own"  # List of own created vouchers with amount.
     OTHER = "other"  # List of vouchers from other users with amount.
-    TEMP = "temp"  # Temporary vouchers.
+
+
+    UNFINISHED = "unfinished"
+    ARCHIVED = "archived"  # List of used archived vouchers without amount
     TRASHED = "trashed"  # Trashed vouchers (to keep until full deletion).
     CORRUPT = "corrupt"  # Vouchers where the verification fails (signature etc).
-
+    TEMP = "temp"  # Temporary vouchers.
 
 class MinutoVoucher(Serializable):
     def __init__(self):
@@ -522,13 +525,13 @@ class MinutoVoucher(Serializable):
                 if get_years_valid(self.valid_until) > 3 or self.get_voucher_amount(user_id) > 0:
                     return VoucherStatus.OWN
                 else:
-                    return VoucherStatus.USED
+                    return VoucherStatus.ARCHIVED
 
             # Other valid vouchers
             if self.get_voucher_amount(user_id) > 0:
                 return VoucherStatus.OTHER  # Vouchers from other users with amount
             elif self.transactions[-1]['sender_id'] == user_id:
-                return VoucherStatus.USED
+                return VoucherStatus.ARCHIVED
             else:
                 return VoucherStatus.TRASHED
         else:

@@ -112,7 +112,7 @@ class Ui_FormShowVoucher(object):
         self.pushButtonSendToGuarantor.setText(QCoreApplication.translate("FormShowVoucher", u"An B\u00fcrge senden", None))
         self.pushButtonRawData.setText(QCoreApplication.translate("FormShowVoucher", u"Rohdaten", None))
         self.pushButtonClose.setText(QCoreApplication.translate("FormShowVoucher", u"Schlie\u00dfen", None))
-        self.pushButtonRecover.setText(QCoreApplication.translate("FormShowVoucher", u"PushButton", None))
-        self.pushButtonTrash.setText(QCoreApplication.translate("FormShowVoucher", u"L\u00f6schen", None))
+        self.pushButtonRecover.setText(QCoreApplication.translate("FormShowVoucher", u"Wiederherstellen", None))
+        self.pushButtonTrash.setText(QCoreApplication.translate("FormShowVoucher", u"Zum Papierkorb", None))
     # retranslateUi
 

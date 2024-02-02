@@ -101,14 +101,14 @@
       <item>
        <widget class="QPushButton" name="pushButtonRecover">
         <property name="text">
-         <string>PushButton</string>
+         <string>Wiederherstellen</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="pushButtonTrash">
         <property name="text">
-         <string>Löschen</string>
+         <string>Zum Papierkorb</string>
         </property>
        </widget>
       </item>

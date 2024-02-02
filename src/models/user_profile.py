@@ -118,7 +118,7 @@ class UserProfile(Serializable):
 
                 if voucher_status in [VoucherStatus.OWN, VoucherStatus.OTHER]:
                     return_info = f"Gutschein mit {voucher_amount}M Guthaben hinzugefügt."
-                elif voucher_status == VoucherStatus.USED:
+                elif voucher_status == VoucherStatus.ARCHIVED:
                     return_info = "Gutschein hat kein Guthaben."
                 elif voucher_status == VoucherStatus.UNFINISHED:
                     return_info = "Unfertigen Gutschein hinzugefügt."

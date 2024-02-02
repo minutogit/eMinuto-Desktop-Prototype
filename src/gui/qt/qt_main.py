@@ -1,7 +1,8 @@
 # qt_main.py
 from PySide6.QtCore import QSortFilterProxyModel, Qt, QSize
 from PySide6.QtGui import QAction, QShowEvent, QIcon
-from PySide6.QtWidgets import QApplication, QStatusBar, QLabel, QHBoxLayout, QWidget, QPushButton, QFileDialog
+from PySide6.QtWidgets import QApplication, QStatusBar, QLabel, QHBoxLayout, QWidget, QPushButton, QFileDialog, \
+    QCheckBox, QVBoxLayout
 from PySide6.QtWidgets import QMainWindow, QMenu, QHeaderView
 
 from src.gui.qt.profile_dialogs import Dialog_Generate_Profile
@@ -299,7 +300,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
                             "Soll er wirklich in den Papierkorb verschoben werden?"):
                 return
         # if voucher from others with amount
-        elif status == VoucherStatus.USED:
+        elif status == VoucherStatus.ARCHIVED:
             if not show_yes_no_box("Benutzten Gutschein entfernen?",
                             "Benutzte Gutscheine Werden zu Erkennung von Betrug benötigt. Diese sollten nicht gelöscht werden."):
                 return
@@ -586,7 +587,7 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
             "Gutschein-ID", "Ersteller", "Organisation", "Adresse", "Geschlecht",
             "Betrag", "Beschreibung", "Fußnote", "Dienstleistungsangebot",
             "Gültigkeit bis", "Region", "Koordinaten", "E-Mail", "Telefon",
-            "Erstellungsdatum", "Testgutschein", "Garantenunterschriften",
+            "Erstellungsdatum", "Testgutschein", "Bürgen",
             "Unterschrift des Erstellers", "Transaktionen"
         ]
         self.voucher_mapping = {}
@@ -594,19 +595,68 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         self.tableView_vouchers.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableView_vouchers.horizontalHeader().customContextMenuRequested.connect(self.openContextMenu)
         self.pushButton_open_voucher_or_signature.clicked.connect(open_data_file)
+        self.add_filter()
 
-    def init_show(self):
-        self.init_values()
-        self.show()
-        self.raise_()
+    def add_filter(self):
+        """
+        Add filters to select which vouchers to display.
+        Initializes checkboxes for each voucher status, with the ability to exclude certain statuses
+        and set default checked statuses.
+        """
+        # Translation dictionary for voucher statuses
+        status_translation = {
+            "unfinished": "Nicht fertig",
+            "archived": "Archivierte",
+            "own": "Eigene",
+            "other": "Andere",
+            "trashed": "Papierkorb",
+            "corrupt": "Ungültige"
+        }
+
+        # Statuses to be excluded from display
+        exclude_status = {"temp"}
+
+        # Statuses to be checked by default
+        default_checked = {"own", "other", "unfinished"}
+
+        self.status_text_to_enum = {status.value: status for status in VoucherStatus if
+                                    status.value not in exclude_status}
+        self.translated_text_to_enum = {v: k for k, v in status_translation.items()}  # Reverse mapping
+
+        # Add CheckBox items for each VoucherStatus
+        for status in VoucherStatus:
+            if status.value in exclude_status:
+                continue  # Skip statuses that should not be displayed
+
+            translated_status = status_translation.get(status.value, status.value.replace('_', ' ').capitalize())
+            item = QStandardItem(translated_status)
+            item.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
+
+            # Set the checkbox to checked if it's in the default_checked set
+            check_state = Qt.CheckState.Checked if status.value in default_checked else Qt.CheckState.Unchecked
+            item.setData(check_state, Qt.ItemDataRole.CheckStateRole)
+
+            self.statusComboBox.model().appendRow(item)
+
+        # Connect the itemChanged signal for all items
+        self.statusComboBox.model().itemChanged.connect(self.init_values)
 
     def init_values(self):
         self.setWindowTitle(f"eMinuto-Liste - Profil: {user_profile.profile_name}")
 
-        # Accumulate all vouchers from all categories
         self.all_vouchers = []
-        for status in VoucherStatus:
-            self.all_vouchers += user_profile.person.voucherlist[status.value]
+        for index in range(self.statusComboBox.model().rowCount()):
+            item = self.statusComboBox.model().item(index)
+            translated_status_text = item.text()
+
+            # Erhalte den englischen Schlüssel aus dem Übersetzungs-Dictionary
+            english_status_key = self.translated_text_to_enum.get(translated_status_text)
+
+            # Erhalte das VoucherStatus Enum-Objekt aus dem englischen Schlüssel
+            status_enum = self.status_text_to_enum.get(english_status_key)
+
+            if status_enum and item.checkState() == Qt.CheckState.Checked:
+                self.all_vouchers += user_profile.person.voucherlist[status_enum.value]
 
         model = QStandardItemModel()
         model.setHorizontalHeaderLabels(self.headers)
@@ -683,6 +733,10 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         voucher = self.voucher_mapping[row]
         win['form_show_voucher'].show_voucher(voucher)
 
+    def init_show(self):
+            self.init_values()
+            self.show()
+            self.raise_()
 
 class Dialog_Profile_Login(QMainWindow, Ui_DialogProfileLogin):
     def __init__(self):

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>838</width>
-    <height>685</height>
+    <width>839</width>
+    <height>718</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -43,16 +43,19 @@
     <string>Gutscheinliste</string>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>10</x>
      <y>35</y>
      <width>802</width>
-     <height>636</height>
+     <height>669</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QComboBox" name="statusComboBox"/>
+    </item>
     <item>
      <widget class="QTableView" name="tableView_vouchers">
       <property name="sizePolicy">
