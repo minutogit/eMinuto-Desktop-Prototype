@@ -15,15 +15,15 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QDialog, QHeaderView,
-    QLabel, QPushButton, QSizePolicy, QTableView,
-    QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QDialog, QHBoxLayout,
+    QHeaderView, QLabel, QLineEdit, QPushButton,
+    QSizePolicy, QTableView, QVBoxLayout, QWidget)
 
 class Ui_DialogVoucherList(object):
     def setupUi(self, DialogVoucherList):
         if not DialogVoucherList.objectName():
             DialogVoucherList.setObjectName(u"DialogVoucherList")
-        DialogVoucherList.resize(839, 718)
+        DialogVoucherList.resize(839, 748)
         sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -38,14 +38,36 @@ class Ui_DialogVoucherList(object):
         self.label_voucher_list.setFont(font)
         self.layoutWidget = QWidget(DialogVoucherList)
         self.layoutWidget.setObjectName(u"layoutWidget")
-        self.layoutWidget.setGeometry(QRect(10, 35, 802, 669))
+        self.layoutWidget.setGeometry(QRect(10, 35, 802, 700))
         self.verticalLayout = QVBoxLayout(self.layoutWidget)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setSpacing(3)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.statusComboBox = QComboBox(self.layoutWidget)
         self.statusComboBox.setObjectName(u"statusComboBox")
+        self.statusComboBox.setMinimumSize(QSize(200, 0))
+        font1 = QFont()
+        font1.setPointSize(11)
+        self.statusComboBox.setFont(font1)
 
-        self.verticalLayout.addWidget(self.statusComboBox)
+        self.horizontalLayout.addWidget(self.statusComboBox)
+
+        self.labelFilter = QLabel(self.layoutWidget)
+        self.labelFilter.setObjectName(u"labelFilter")
+        self.labelFilter.setFont(font1)
+
+        self.horizontalLayout.addWidget(self.labelFilter)
+
+        self.lineEditFilter = QLineEdit(self.layoutWidget)
+        self.lineEditFilter.setObjectName(u"lineEditFilter")
+        self.lineEditFilter.setFont(font1)
+
+        self.horizontalLayout.addWidget(self.lineEditFilter)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout)
 
         self.tableView_vouchers = QTableView(self.layoutWidget)
         self.tableView_vouchers.setObjectName(u"tableView_vouchers")
@@ -69,6 +91,7 @@ class Ui_DialogVoucherList(object):
     def retranslateUi(self, DialogVoucherList):
         DialogVoucherList.setWindowTitle(QCoreApplication.translate("DialogVoucherList", u"Gutscheinliste", None))
         self.label_voucher_list.setText(QCoreApplication.translate("DialogVoucherList", u"Gutscheinliste", None))
+        self.labelFilter.setText(QCoreApplication.translate("DialogVoucherList", u"  Filter:", None))
         self.pushButton_open_voucher_or_signature.setText(QCoreApplication.translate("DialogVoucherList", u"Gutschein oder B\u00fcrgenunterschrift aus Datei \u00f6ffen", None))
     # retranslateUi
 

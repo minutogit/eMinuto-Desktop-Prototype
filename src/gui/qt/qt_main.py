@@ -1,4 +1,6 @@
 # qt_main.py
+import re
+
 from PySide6.QtCore import QSortFilterProxyModel, Qt, QSize
 from PySide6.QtGui import QAction, QShowEvent, QIcon
 from PySide6.QtWidgets import QApplication, QStatusBar, QLabel, QHBoxLayout, QWidget, QPushButton, QFileDialog, \
@@ -23,6 +25,8 @@ from src.models.user_profile import user_profile
 from src.models.minuto_voucher import MinutoVoucher, VoucherStatus
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import QAbstractItemView
+
+from src.services.utils import dprint
 
 
 def open_data_file():
@@ -578,11 +582,47 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
             self.label_voucher_description.setText("Gutschein für Waren oder Dienstleistungen")
 
 
+class CustomSortFilterProxyModel(QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.visible_columns = []
+        self.filter_words = []
+
+    def set_visible_columns(self, columns):
+        self.visible_columns = columns
+        self.invalidateFilter()  # Wichtig, um das Filter neu anzuwenden
+
+    def set_filter_text(self, text):
+        self.filter_words = [word.lower() for word in text.split() if word]
+        self.invalidateFilter()  # Wichtig, um das Filter neu anzuwenden
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        if not self.filter_words:
+            return True
+
+        # Prüfe jede Spalte für jedes Wort
+        for word in self.filter_words:
+            word_found_in_any_column = False
+            for col in self.visible_columns:
+                cell_text = str(self.sourceModel().index(source_row, col, source_parent).data()).lower()
+                if word in cell_text:
+                    word_found_in_any_column = True
+                    break  # Das Wort wurde in dieser Spalte gefunden, keine Notwendigkeit weiter zu suchen
+
+            if not word_found_in_any_column:
+                return False  # Das Wort wurde in keiner der sichtbaren Spalten gefunden
+
+        # Alle Wörter wurden in mindestens einer der sichtbaren Spalten gefunden
+        return True
+
+
 class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
         self.all_vouchers = None
+
+
         self.headers = [
             "Gutschein-ID", "Ersteller", "Organisation", "Adresse", "Geschlecht",
             "Betrag", "Beschreibung", "Fußnote", "Dienstleistungsangebot",
@@ -595,7 +635,66 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         self.tableView_vouchers.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableView_vouchers.horizontalHeader().customContextMenuRequested.connect(self.openContextMenu)
         self.pushButton_open_voucher_or_signature.clicked.connect(open_data_file)
+
+        # Initialisiere das Basis-Model
+        self.model = QStandardItemModel()
+        self.model.setHorizontalHeaderLabels(self.headers)
+
+        self.base_proxy_model = CustomSortFilterProxyModel()
+        self.base_proxy_model.setSourceModel(self.model)
+        self.base_proxy_model.setDynamicSortFilter(True)
+
+        # Setze das oberste Proxy-Model für die TableView
+        self.tableView_vouchers.setModel(self.base_proxy_model)
+        self.tableView_vouchers.setSortingEnabled(True)
+
+
         self.add_filter()
+        self.lineEditFilter.textChanged.connect(self.apply_filter)
+
+    def get_visible_columns(self):
+        visible_columns = []
+        for i in range(self.model.columnCount()):
+            if not self.tableView_vouchers.isColumnHidden(i):
+                visible_columns.append(i)
+        return visible_columns
+
+    def build_filter_models(self, filter_text, model):
+        """
+        Build multiple proxy filter models in a row to have a logical AND when multiple words are typed as filtertext.
+        :param filter_text: The text to filter by.
+        :param model: The initial model or proxy model to apply filters to.
+        :return: The top-level proxy model with all filters applied.
+        """
+        # Remove multiple whitespaces
+        filter_text = re.sub(r'\s+', ' ', filter_text).strip()
+        words = filter_text.split(" ")
+
+        proxy_model = model
+        for word in words:
+            if word:
+                new_model = QSortFilterProxyModel()
+                new_model.setSourceModel(proxy_model)
+                new_model.setFilterKeyColumn(-1)  # -1 for all columns
+                new_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
+                new_model.setFilterWildcard('*{}*'.format(word))
+                proxy_model = new_model
+
+        return proxy_model
+
+    def apply_filter(self):
+        filter_text = self.lineEditFilter.text().lower()
+        visible_columns = self.get_visible_columns()
+
+        # Setze die sichtbaren Spalten und den Filtertext im Proxy-Model
+        self.base_proxy_model.set_visible_columns(visible_columns)
+        self.base_proxy_model.set_filter_text(filter_text)
+
+        # Setze das Proxy-Model als das Model für die TableView
+        self.tableView_vouchers.setModel(self.base_proxy_model)
+
+        # Aktualisiere die Ansicht
+        self.init_values()
 
     def add_filter(self):
         """
@@ -642,7 +741,11 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         self.statusComboBox.model().itemChanged.connect(self.init_values)
 
     def init_values(self):
+        print("init_values")
         self.setWindowTitle(f"eMinuto-Liste - Profil: {user_profile.profile_name}")
+
+        self.model.removeRows(0, self.model.rowCount())
+
 
         self.all_vouchers = []
         for index in range(self.statusComboBox.model().rowCount()):
@@ -658,17 +761,10 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
             if status_enum and item.checkState() == Qt.CheckState.Checked:
                 self.all_vouchers += user_profile.person.voucherlist[status_enum.value]
 
-        model = QStandardItemModel()
-        model.setHorizontalHeaderLabels(self.headers)
 
-        self.proxyModel = QSortFilterProxyModel()
-        self.proxyModel.setSourceModel(model)
-        self.proxyModel.setDynamicSortFilter(True)
-        self.tableView_vouchers.setModel(self.proxyModel)
-        self.tableView_vouchers.setSortingEnabled(True)
 
         for i, voucher in enumerate(self.all_vouchers):
-            self.add_voucher_to_model(model, voucher)
+            self.add_voucher_to_model(self.model, voucher)
             self.voucher_mapping[i] = voucher
 
         self.tableView_vouchers.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -728,7 +824,7 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
             self.tableView_vouchers.hideColumn(column)
 
     def on_table_view_clicked(self, index):
-        mapped_index = self.proxyModel.mapToSource(index)
+        mapped_index = self.base_proxy_model.mapToSource(index)
         row = mapped_index.row()
         voucher = self.voucher_mapping[row]
         win['form_show_voucher'].show_voucher(voucher)
