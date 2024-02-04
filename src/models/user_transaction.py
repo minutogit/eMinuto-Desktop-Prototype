@@ -1,6 +1,7 @@
 # user_transaction.py
 from src.models.voucher_transaction import VoucherTransaction
 from src.services.utils import dprint, amount_precision
+from src.models.minuto_voucher import VoucherStatus
 
 class UserTransaction:
     """Manages transactions between users (persons). A user transaction can contain multiple vouchers."""
@@ -25,22 +26,23 @@ class UserTransaction:
         remaining_amount_to_send = amount
         selected_vouchers = []
 
-        for voucher in person.voucherlist["temp"]:
-            if not voucher.verify_complete_voucher(verbose):
-                continue  # Use only valid vouchers
+        for list_type in [VoucherStatus.OTHER.value, VoucherStatus.OWN.value]:
+            for voucher in person.voucherlist[list_type]:
+                if not voucher.verify_complete_voucher(verbose):
+                    continue  # Use only valid vouchers
 
-            voucher_amount = voucher.get_voucher_amount(person.id)
-            if voucher_amount == 0:  # use only vouchers with amount, ignore empty vouchers
-                continue
-            if voucher_amount >= remaining_amount_to_send:
-                # wähle diesen voucher und sende damit remaining_amount_to_send
-                selected_vouchers.append((voucher, remaining_amount_to_send))
-                remaining_amount_to_send = 0
-                break
-            else:
-                # voucher nicht genug amount, nutze diese voucher komplett und den remaining_amount_to_send mit dem nächsten
-                selected_vouchers.append((voucher, voucher_amount))
-                remaining_amount_to_send -= voucher_amount
+                voucher_amount = voucher.get_voucher_amount(person.id)
+                if voucher_amount == 0:  # use only vouchers with amount, ignore empty vouchers
+                    continue
+                if voucher_amount >= remaining_amount_to_send:
+                    # wähle diesen voucher und sende damit remaining_amount_to_send
+                    selected_vouchers.append((voucher, remaining_amount_to_send))
+                    remaining_amount_to_send = 0
+                    break
+                else:
+                    # voucher nicht genug amount, nutze diese voucher komplett und den remaining_amount_to_send mit dem nächsten
+                    selected_vouchers.append((voucher, voucher_amount))
+                    remaining_amount_to_send -= voucher_amount
 
 
         if remaining_amount_to_send > 0:
@@ -81,7 +83,8 @@ class UserTransaction:
             if v_amount > 0:  # Only use vouchers with a positive amount
                 if verbose:
                     print(f"Received voucher with {v_amount} amount.")
-                person.voucherlist["temp"].append(voucher)
+                voucher_status = voucher.voucher_status(person.id)
+                person.voucherlist[voucher_status.value].append(voucher) # append to the relevant list
                 transaction.transaction_amount += v_amount
         return True  # Transaction successfully received
 

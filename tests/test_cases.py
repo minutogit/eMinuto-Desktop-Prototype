@@ -3,7 +3,7 @@ import unittest
 import os
 from tests.models.simulationhelper import SimulationHelper
 from tests.services.utils import modify_voucher, compare_and_highlight_differences
-
+from src.models.minuto_voucher import VoucherStatus
 
 class TestPerson(unittest.TestCase):
     def setUp(self):
@@ -93,7 +93,7 @@ class TestPerson(unittest.TestCase):
         sim.send_amount(2, 1, 50)
         sim.send_amount(1, 2, 22.2)
 
-        original_voucher_dict = sim.persons[2].voucherlist["temp"][0].save_to_disk(simulation=True)
+        original_voucher_dict = sim.persons[2].voucherlist[VoucherStatus.OTHER.value][0].save_to_disk(simulation=True)
 
         # complete random voucher modification of one single char
         for i in range(20):
@@ -187,14 +187,14 @@ class TestPerson(unittest.TestCase):
         filehandler = SecureFileHandler()
 
         # Test encryption with password
-        filehandler.encrypt_and_save(sim.persons[1].voucherlist["temp"][0], "secure_voucher.txt", "mypassword")
+        filehandler.encrypt_and_save(sim.persons[1].voucherlist[VoucherStatus.OTHER.value][0], "secure_voucher.txt", "mypassword")
         decrypted_data = filehandler.decrypt_and_load("secure_voucher.txt", "mypassword", MinutoVoucher)
         self.assertTrue(decrypted_data.verify_complete_voucher())
-        self.assertEqual(sim.persons[1].voucherlist["temp"][0], decrypted_data)
+        self.assertEqual(sim.persons[1].voucherlist[VoucherStatus.OTHER.value][0], decrypted_data)
 
 
         # Test encryption with Diffie-Hellman key exchange
-        filehandler.encrypt_with_shared_secret_and_save(sim.persons[1].voucherlist["temp"][0], "secure_voucher2.txt",
+        filehandler.encrypt_with_shared_secret_and_save(sim.persons[1].voucherlist[VoucherStatus.OTHER.value][0], "secure_voucher2.txt",
                                                         sim.persons[2].id, sim.persons[1].id, sim.persons[1].key.private_key)
 
         decrypted_data = filehandler.decrypt_with_shared_secret_and_load("secure_voucher2.txt", sim.persons[1].id, sim.persons[2].id,
@@ -208,7 +208,7 @@ class TestPerson(unittest.TestCase):
 
         # Assert that the original data and decrypted data are equal
         self.assertEqual(
-            sim.persons[1].voucherlist["temp"][0],
+            sim.persons[1].voucherlist[VoucherStatus.OTHER.value][0],
             decrypted_data,
             "Original and decrypted vouchers should be identical."
         )

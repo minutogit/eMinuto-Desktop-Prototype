@@ -4,6 +4,7 @@ import time
 from faker import Faker
 from typing import List
 from src.services.crypto_utils import generate_seed
+from src.models.minuto_voucher import VoucherStatus
 from src.services.utils import dprint
 from src.models.person import Person
 import random
@@ -162,13 +163,13 @@ class SimulationHelper:
         used_vouchers = [copy.deepcopy(voucher) for voucher in transaction.transaction_vouchers]
         for voucher in used_vouchers:
             voucher.transactions.pop()  # Remove the latest transaction
-
-        # Re-add vouchers to available list for reuse (to enable double spending)
-        self.persons[sender].voucherlist["temp"] = used_vouchers + self.persons[sender].voucherlist["temp"]
+            voucher_status = voucher.voucher_status(self.persons[sender].id)
+            # Re-add vouchers to lists (other or own depending on status) for reuse (to enable double spending)
+            self.persons[sender].voucherlist[voucher_status.value].append(voucher)
 
         # Filter out vouchers that have been double spent
-        self.persons[sender].voucherlist["used"] = [
-            voucher for voucher in self.persons[sender].voucherlist["used"]
+        self.persons[sender].voucherlist[VoucherStatus.ARCHIVED.value] = [
+            voucher for voucher in self.persons[sender].voucherlist[VoucherStatus.ARCHIVED.value]
             if voucher.transactions[-1]['t_id'] not in last_transaction_ids_of_used_vouchers
         ]
 

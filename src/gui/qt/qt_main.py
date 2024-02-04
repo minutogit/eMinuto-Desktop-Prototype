@@ -722,19 +722,19 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         """
         # Translation dictionary for voucher statuses
         status_translation = {
-            "unfinished": "Nicht fertig",
-            "archived": "Archivierte",
-            "own": "Eigene",
-            "other": "Andere",
-            "trashed": "Papierkorb",
-            "corrupt": "Ungültige"
+            VoucherStatus.UNFINISHED.value: "Nicht fertig",
+            VoucherStatus.ARCHIVED.value: "Archivierte",
+            VoucherStatus.OWN.value: "Eigene",
+            VoucherStatus.OTHER.value: "Andere",
+            VoucherStatus.TRASHED.value: "Papierkorb",
+            VoucherStatus.CORRUPT.value: "Ungültige"
         }
 
         # Statuses to be excluded from display
-        exclude_status = {"temp"}
+        exclude_status = {VoucherStatus.TEMP.value}
 
         # Statuses to be checked by default
-        default_checked = {"own", "other", "unfinished"}
+        default_checked = {VoucherStatus.OWN.value, VoucherStatus.OTHER.value, VoucherStatus.UNFINISHED.value}
 
         self.status_text_to_enum = {status.value: status for status in VoucherStatus if
                                     status.value not in exclude_status}

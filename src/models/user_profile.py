@@ -112,7 +112,6 @@ class UserProfile(Serializable):
                 self.person.read_voucher_from_dict(file_content)
                 # todo avoid adding duplicates - add func in person to check if voucher already loaded
                 voucher_status = self.person.current_voucher.voucher_status(self.person.id)
-                dprint(voucher_status)
                 self.person.voucherlist[voucher_status.value].append(self.person.current_voucher)
                 voucher_amount = self.person.current_voucher.get_voucher_amount(self.person.id)
 
@@ -341,13 +340,13 @@ class UserProfile(Serializable):
         # calculate total balances for gui
         if not self._profile_initialized:
             return "0,00"
-        if type == "own":
+        if type == VoucherStatus.OWN.value:
             value = 0
             for v in self.person.voucherlist[VoucherStatus.OWN.value]:
                 value += v.get_voucher_amount(self.person.id)
             return display_balance(value)
 
-        if type == "other":
+        if type == VoucherStatus.OTHER.value:
             value = 0
             for v in self.person.voucherlist[VoucherStatus.OTHER.value]:
                 value += v.get_voucher_amount(self.person.id)

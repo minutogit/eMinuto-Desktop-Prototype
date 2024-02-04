@@ -118,7 +118,8 @@ class Person:
     def read_voucher_and_save_voucher(self, filename, subfolder=None, simulation = False):
         """read the voucher and stores it to persons voucher list"""
         self.read_voucher(filename, subfolder, simulation)
-        self.voucherlist[VoucherStatus.TEMP.value].append(self.current_voucher)
+        voucher_status = self.current_voucher.voucher_status(self.id)
+        self.voucherlist[voucher_status.value].append(self.current_voucher)
 
     def read_voucher(self, filename, subfolder=None, simulation = False):
         """read the voucher"""
@@ -139,7 +140,12 @@ class Person:
         """saves all vouchers to disk"""
         filename = ''
         i = 0
-        for voucher in self.voucherlist["temp"]: # todo all lists (func still needed?)
+
+        all_vouchers = []
+        for voucher_type in VoucherStatus:
+            all_vouchers += self.voucherlist[voucher_type.value]
+
+        for voucher in all_vouchers:
             i += 1
             if len(fileprefix) > 0:
                 filename = f"{str(fileprefix)}-"
@@ -292,6 +298,8 @@ class Person:
             print("Can only sign own voucher as creator!")
             return False, "Nur eigene Gutscheine können unterschrieben werden"
 
+        # todo add check of voucher_id  and update the following comment. "ordered by the guarantor's" is not need anymore
+
         """
         Important! Signatures must be ordered by the guarantor's ID to prevent the possibility of creating multiple
         valid vouchers with the same signatures. This is essential because different orders of signatures could
@@ -308,6 +316,9 @@ class Person:
         transaction = VoucherTransaction(voucher)
         transaction_data = transaction.get_initial_transaction(self.key)
         voucher.transactions.append(transaction_data)
+        # add voucher to own list and remove from unfinished list
+        self.voucherlist[VoucherStatus.OWN.value].append(voucher)
+        self.voucherlist[VoucherStatus.UNFINISHED.value].remove(voucher)
         return True, ""
 
     def verify_creator_signature(self, voucher=None):
@@ -328,15 +339,19 @@ class Person:
         # clean vouchers with empty amount (balance)
         # Create a new list for the remaining vouchers
         remaining_vouchers = []
+        for list_type in [VoucherStatus.OTHER.value, VoucherStatus.OWN.value]:
+            for voucher in self.voucherlist[list_type]:
+                if voucher.get_voucher_amount(self.id) == 0:
+                    self.voucherlist[VoucherStatus.ARCHIVED.value].append(voucher)  # Add empty voucher to the empty vouchers list
+                else:
+                    remaining_vouchers.append(voucher)  # Keep the voucher if it's not empty
 
-        for voucher in self.voucherlist["temp"]:
-            if voucher.get_voucher_amount(self.id) == 0:
-                self.voucherlist["used"].append(voucher)  # Add empty voucher to the empty vouchers list
-            else:
-                remaining_vouchers.append(voucher)  # Keep the voucher if it's not empty
-
-        # Update the self.vouchers list with the remaining vouchers
-        self.voucherlist["temp"] = remaining_vouchers
+        self.voucherlist[VoucherStatus.OWN.value] = []
+        self.voucherlist[VoucherStatus.OTHER.value] = []
+        # add the self.vouchers list with the remaining vouchers
+        for voucher in remaining_vouchers:
+            voucher_status = voucher.voucher_status(self.id)
+            self.voucherlist[voucher_status.value].append(voucher)
 
         return transaction
 
@@ -356,11 +371,13 @@ class Person:
     def list_vouchers(self):
         """prints a short list of all vouchers"""
         full_amount = amount_precision(self.get_amount_of_all_vouchers())
-        print(f"\033[1m{self.name} {self.id[:6]}.. - {len(self.voucherlist['temp'])} Vouchers  (Full Amount: {full_amount} Min)\033[0m")
-        sorted_vouchers = sorted(self.voucherlist["temp"], key=lambda voucher: voucher.creator_id)
+        available_vouchers = self.voucherlist[VoucherStatus.OWN.value] + self.voucherlist[VoucherStatus.OTHER.value]
+        print(f"\033[1m{self.first_name} {self.last_name} {self.id[:6]}.. - {len(available_vouchers)} Vouchers  (Full Amount: {full_amount} Min)\033[0m")
+        sorted_vouchers = sorted(available_vouchers, key=lambda voucher: voucher.creator_id)
         creator_id = ''
         linetext = ''
         for voucher in sorted_vouchers:
+            linetext = f"list[{voucher.voucher_status(self.id)}]:  "
             if creator_id != voucher.creator_id:
                 if creator_id != '':
                     print(linetext)
@@ -374,8 +391,9 @@ class Person:
     def get_amount_of_all_vouchers(self):
         """calculates the full amount of all vouchers of the person"""
         full_amount = 0
-        # todo not only temp vouchers
-        for voucher in self.voucherlist["temp"]:
+        # only own and other are vouchers with amount
+        available_vouchers = self.voucherlist[VoucherStatus.OWN.value] + self.voucherlist[VoucherStatus.OTHER.value]
+        for voucher in available_vouchers:
             full_amount += voucher.get_voucher_amount(self.id)
         return full_amount
 
@@ -387,7 +405,12 @@ class Person:
         """
 
         v_object_id_counts = {}
-        for voucher in self.voucherlist["temp"]:
+
+        all_vouchers = []
+        for status in VoucherStatus:
+            all_vouchers += self.voucherlist[status.value]
+
+        for voucher in all_vouchers:
             voucher_id = id(voucher)
             if voucher_id in v_object_id_counts:
                 v_object_id_counts[voucher_id] += 1
