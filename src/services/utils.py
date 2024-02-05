@@ -256,8 +256,13 @@ class Serializable:
     def from_dict(cls, dict_):
         constructor_args = inspect.signature(cls.__init__).parameters
         relevant_data = {key: dict_[key] for key in dict_ if key in constructor_args}
-        print("Relevante Daten für from_dict:", relevant_data)
-        return cls(**relevant_data)
+
+        instance = cls(**relevant_data)
+        for key, value in dict_.items():
+            if key not in constructor_args:
+                setattr(instance, key, value)
+
+        return instance
 
 
 def dprint(*args, sep=' ', end='\n'):
