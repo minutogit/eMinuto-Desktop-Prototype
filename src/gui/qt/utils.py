@@ -38,3 +38,46 @@ def apply_global_styles(app):
         }
 
     """)
+
+
+# utils.py
+from PySide6.QtGui import QValidator
+import re
+
+
+class DecimalFormatValidator(QValidator):
+    """
+    A singleton validator class for validating and correcting decimal input.
+    Allows up to five digits before the decimal point and two digits after it.
+    Accepts both dot (.) and comma (,) as decimal separators.
+    """
+    instance = None
+
+    def __new__(cls):
+        """Ensure only one instance of DecimalFormatValidator is created (singleton pattern)."""
+        if cls.instance is None:
+            cls.instance = super(DecimalFormatValidator, cls).__new__(cls)
+        return cls.instance
+
+    def validate(self, input_str, pos):
+        """
+        Validate the input string based on the defined decimal format.
+
+        :param input_str: The string input to validate.
+        :param pos: The position of the cursor.
+        :return: Tuple of validation state (Acceptable, Intermediate, or Invalid), input string, and cursor position.
+        """
+        pattern = r'^\d{0,5}([.,]\d{0,2})?$'
+        if re.match(pattern, input_str):
+            return QValidator.Acceptable, input_str, pos
+        else:
+            return QValidator.Invalid, input_str, pos
+
+    def fixup(self, input_str):
+        """
+        Correct the input string by replacing commas with dots.
+
+        :param input_str: The string input to correct.
+        :return: The corrected string.
+        """
+        return input_str.replace(',', '.')

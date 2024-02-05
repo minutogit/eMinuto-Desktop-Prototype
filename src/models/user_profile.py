@@ -5,7 +5,7 @@ from src.services.crypto_utils import generate_symmetric_key, symmetric_encrypt,
 from src.models.secure_file_handler import SecureFileHandler
 from src.models.person import Person
 from src.models.minuto_voucher import is_voucher_dict, VoucherStatus, MinutoVoucher
-
+from src.models.user_transaction import UserTransaction
 class UserProfile(Serializable):
     # Singleton instance of UserProfile.
     # Ensures a single, globally accessible user profile instance across the application.
@@ -21,6 +21,7 @@ class UserProfile(Serializable):
         # Initialize the profile state
         self.initialize_state()
         self._secure_file_handler: SecureFileHandler = None
+        self._user_transaction = UserTransaction()
 
     def initialize_state(self):
         """Initialize or reset the state of the profile."""
@@ -85,7 +86,38 @@ class UserProfile(Serializable):
                     else:
                         self.open_voucher(full_file_path)
 
-    def open_file(self, file_path, trashed = False):
+    def open_transaction_file(self, file_path):
+        # open and read transactions from user interaction in gui
+        file_content = read_file_content(file_path)
+        if is_encrypted_string(file_content):
+            try:
+                file_content = self._secure_file_handler.decrypt_with_shared_secret_and_load(file_path)
+                #dprint(file_content)
+            except:
+                return None, "Entschlüsselung fehlgeschlagen"
+
+        # convert dict to transaktion object
+        transaction_object = self._user_transaction.from_dict(file_content)
+        # receive_transaction_from_user checks if valid vouchers in transaction and stores vouchers in voucherlist[temp]
+        if self._user_transaction.receive_transaction_from_user(transaction_object, self.person, receive_temp=True):
+            # todo double checks if all is succesful
+            for voucher in self.person.voucherlist[VoucherStatus.TEMP.value]:
+                # Retrieve and store the local voucher ID
+                local_id, _ = voucher.get_local_voucher_id(self.person.id)
+
+                # add voucher to managment dict
+                self.vouchers[id(voucher)] = {'local_vid': local_id, 'file_path': None,
+                                                                  'trashed': False}
+                # todo ask user if store vouchers
+                self.save_voucher_to_disk(voucher)
+
+            self.person.voucherlist[VoucherStatus.TEMP.value] = [] # clean temp list
+            return None, "Transaktion erfolgreich empfangen"
+        else:
+            return None, "Transaktion konnte nicht empfangen werden."
+
+
+    def open_file(self, file_path, transaction = False):
         # open and reads vouchers, signatures or transactions from user interaction in gui
         return_info = ""
         file_content = read_file_content(file_path)
@@ -127,7 +159,7 @@ class UserProfile(Serializable):
                 self.vouchers[id(self.person.current_voucher)] = {'local_vid': local_id, 'file_path': None,
                                                                   'trashed': False}
 
-                self.save_file(self.person.current_voucher)
+                self.save_voucher_to_disk(self.person.current_voucher)
 
             # check if guarantor signature
             elif isinstance(file_content, list) and isinstance(file_content[0], dict) and "signature_time" in \
@@ -136,7 +168,7 @@ class UserProfile(Serializable):
                 self.person.current_voucher, return_info = self.person.add_received_signature_to_unfinished_voucher(file_content)
                 # save updated voucher to disk
                 if self.person.current_voucher is not None:
-                    self.save_file(self.person.current_voucher)
+                    self.save_voucher_to_disk(self.person.current_voucher)
             else:
                 return_info = "unbekanntes Format"
 
@@ -209,7 +241,7 @@ class UserProfile(Serializable):
         # Remove the voucher from the user's trashed voucher list
         user_profile.person.voucherlist[VoucherStatus.TRASHED.value].remove(voucher)
 
-    def save_file(self, voucher:MinutoVoucher, trash=False):
+    def save_voucher_to_disk(self, voucher:MinutoVoucher, trash=False):
         # save vouher to disk
 
         voucher_stored_on_disk = (self.vouchers[id(voucher)]['file_path'] is not None)
@@ -221,17 +253,17 @@ class UserProfile(Serializable):
                 self.delete_voucher(voucher)
                 return
             self.vouchers[id(voucher)]['trashed'] = True
-            voucher_status = VoucherStatus.TRASHED
+            voucher_status = VoucherStatus.TRASHED.value
 
         else:
-            voucher_status = voucher.voucher_status(self.person.id)
+            voucher_status = voucher.voucher_status(self.person.id).value
             self.vouchers[id(voucher)]['trashed'] = False
 
         import os
 
-        file_path = os.path.join(self.data_folder, voucher_status.value)
+        file_path = os.path.join(self.data_folder, voucher_status)
         voucher_name = f"eMinuto-{local_id}.mv"
-        new_full_file_path = str(os.path.join(self.data_folder, voucher_status.value, voucher_name))
+        new_full_file_path = str(os.path.join(self.data_folder, voucher_status, voucher_name))
 
         old_path = None # for checking if new path
         if voucher_stored_on_disk and self.vouchers[id(voucher)]['file_path'] != new_full_file_path:
@@ -244,10 +276,10 @@ class UserProfile(Serializable):
                 old_voucher_status = stat.value
                 break  # Voucher found, exit the loop
 
-        if old_voucher_status != voucher_status.value:  # if new status -> Move voucher to new list
+        if old_voucher_status != voucher_status:  # if new status -> Move voucher to new list
             if old_voucher_status: # if no old status (voucher creation) do nothing
                 user_profile.person.voucherlist[old_voucher_status].remove(voucher)
-            user_profile.person.voucherlist[voucher_status.value].append(voucher)
+            user_profile.person.voucherlist[voucher_status].append(voucher)
 
         self.vouchers[id(voucher)]['file_path'] = new_full_file_path
         self.vouchers[id(voucher)]['local_vid'] = local_id
@@ -259,6 +291,21 @@ class UserProfile(Serializable):
         if old_path:
             self._secure_file_handler.delete_file(old_path)
 
+    def send_minuto(self, amount, recipient_id):
+        # creates a transaction and returns an encrypted transaction file
+
+        transaction = self.person.send_amount(amount, recipient_id)
+        if not transaction.transaction_successful:
+            return transaction # return failed transaction
+
+        # save changed vouchers in transaktion to disk
+        for voucher in transaction.transaction_vouchers:
+            self.save_voucher_to_disk(voucher)
+
+
+        # todo save transaction backup to disk (to send again, store file again for sending)
+        # todo gui with transaction list
+        return transaction
 
     def create_new_profile(self, profile_name, first_name, last_name, organization, seed, profile_password):
         # storekey and salt in object for saving to disk
@@ -322,7 +369,7 @@ class UserProfile(Serializable):
         # add to voucher management list
         self.vouchers[id(self.person.current_voucher)] = {'local_vid': local_id, 'file_path': None,
                                                           'trashed': False}
-        self.save_file(self.person.current_voucher) # saves file and add it to voucherlist
+        self.save_voucher_to_disk(self.person.current_voucher) # saves file and add it to voucherlist
         voucher = self.person.current_voucher
         self.person.current_voucher = None
         return voucher

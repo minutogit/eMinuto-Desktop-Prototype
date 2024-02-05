@@ -9,7 +9,7 @@ import json
 class Person:
     def __init__(self, person_data={}, seed=None):
         self.key = Key(seed) if seed else Key()
-        self.id = self.key.id
+        self.id = self.key.id # own user id
         self.pubkey_short = self.key.get_compressed_public_key()
 
         # Set attributes from person_data using a separate method
@@ -381,7 +381,7 @@ class Person:
             if creator_id != voucher.creator_id:
                 if creator_id != '':
                     print(linetext)
-                linetext = f"V-Creator: {voucher.creator_first_name} {voucher.creator_last_name} \tV-Amounts: {voucher.get_voucher_amount(self.id)}M"
+                linetext += f"V-Creator: {voucher.creator_first_name} {voucher.creator_last_name} \tV-Amounts: {voucher.get_voucher_amount(self.id)}M"
                 creator_id = voucher.creator_id
             else:
                 linetext += f"  {voucher.get_voucher_amount(self.id)}M"

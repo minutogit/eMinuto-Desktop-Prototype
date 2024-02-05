@@ -18,9 +18,10 @@ from src.gui.qt.ui_components.form_show_voucher import Ui_FormShowVoucher
 from src.gui.qt.ui_components.main_window import Ui_MainWindow
 from src.gui.qt.ui_components.form_send_to_guarantor import Ui_FormSendToGuarantor
 from src.gui.qt.ui_components.form_sign_as_guarantor import Ui_FormSignVoucherAsGuarantor
+from src.gui.qt.ui_components.form_send_minuto import Ui_FormSendMinuto
 from src.services.crypto_utils import verify_user_ID
 
-from src.gui.qt.utils import apply_global_styles, show_message_box, show_yes_no_box
+from src.gui.qt.utils import apply_global_styles, show_message_box, show_yes_no_box, DecimalFormatValidator
 from src.models.user_profile import user_profile
 from src.models.minuto_voucher import MinutoVoucher, VoucherStatus
 from PySide6.QtGui import QStandardItemModel, QStandardItem
@@ -29,7 +30,7 @@ from PySide6.QtWidgets import QAbstractItemView
 from src.services.utils import dprint
 
 
-def open_data_file():
+def open_data_file(transaction=False):
     """
     Opens a file dialog to select a voucher or signature file and adds the voucher
     or signature to a voucher.
@@ -38,17 +39,114 @@ def open_data_file():
     file_dialog = QFileDialog()
 
     # Set the accepted file extensions
-    file_filter = "Voucher/Signature Files (*.mv *.ms);;All Files (*)"
+    file_filter = "Voucher/Signature/Transaction Files (*.mv *.ms *.mt);;All Files (*)"
+    if transaction:
+        file_filter = "Transaction Files (*.mt);;All Files (*)"
 
     # Open the dialog and get the file path
     file_path, _ = file_dialog.getOpenFileName(None, "Open File", "", file_filter)
 
     if file_path:
-        voucher, info_msg = user_profile.open_file(file_path)
+        if transaction:
+            voucher, info_msg = user_profile.open_transaction_file(file_path)
+        else:
+            voucher, info_msg = user_profile.open_file(file_path, transaction)
         win['dialog_voucher_list'].init_values()
         show_message_box("Info", info_msg)
+        frm_main_window.update_values() # update balances in main window
         if voucher is not None:
             win['form_show_voucher'].show_voucher(voucher)
+
+
+class FormSendMinuto(QMainWindow, Ui_FormSendMinuto):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        # set validator for correct input format
+        self.available_amount = 0 # store max amount to send
+        self.lineEdit_transfer_amount.setValidator(DecimalFormatValidator())
+        self.lineEdit_recipient_id.textChanged.connect(self.check_recipient_ID)
+        self.pushButton_Send_Minuto.clicked.connect(self.send_minuto)
+        self.apply_stylesheet_to_buttons()
+
+    def apply_stylesheet_to_buttons(self):
+        """ Apply custom stylesheet to buttons in the form. """
+        button_stylesheet = """
+                    QPushButton {
+                        /* Stylesheet for normal button states */
+                    }
+                    QPushButton:disabled {
+                        background-color: #d3d3d3;
+                        color: #a0a0a0;
+                    }
+                """
+        for button in self.findChildren(QPushButton):
+            button.setStyleSheet(button_stylesheet)
+
+    def check_recipient_ID(self):
+        """
+        Check the entered guarantor ID and update the label with a green check or red cross based on validity.
+        """
+        recipient_id = self.lineEdit_recipient_id.text().strip()
+        self.pushButton_Send_Minuto.setEnabled(False)
+        if recipient_id == "":
+            self.label_recipient_id_check.setText("")  # Clear label if input is empty
+            return
+
+        # Set label based on the validity of the guarantor ID
+        if verify_user_ID(recipient_id):
+            if recipient_id == user_profile.person.id:
+                show_message_box("Fehler!", "Nicht die eigene ID verwenden!")
+                return
+            self.label_recipient_id_check.setText("✅")  # Green check emoji for valid ID
+            self.pushButton_Send_Minuto.setEnabled(True)
+
+        else:
+            self.label_recipient_id_check.setText("❌")  # Red cross emoji for invalid ID
+
+    def send_minuto(self):
+        recipient_id = self.lineEdit_recipient_id.text()
+        amount = float(self.lineEdit_transfer_amount.text().replace(",","."))
+
+        if amount > self.available_amount:
+            show_message_box("Nicht genug Guthaben", f"Es können maximal {self.available_amount} Minuto gesendet werden.")
+            return
+
+        if not show_yes_no_box("Minuto versenden?", "Sollen die Minuto versendet werden?"):
+            return
+
+        transaction = user_profile.send_minuto(amount, recipient_id)
+        if not transaction.transaction_successful:
+            show_message_box("Fehler","Transaktion fehlgeschlagen")
+            return
+
+        suggested_filename = f"eMinuto-Transaktion-an-{recipient_id[:6]}.mt"
+        file_filter = "Minuto Transaction (*.mt)"
+
+        # Open file save dialog
+        filename_with_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Transaktion speichern",
+            suggested_filename,
+            file_filter
+        )
+
+        # Check if the user has entered a file name
+        if filename_with_path:
+            # Encrypt and save the transaction
+            user_profile._secure_file_handler.encrypt_with_shared_secret_and_save(
+                transaction, filename_with_path, recipient_id, user_profile.person.id)
+
+        frm_main_window.update_values() # update balances in main window
+
+
+    def show_init(self):
+        self.available_amount = user_profile.person.get_amount_of_all_vouchers()
+        self.lineEdit_recipient_id.setText("")
+        self.lineEdit_transfer_amount.setText("")
+        self.check_recipient_ID()
+        self.show()
+        self.raise_()
 
 
 class FormSignAsGuarantor(QMainWindow, Ui_FormSignVoucherAsGuarantor):
@@ -85,7 +183,7 @@ class FormSignAsGuarantor(QMainWindow, Ui_FormSignVoucherAsGuarantor):
     def sign_as_guarantor(self):
         # if sign successful
         if user_profile.person.sign_voucher_as_guarantor(self.voucher):
-            user_profile.save_file(self.voucher)  # save signed voucher
+            user_profile.save_voucher_to_disk(self.voucher)  # save signed voucher
             # update gui
             self.checkBox_liability_acceptance.setEnabled(False)
             self.pushButton_sign_as_guarantor.setEnabled(False)
@@ -275,7 +373,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
 
     def recover_trashed_voucher(self):
         # recover back a trashed voucher
-        user_profile.save_file(self.voucher) # save without trash flag will restore voucher
+        user_profile.save_voucher_to_disk(self.voucher) # save without trash flag will restore voucher
         self.show_voucher(self.voucher) # to reload gui
         frm_main_window.update_values()  # update values in main win (calculate new amount etc)
 
@@ -309,7 +407,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
                             "Benutzte Gutscheine Werden zu Erkennung von Betrug benötigt. Diese sollten nicht gelöscht werden."):
                 return
 
-        user_profile.save_file(self.voucher, trash=True)
+        user_profile.save_voucher_to_disk(self.voucher, trash=True)
         self.close()
         # reload voucher list if open
         if not win['dialog_voucher_list'].isHidden():
@@ -323,7 +421,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
             signed, message = user_profile.person.sign_voucher_as_creator(self.voucher)
 
             if signed:
-                user_profile.save_file(self.voucher)
+                user_profile.save_voucher_to_disk(self.voucher)
                 user_profile.person.current_voucher = None
                 self.show_voucher(self.voucher)  # to update all values
                 frm_main_window.update_values()
@@ -981,6 +1079,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.dialog_generate_profile.profileCreated.connect(self.onProfileCreated)
 
         self.setWindowTitle(f"eMinuto")
+        # menu actions
         self.actionCreateProfile.triggered.connect(self.dialog_generate_profile.show)
         self.actionEditProfile.triggered.connect(win['dialog_profile'].init_and_show)
         self.actionCreateMinuto.triggered.connect(win['dialog_create_minuto'].show)
@@ -992,7 +1091,10 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.actionClose.triggered.connect(self.close)
         self.set_gui_depending_profile_status()
 
+        # buttons
         self.pushButton_copy_user_ID.clicked.connect(self.copyUserIDToClipboard)
+        self.pushButton_send_minuto.clicked.connect(self.sendMinuto)
+        self.pushButton_receive_minuto.clicked.connect(self.receiveMinutoTransaction)
 
     def closeEvent(self, event):
         # close all windows on close of main win
@@ -1003,6 +1105,12 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         QApplication.instance().quit()
 
         super().closeEvent(event)
+
+    def sendMinuto(self):
+        win['form_send_minuto'].show_init()
+
+    def receiveMinutoTransaction(self):
+        open_data_file(transaction=True)
 
     def copyUserIDToClipboard(self):
         clipboard = QApplication.clipboard()
@@ -1044,8 +1152,8 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
 
     def set_vouchers_balances(self):
         """Demo function set balance of vouchers."""
-        self.lineEdit_own_balance.setText(user_profile.get_minuto_balance("own"))
-        self.lineEdit_other_balance.setText(user_profile.get_minuto_balance("other"))
+        self.lineEdit_own_balance.setText(user_profile.get_minuto_balance(VoucherStatus.OWN.value))
+        self.lineEdit_other_balance.setText(user_profile.get_minuto_balance(VoucherStatus.OTHER.value))
 
 
     def set_gui_depending_profile_status(self):
@@ -1116,6 +1224,7 @@ apply_global_styles(app)
 
 # dict of all windwos
 win = {
+    'form_send_minuto': FormSendMinuto(),
     'form_sign_as_guarantor': FormSignAsGuarantor(),
     'form_send_to_guarantor': FormSendToGuarantor(),
     'form_show_raw_data': FormShowRawData(),

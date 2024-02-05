@@ -46,15 +46,15 @@ class Ui_MainWindow(object):
         self.actionOpenFile.setObjectName(u"actionOpenFile")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
-        self.widget = QWidget(self.centralwidget)
-        self.widget.setObjectName(u"widget")
-        self.widget.setGeometry(QRect(10, 10, 581, 301))
-        self.verticalLayout_2 = QVBoxLayout(self.widget)
+        self.layoutWidget = QWidget(self.centralwidget)
+        self.layoutWidget.setObjectName(u"layoutWidget")
+        self.layoutWidget.setGeometry(QRect(10, 10, 581, 301))
+        self.verticalLayout_2 = QVBoxLayout(self.layoutWidget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_3 = QHBoxLayout()
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.label_username = QLabel(self.widget)
+        self.label_username = QLabel(self.layoutWidget)
         self.label_username.setObjectName(u"label_username")
         sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
@@ -72,7 +72,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_3.addItem(self.horizontalSpacer)
 
-        self.label_user_id_text = QLabel(self.widget)
+        self.label_user_id_text = QLabel(self.layoutWidget)
         self.label_user_id_text.setObjectName(u"label_user_id_text")
         sizePolicy1 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         sizePolicy1.setHorizontalStretch(0)
@@ -83,7 +83,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_3.addWidget(self.label_user_id_text)
 
-        self.label_user_id = QLabel(self.widget)
+        self.label_user_id = QLabel(self.layoutWidget)
         self.label_user_id.setObjectName(u"label_user_id")
         sizePolicy1.setHeightForWidth(self.label_user_id.sizePolicy().hasHeightForWidth())
         self.label_user_id.setSizePolicy(sizePolicy1)
@@ -92,7 +92,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_3.addWidget(self.label_user_id)
 
-        self.pushButton_copy_user_ID = QPushButton(self.widget)
+        self.pushButton_copy_user_ID = QPushButton(self.layoutWidget)
         self.pushButton_copy_user_ID.setObjectName(u"pushButton_copy_user_ID")
         icon = QIcon()
         iconThemeName = u"edit-copy"
@@ -109,7 +109,7 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
 
-        self.frame = QFrame(self.widget)
+        self.frame = QFrame(self.layoutWidget)
         self.frame.setObjectName(u"frame")
         sizePolicy2 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         sizePolicy2.setHorizontalStretch(0)
@@ -118,23 +118,26 @@ class Ui_MainWindow(object):
         self.frame.setSizePolicy(sizePolicy2)
         self.frame.setFrameShape(QFrame.StyledPanel)
         self.frame.setFrameShadow(QFrame.Raised)
-        self.label = QLabel(self.frame)
+        self.layoutWidget1 = QWidget(self.frame)
+        self.layoutWidget1.setObjectName(u"layoutWidget1")
+        self.layoutWidget1.setGeometry(QRect(10, 10, 471, 190))
+        self.verticalLayout = QVBoxLayout(self.layoutWidget1)
+        self.verticalLayout.setSpacing(12)
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.label = QLabel(self.layoutWidget1)
         self.label.setObjectName(u"label")
-        self.label.setGeometry(QRect(10, 10, 121, 16))
         font1 = QFont()
         font1.setPointSize(14)
         font1.setBold(True)
         font1.setItalic(False)
         self.label.setFont(font1)
-        self.layoutWidget = QWidget(self.frame)
-        self.layoutWidget.setObjectName(u"layoutWidget")
-        self.layoutWidget.setGeometry(QRect(10, 40, 431, 70))
-        self.verticalLayout = QVBoxLayout(self.layoutWidget)
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.verticalLayout.addWidget(self.label)
+
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.label_2 = QLabel(self.layoutWidget)
+        self.label_2 = QLabel(self.layoutWidget1)
         self.label_2.setObjectName(u"label_2")
         self.label_2.setMinimumSize(QSize(150, 0))
         font2 = QFont()
@@ -143,7 +146,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout.addWidget(self.label_2)
 
-        self.lineEdit_own_balance = QLineEdit(self.layoutWidget)
+        self.lineEdit_own_balance = QLineEdit(self.layoutWidget1)
         self.lineEdit_own_balance.setObjectName(u"lineEdit_own_balance")
         self.lineEdit_own_balance.setFont(font2)
         self.lineEdit_own_balance.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
@@ -156,14 +159,14 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2 = QHBoxLayout()
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.label_3 = QLabel(self.layoutWidget)
+        self.label_3 = QLabel(self.layoutWidget1)
         self.label_3.setObjectName(u"label_3")
         self.label_3.setMinimumSize(QSize(150, 0))
         self.label_3.setFont(font2)
 
         self.horizontalLayout_2.addWidget(self.label_3)
 
-        self.lineEdit_other_balance = QLineEdit(self.layoutWidget)
+        self.lineEdit_other_balance = QLineEdit(self.layoutWidget1)
         self.lineEdit_other_balance.setObjectName(u"lineEdit_other_balance")
         self.lineEdit_other_balance.setFont(font2)
         self.lineEdit_other_balance.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
@@ -173,6 +176,16 @@ class Ui_MainWindow(object):
 
 
         self.verticalLayout.addLayout(self.horizontalLayout_2)
+
+        self.pushButton_send_minuto = QPushButton(self.layoutWidget1)
+        self.pushButton_send_minuto.setObjectName(u"pushButton_send_minuto")
+
+        self.verticalLayout.addWidget(self.pushButton_send_minuto)
+
+        self.pushButton_receive_minuto = QPushButton(self.layoutWidget1)
+        self.pushButton_receive_minuto.setObjectName(u"pushButton_receive_minuto")
+
+        self.verticalLayout.addWidget(self.pushButton_receive_minuto)
 
 
         self.verticalLayout_2.addWidget(self.frame)
@@ -230,6 +243,8 @@ class Ui_MainWindow(object):
         self.label.setText(QCoreApplication.translate("MainWindow", u"Kontostand", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"eigene Minuto", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"andere Minuto", None))
+        self.pushButton_send_minuto.setText(QCoreApplication.translate("MainWindow", u"Minuto versenden", None))
+        self.pushButton_receive_minuto.setText(QCoreApplication.translate("MainWindow", u"Minuto empfangen", None))
         self.menuStart.setTitle(QCoreApplication.translate("MainWindow", u"Start", None))
         self.menuProfile.setTitle(QCoreApplication.translate("MainWindow", u"Profil", None))
         self.menuMinuto.setTitle(QCoreApplication.translate("MainWindow", u"Minuto", None))
