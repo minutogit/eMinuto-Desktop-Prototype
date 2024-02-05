@@ -129,10 +129,10 @@ class UserProfile(Serializable):
                 # Retrieve all local_ids that are already saved in self.vouchers
                 local_id, _ = self.person.current_voucher.get_local_voucher_id(self.person.id)
                 all_local_ids = [info['local_vid'] for info in self.vouchers.values()]
-                existing_entry = (local_id in all_local_ids)
+                existing_vouchers = (local_id in all_local_ids)
 
                 # If the voucher does not already exist, add it to the voucher list and voucher management
-                if not existing_entry:
+                if not existing_vouchers:
                     self.person.voucherlist[voucher_status.value].append(self.person.current_voucher)
                     self.vouchers[id(self.person.current_voucher)] = {
                         'local_vid': local_id, 'file_path': None, 'trashed': False}
@@ -151,18 +151,28 @@ class UserProfile(Serializable):
                 # Receive transaction from user, checks if valid vouchers in transaction, and stores vouchers in voucherlist[temp]
                 if self._user_transaction.receive_transaction_from_user(transaction_object, self.person,
                                                                         receive_temp=True):
-                    # Todo: Double-checks if all is successful
-                    for voucher in self.person.voucherlist[VoucherStatus.TEMP.value]:
-                        # Retrieve and store the local voucher ID
-                        local_id, _ = voucher.get_local_voucher_id(self.person.id)
+                    # Todo: additional -checks if all is successful (sum of total amount before and after transaktion)
+                    all_local_ids = [info['local_vid'] for info in self.vouchers.values()]
+                    existing_vouchers = any(voucher.get_local_voucher_id(self.person.id)[0] in all_local_ids
+                                         for voucher in self.person.voucherlist[VoucherStatus.TEMP.value])
 
-                        # Add voucher to management dictionary
-                        self.vouchers[id(voucher)] = {'local_vid': local_id, 'file_path': None, 'trashed': False}
-                        # Todo: Ask user if store vouchers
-                        self.save_voucher_to_disk(voucher)
+                    # if there are existing vouchers in the transaction don't import vouchers of transaction
+                    if existing_vouchers:
+                        return_info = ("Transaktion konnte nicht empfangen werden, da die enthaltenen Gutscheine schon "
+                                       "existieren. (Alte bereits empfangene Transaktion?)")
+                    else: # avoid adding same voucher again (possible if try to load same transaction again)
+                        for voucher in self.person.voucherlist[VoucherStatus.TEMP.value]:
+                            # Retrieve and store the local voucher ID
+                            local_id, _ = voucher.get_local_voucher_id(self.person.id)
+
+                            # Add voucher to management dictionary
+                            self.vouchers[id(voucher)] = {'local_vid': local_id, 'file_path': None, 'trashed': False}
+                            # Todo: Ask user if store vouchers
+                            self.save_voucher_to_disk(voucher)
+                        return_info = f"Transaktion mit {transaction_object.transaction_amount} Minuto erfolgreich empfangen"
 
                     self.person.voucherlist[VoucherStatus.TEMP.value] = []  # Clean temp list
-                    return_info = "Transaktion erfolgreich empfangen"
+
                 else:
                     return_info = "Transaktion konnte nicht empfangen werden."
 
