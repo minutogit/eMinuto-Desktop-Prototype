@@ -4,7 +4,7 @@ from src.services.utils import convert_json_string_to_dict, file_exists, join_pa
 from src.services.crypto_utils import generate_symmetric_key, symmetric_encrypt, symmetric_decrypt, b64d, is_encrypted_string, hash_bytes
 from src.models.secure_file_handler import SecureFileHandler
 from src.models.person import Person
-from src.models.minuto_voucher import is_voucher_dict, VoucherStatus, MinutoVoucher
+from src.models.minuto_voucher import is_voucher_dict, VoucherStatus, MinutoVoucher, is_user_transaction_dict
 from src.models.user_transaction import UserTransaction
 class UserProfile(Serializable):
     # Singleton instance of UserProfile.
@@ -53,8 +53,9 @@ class UserProfile(Serializable):
         self._profile_initialized = False
         self.file_enc_key = None # key for encyption of local files (vouchers)
 
-        self.vouchers = {}  # Initialize the vouchers management dictionary
-
+        # Initialize the vouchers management dictionary. This dictionary is used for managing vouchers in memory and
+        # won't be stored on disk (excluded in the self.to_dict method). It is initialized at startup.
+        self.vouchers = {}
 
     def init_existing_profile(self,password):
         if not self.load_profile_from_disk(password):
@@ -86,67 +87,38 @@ class UserProfile(Serializable):
                     else:
                         self.open_voucher(full_file_path)
 
-    def open_transaction_file(self, file_path):
-        # open and read transactions from user interaction in gui
-        file_content = read_file_content(file_path)
-        if is_encrypted_string(file_content):
-            try:
-                file_content = self._secure_file_handler.decrypt_with_shared_secret_and_load(file_path)
-                #dprint(file_content)
-            except:
-                return None, "Entschlüsselung fehlgeschlagen"
-
-        # convert dict to transaktion object
-        transaction_object = self._user_transaction.from_dict(file_content)
-        # receive_transaction_from_user checks if valid vouchers in transaction and stores vouchers in voucherlist[temp]
-        if self._user_transaction.receive_transaction_from_user(transaction_object, self.person, receive_temp=True):
-            # todo double checks if all is succesful
-            for voucher in self.person.voucherlist[VoucherStatus.TEMP.value]:
-                # Retrieve and store the local voucher ID
-                local_id, _ = voucher.get_local_voucher_id(self.person.id)
-
-                # add voucher to managment dict
-                self.vouchers[id(voucher)] = {'local_vid': local_id, 'file_path': None,
-                                                                  'trashed': False}
-                # todo ask user if store vouchers
-                self.save_voucher_to_disk(voucher)
-
-            self.person.voucherlist[VoucherStatus.TEMP.value] = [] # clean temp list
-            return None, "Transaktion erfolgreich empfangen"
-        else:
-            return None, "Transaktion konnte nicht empfangen werden."
-
-
-    def open_file(self, file_path, transaction = False):
-        # open and reads vouchers, signatures or transactions from user interaction in gui
+    def open_file(self, file_path):
+        """
+        Opens and reads vouchers, signatures, or transactions from user interaction in the GUI.
+        Decrypts the content if necessary and processes it based on its type (voucher, transaction, or signature).
+        """
         return_info = ""
         file_content = read_file_content(file_path)
-        if is_encrypted_string(file_content):
 
+        if is_encrypted_string(file_content):
             try:
-                # first try to encrypt received files from other users with shared secret
+                # First, try to decrypt received files from other users with a shared secret
                 file_content = self._secure_file_handler.decrypt_with_shared_secret_and_load(file_path)
             except:
                 try:
-                    # if decryption from other user fails, try to decrypt with own file key
+                    # If decryption from another user fails, try to decrypt with own file key
                     file_content = symmetric_decrypt(file_content, key=self.file_enc_key)
                 except:
-                    print("decryption fails")
+                    print("Decryption failed")
                     return None, "Entschlüsselung fehlgeschlagen"
 
         if is_valid_object(file_content):
-            # if string then convert to dict
+            # If the content is a string, then convert it to a dictionary
             if isinstance(file_content, str):
                 file_content = convert_json_string_to_dict(file_content)
 
-            # check if voucher
+            # Check if the content is a voucher dictionary
             if is_voucher_dict(file_content):
                 self.person.read_voucher_from_dict(file_content)
-                # todo avoid adding duplicates - add func in person to check if voucher already loaded
                 voucher_status = self.person.current_voucher.voucher_status(self.person.id)
-                self.person.voucherlist[voucher_status.value].append(self.person.current_voucher)
                 voucher_amount = self.person.current_voucher.get_voucher_amount(self.person.id)
 
+                # Determine voucher status and set return information accordingly
                 if voucher_status in [VoucherStatus.OWN, VoucherStatus.OTHER]:
                     return_info = f"Gutschein mit {voucher_amount}M Guthaben hinzugefügt."
                 elif voucher_status == VoucherStatus.ARCHIVED:
@@ -154,19 +126,54 @@ class UserProfile(Serializable):
                 elif voucher_status == VoucherStatus.UNFINISHED:
                     return_info = "Unfertigen Gutschein hinzugefügt."
 
+                # Retrieve all local_ids that are already saved in self.vouchers
                 local_id, _ = self.person.current_voucher.get_local_voucher_id(self.person.id)
-                # add to voucher management list
-                self.vouchers[id(self.person.current_voucher)] = {'local_vid': local_id, 'file_path': None,
-                                                                  'trashed': False}
+                all_local_ids = [info['local_vid'] for info in self.vouchers.values()]
+                existing_entry = (local_id in all_local_ids)
 
-                self.save_voucher_to_disk(self.person.current_voucher)
+                # If the voucher does not already exist, add it to the voucher list and voucher management
+                if not existing_entry:
+                    self.person.voucherlist[voucher_status.value].append(self.person.current_voucher)
+                    self.vouchers[id(self.person.current_voucher)] = {
+                        'local_vid': local_id, 'file_path': None, 'trashed': False}
+                    self.save_voucher_to_disk(self.person.current_voucher)
+                else:
+                    # Todo (optional improvement): Avoid adding older voucher versions when a newer version exists
+                    return_info = "Gutschein existiert schon."
+                    self.person.current_voucher = None
 
-            # check if guarantor signature
+            # Check if the content is a user transaction dictionary
+            elif is_user_transaction_dict(file_content):
+                self.person.current_voucher = None  # Reset current voucher
+                # Convert dictionary to transaction object
+                transaction_object = self._user_transaction.from_dict(file_content)
+
+                # Receive transaction from user, checks if valid vouchers in transaction, and stores vouchers in voucherlist[temp]
+                if self._user_transaction.receive_transaction_from_user(transaction_object, self.person,
+                                                                        receive_temp=True):
+                    # Todo: Double-checks if all is successful
+                    for voucher in self.person.voucherlist[VoucherStatus.TEMP.value]:
+                        # Retrieve and store the local voucher ID
+                        local_id, _ = voucher.get_local_voucher_id(self.person.id)
+
+                        # Add voucher to management dictionary
+                        self.vouchers[id(voucher)] = {'local_vid': local_id, 'file_path': None, 'trashed': False}
+                        # Todo: Ask user if store vouchers
+                        self.save_voucher_to_disk(voucher)
+
+                    self.person.voucherlist[VoucherStatus.TEMP.value] = []  # Clean temp list
+                    return_info = "Transaktion erfolgreich empfangen"
+                else:
+                    return_info = "Transaktion konnte nicht empfangen werden."
+
+            # Check if the content is a guarantor signature
             elif isinstance(file_content, list) and isinstance(file_content[0], dict) and "signature_time" in \
                     file_content[0]:
-                # try to find voucher and add guarantor signature
-                self.person.current_voucher, return_info = self.person.add_received_signature_to_unfinished_voucher(file_content)
-                # save updated voucher to disk
+                # Try to find voucher and add guarantor signature
+                self.person.current_voucher, return_info = self.person.add_received_signature_to_unfinished_voucher(
+                    file_content)
+
+                # Save updated voucher to disk
                 if self.person.current_voucher is not None:
                     self.save_voucher_to_disk(self.person.current_voucher)
             else:
@@ -229,7 +236,7 @@ class UserProfile(Serializable):
 
     def delete_voucher(self, voucher):
         """
-        Permanently deletes a voucher file, making recovery impossible, and removes it from the user's trashed voucher list.
+        Permanently deletes a voucher file, making recovery impossible, and removes it from the user's trashed voucher list and management list.
 
         Args:
             voucher: The voucher object to be deleted.
@@ -240,6 +247,9 @@ class UserProfile(Serializable):
 
         # Remove the voucher from the user's trashed voucher list
         user_profile.person.voucherlist[VoucherStatus.TRASHED.value].remove(voucher)
+
+        # Remove the voucher from management list
+        self.vouchers.pop(id(voucher), None)
 
     def save_voucher_to_disk(self, voucher:MinutoVoucher, trash=False):
         # save vouher to disk
@@ -379,7 +389,7 @@ class UserProfile(Serializable):
         Converts the attributes of the class into a dictionary. This method is essential for saving to disk.
         """
         # Exclude non-serializable attributes
-        exclude = ['person']
+        exclude = ['person','vouchers']
         return {key: value for key, value in self.__dict__.items()
                 if not key.startswith('_') and key not in exclude}
 

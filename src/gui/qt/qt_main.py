@@ -30,30 +30,30 @@ from PySide6.QtWidgets import QAbstractItemView
 from src.services.utils import dprint
 
 
-def open_data_file(transaction=False):
+def open_data_file(file_type=""):
     """
-    Opens a file dialog to select a voucher or signature file and adds the voucher
+    Opens a file dialog to select a transaction, voucher or signature file and adds the voucher
     or signature to a voucher.
     """
-    # Create a file dialog
-    file_dialog = QFileDialog()
 
     # Set the accepted file extensions
-    file_filter = "Voucher/Signature/Transaction Files (*.mv *.ms *.mt);;All Files (*)"
-    if transaction:
-        file_filter = "Transaction Files (*.mt);;All Files (*)"
+    if file_type == "transaction":
+        file_filter = "Transaktions Dateien (*.mt);;Alle Dateien (*)"
+    elif file_type == "signature":
+        file_filter = "Unterschrift Dateien (*.ms);;Alle Dateien (*)"
+    else:
+        file_filter = "Gutschein/Unterschrift/Transaktions Dateien (*.mv *.ms *.mt);;Alle Dateien (*)"
 
-    # Open the dialog and get the file path
+    # Create and open the dialog and get the file path
+    file_dialog = QFileDialog()
     file_path, _ = file_dialog.getOpenFileName(None, "Open File", "", file_filter)
 
     if file_path:
-        if transaction:
-            voucher, info_msg = user_profile.open_transaction_file(file_path)
-        else:
-            voucher, info_msg = user_profile.open_file(file_path, transaction)
+        # if not a voucher then None will be returned
+        voucher, info_msg = user_profile.open_file(file_path)
         win['dialog_voucher_list'].init_values()
-        show_message_box("Info", info_msg)
-        frm_main_window.update_values() # update balances in main window
+        frm_main_window.update_values()  # update balances in main window
+        show_message_box("Info", info_msg) # display info to user
         if voucher is not None:
             win['form_show_voucher'].show_voucher(voucher)
 
@@ -188,7 +188,7 @@ class FormSignAsGuarantor(QMainWindow, Ui_FormSignVoucherAsGuarantor):
             self.checkBox_liability_acceptance.setEnabled(False)
             self.pushButton_sign_as_guarantor.setEnabled(False)
             self.pushButton_save_as_file.setEnabled(True)
-            win['form_show_voucher'].show_voucher(self.voucher)  # reload voucher gui
+
 
     def save_signature_as_file(self):
         """
@@ -351,6 +351,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         self.pushButtonRawData.clicked.connect(self.show_raw_data)
         self.pushButtonSignAsGuarantor.clicked.connect(self.sing_as_guarantor)
         self.pushButtonSendToGuarantor.clicked.connect(self.send_to_guarantor)
+        self.pushButtonAddGuarantorSignature.clicked.connect(self.add_guarantor_signature)
         self.pushButtonSignAsCreator.clicked.connect(self.sign_as_creator)
         self.pushButtonTrash.clicked.connect(self.delete_voucher)
         self.pushButtonRecover.clicked.connect(self.recover_trashed_voucher)
@@ -376,7 +377,6 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         user_profile.save_voucher_to_disk(self.voucher) # save without trash flag will restore voucher
         self.show_voucher(self.voucher) # to reload gui
         frm_main_window.update_values()  # update values in main win (calculate new amount etc)
-
 
     def delete_voucher(self):
         status = self.voucher.voucher_status(user_profile.person.id)
@@ -432,13 +432,20 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
                 show_message_box("Fehler", f"Unterschrift fehlgeschlagen. {message}")
 
     def sing_as_guarantor(self):
-        # check if gender is set
         gender_is_set = (user_profile.person.gender != 0)
-        if not gender_is_set:
-            gender_is_set = show_yes_no_box("Geschlecht fehlt",
-                                            "Im Profil muss das Geschlecht angegeben werden. Dennoch unterschreiben? (nicht empfohlen)")
-        if gender_is_set:
-            win['form_sign_as_guarantor'].show_form(self.voucher)
+        # male and female needed, so with 2 guarantors gender must be set
+        if self.voucher.needed_guarantors == 2 and not gender_is_set:
+            show_message_box("Geschlecht fehlt",
+                             "Bitte unter Profil das Geschlecht einstellen, da der Gutschein einen männlichen und weiblichen Bürgen benötigt.")
+            win['dialog_profile'].init_and_show()
+            return
+
+        win['form_sign_as_guarantor'].show_form(self.voucher)
+
+    def add_guarantor_signature(self):
+        # to open a file with a signature to add to voucher)
+        open_data_file(file_type="signature")
+
 
     def send_to_guarantor(self):
         win['form_send_to_guarantor'].show_form(self.voucher)
@@ -461,10 +468,14 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         both_genders_present = '1' in guarantor_genders and '2' in guarantor_genders
 
         # Enable or disable buttons based on voucher status
+        self.pushButtonAddGuarantorSignature.hide()
         self.pushButtonSignAsGuarantor.hide()
         self.pushButtonSignAsCreator.hide()
         self.pushButtonSendToGuarantor.hide()
         self.pushButtonRecover.hide()
+        if own_voucher and not enough_guarantors and not trashed_voucher:
+            self.pushButtonAddGuarantorSignature.show()
+
         if own_voucher and not enough_guarantors and not trashed_voucher:
             self.pushButtonSendToGuarantor.show()
 
@@ -591,6 +602,9 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         self.setWindowTitle(f"eMinuto Details - Profil: {user_profile.profile_name}")
         self.show()
         self.raise_()
+        # close other forms and dialog which depend on voucher
+        win['form_sign_as_guarantor'].close()
+        win['form_send_to_guarantor'].close()
 
         # if ready to sign as creator show message
         if not self.pushButtonSignAsCreator.isHidden():
@@ -1110,7 +1124,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         win['form_send_minuto'].show_init()
 
     def receiveMinutoTransaction(self):
-        open_data_file(transaction=True)
+        open_data_file(file_type="transaction")
 
     def copyUserIDToClipboard(self):
         clipboard = QApplication.clipboard()
@@ -1218,7 +1232,6 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.statusBar().showMessage(message, 5000)  # 5 seconds timeout
 
 
-#
 app = QApplication([])
 apply_global_styles(app)
 

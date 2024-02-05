@@ -54,6 +54,11 @@ class Ui_FormShowVoucher(object):
 
         self.horizontalLayout_3 = QHBoxLayout()
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.pushButtonAddGuarantorSignature = QPushButton(self.layoutWidget)
+        self.pushButtonAddGuarantorSignature.setObjectName(u"pushButtonAddGuarantorSignature")
+
+        self.horizontalLayout_3.addWidget(self.pushButtonAddGuarantorSignature)
+
         self.pushButtonSignAsCreator = QPushButton(self.layoutWidget)
         self.pushButtonSignAsCreator.setObjectName(u"pushButtonSignAsCreator")
 
@@ -107,6 +112,7 @@ class Ui_FormShowVoucher(object):
         FormShowVoucher.setWindowTitle(QCoreApplication.translate("FormShowVoucher", u"Gutscheindetails", None))
         self.labelInfoTextLeft.setText("")
         self.labelInfoTextRight.setText("")
+        self.pushButtonAddGuarantorSignature.setText(QCoreApplication.translate("FormShowVoucher", u"Erhaltene B\u00fcrgenunterschrift hinzuf\u00fcgen", None))
         self.pushButtonSignAsCreator.setText(QCoreApplication.translate("FormShowVoucher", u"Als Ersteller unterschreiben", None))
         self.pushButtonSignAsGuarantor.setText(QCoreApplication.translate("FormShowVoucher", u"Als B\u00fcrge unterschreiben", None))
         self.pushButtonSendToGuarantor.setText(QCoreApplication.translate("FormShowVoucher", u"An B\u00fcrge senden", None))

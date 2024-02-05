@@ -273,12 +273,19 @@ def dprint(*args, sep=' ', end='\n'):
     # Get the frame information
     frame_info = outer_frame[1]
 
-    # Extracting file name and line number
-    file_name = frame_info.filename.split('/')[-1]
+    # Extracting file path and line number
+    full_file_path = frame_info.filename
     line_number = frame_info.lineno
 
-    # Constructing the debug information
-    debug_info = f"{file_name}:{line_number} :"
+    # Get the current working directory (where the program was started)
+    base_dir = os.getcwd()
 
-    # Printing the debug information followed by the original print content
-    print(debug_info, *args, sep=sep, end=end)
+    # Make the file path relative to the base directory
+    # os.path.relpath() computes a relative filepath to the file from the current working directory.
+    relative_file_path = os.path.relpath(full_file_path, base_dir)
+
+    # Constructing the debug information with the relative file path
+    debug_info = f"{relative_file_path}:{line_number}"
+    print(debug_info) # Printing the debug information
+    # followed by the original print content
+    print(*args, sep=sep, end=end)

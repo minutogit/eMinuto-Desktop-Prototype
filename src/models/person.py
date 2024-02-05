@@ -237,6 +237,8 @@ class Person:
 
         if self.current_voucher is None:
             return None, "Keinen passenden Gutschein für die Bürgenunterschrift gefunden"
+        elif signature[0]['gender'] == 0:
+            return None, "Unterschrift kann nicht verwendet werden, da der Bürge kein Geschlecht angegeben hat."
         else:
             success, message = self.append_guarantor_signature(signature)
             if success:

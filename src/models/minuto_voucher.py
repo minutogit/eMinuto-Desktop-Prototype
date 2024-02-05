@@ -196,7 +196,6 @@ class MinutoVoucher(Serializable):
 
         return voucher
 
-
     def get_voucher_amount(self, sender_id, voucher=None):
         """
         Calculates the available amount of the last transaction of the voucher based on the sender_id.
@@ -247,7 +246,8 @@ class MinutoVoucher(Serializable):
                         elif dspender_id == previous_trans['recipient_id']:
                             return float(previous_trans['amount'])
 
-                    # For non-split or undefined t_type, return amount if sender_id matches recipient of the last transaction
+                    # For non-split or undefined t_type, return amount if sender_id matches recipient of the last
+                    # transaction
                     elif dspender_id == previous_trans['recipient_id']:
                         return float(previous_trans['amount'])
 
@@ -291,7 +291,7 @@ class MinutoVoucher(Serializable):
         """
         if voucher is None:
             voucher = self
-        data = self.get_voucher_data(type="voucher_id_hashing").encode()
+        data = voucher.get_voucher_data(type="voucher_id_hashing").encode()
         return get_hash(data)
 
     def verify_creator_signature(self, voucher=None, verbose=False):
@@ -411,7 +411,7 @@ class MinutoVoucher(Serializable):
                 print("Initial transaction verification failed.")
             return False
 
-        # to catch key erros when corrupt file
+        # to catch key errors when corrupt file
         try:
 
             # Loop through and verify each subsequent transaction
@@ -448,7 +448,8 @@ class MinutoVoucher(Serializable):
                 allowed_amount = float(previous_transaction['amount'])
                 if previous_transaction.get('t_type', '') == 'split' and current_transaction['sender_id'] == \
                         previous_transaction['sender_id']:
-                    # when after split transaction the sender will send again, the remaining amount of the prev. transaction is the allowed amount
+                    # when after split transaction the sender will send again, the remaining amount of the prev.
+                    # transaction is the allowed amount
                     allowed_amount = float(previous_transaction['sender_remaining_amount'])
                 if float(current_transaction['amount']) > allowed_amount:
                     if verbose:
@@ -614,3 +615,26 @@ def is_voucher_dict(data):
         'transactions', 'creation_date', 'voucher_id'
     ]
     return all(key in data for key in required_keys)
+
+def is_user_transaction_dict(data):
+    """
+    Checks if the dictionary contains all essential keys that are necessary to represent
+    a UserTransaction. This method is designed to identify if a given dictionary is likely
+    to be a representation of a UserTransaction instance. The method does not utilize all keys
+    as future versions might add new keys or discontinue the use of existing ones. To ensure
+    accurate classification of UserTransaction in the future, only the most critical keys, which are
+    likely to remain consistent, are checked.
+
+    Args:
+        data (dict): The dictionary to check.
+
+    Returns:
+        bool: True if the dictionary contains all essential keys, False otherwise.
+    """
+    # The most important parameters of the class, which are likely to always remain.
+    required_keys = [
+        'transaction_sender_id', 'transaction_recipient_id', 'transaction_amount', 'transaction_vouchers',
+        'transaction_successful'
+    ]
+    return all(key in data for key in required_keys)
+

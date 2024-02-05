@@ -60,6 +60,13 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
+       <widget class="QPushButton" name="pushButtonAddGuarantorSignature">
+        <property name="text">
+         <string>Erhaltene Bürgenunterschrift hinzufügen</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButtonSignAsCreator">
         <property name="text">
          <string>Als Ersteller unterschreiben</string>
