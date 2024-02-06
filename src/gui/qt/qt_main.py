@@ -1,7 +1,7 @@
 # qt_main.py
 import re
 
-from PySide6.QtCore import QSortFilterProxyModel, Qt, QSize
+from PySide6.QtCore import QSortFilterProxyModel, Qt, QSize, QModelIndex, QDateTime
 from PySide6.QtGui import QAction, QShowEvent, QIcon
 from PySide6.QtWidgets import QApplication, QStatusBar, QLabel, QHBoxLayout, QWidget, QPushButton, QFileDialog, \
     QCheckBox, QVBoxLayout
@@ -27,7 +27,7 @@ from src.models.minuto_voucher import MinutoVoucher, VoucherStatus
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import QAbstractItemView
 
-from src.services.utils import dprint
+from src.services.utils import dprint, display_balance, is_iso8601_datetime
 
 
 def open_data_file(file_type=""):
@@ -755,6 +755,24 @@ class CustomSortFilterProxyModel(QSortFilterProxyModel):
         # All words were found in at least one of the visible columns
         return True
 
+    def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
+        """
+        Reimplementation of the lessThan method to handle numerical sorting based on the Qt.UserRole.
+
+        :param left: The QModelIndex of the left item.
+        :param right: The QModelIndex of the right item.
+        :return: True if the left item is less than the right item; otherwise False.
+        """
+        leftData = self.sourceModel().data(left, Qt.UserRole)
+        rightData = self.sourceModel().data(right, Qt.UserRole)
+
+        # If both leftData and rightData are of type float or int, compare them as numbers
+        if isinstance(leftData, (float, int)) and isinstance(rightData, (float, int)):
+            return leftData < rightData
+
+        # Otherwise, fall back to the default implementation for other types (e.g., string comparison)
+        return super().lessThan(left, right)
+
 
 class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
     """
@@ -769,9 +787,9 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
 
         # Define table headers
         self.headers = [
-            "Gutschein-ID", "Ersteller", "Organisation", "Adresse", "Geschlecht",
-            "Betrag", "Beschreibung", "Fußnote", "Dienstleistungsangebot",
-            "Gültigkeit bis", "Region", "Koordinaten", "E-Mail", "Telefon",
+            "Gutschein-ID", "Betrag", "Betrag (verfügbar)", "Gültigkeit bis", "Ersteller",
+            "Organisation", "Adresse", "Geschlecht", "Dienstleistungsangebot",
+            "Region", "Koordinaten", "E-Mail", "Telefon",
             "Erstellungsdatum", "Testgutschein", "Bürgen",
             "Unterschrift des Erstellers", "Transaktionen"
         ]
@@ -912,17 +930,20 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         gender_text = {0: "Unbekannt", 1: "Männlich", 2: "Weiblich"}.get(voucher.creator_gender, "Unbekannt")
         test_voucher_text = "Ja" if voucher.is_test_voucher else "Nein"
         creator_signature_text = "Ja" if voucher.creator_signature else "Nein"
+        available_balance = self.create_non_editable_item(
+            (voucher.get_voucher_amount(user_profile.person.id))
+        )
+
         row = [
             self.create_non_editable_item(voucher.voucher_id),
+            self.create_non_editable_item(float(voucher.amount)),
+            available_balance,
+            self.create_non_editable_item(voucher.valid_until),
             self.create_non_editable_item(f"{voucher.creator_first_name} {voucher.creator_last_name}"),
             self.create_non_editable_item(voucher.creator_organization),
             self.create_non_editable_item(voucher.creator_address),
             self.create_non_editable_item(gender_text),
-            self.create_non_editable_item(str(voucher.amount)),
-            self.create_non_editable_item(voucher.description),
-            self.create_non_editable_item(voucher.footnote),
             self.create_non_editable_item(voucher.service_offer),
-            self.create_non_editable_item(voucher.valid_until),
             self.create_non_editable_item(voucher.region),
             self.create_non_editable_item(voucher.coordinates),
             self.create_non_editable_item(voucher.email),
@@ -935,14 +956,46 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         ]
         model.appendRow(row)
 
-    def create_non_editable_item(self, text):
+    def create_non_editable_item(self, value):
         """
         Creates a non-editable item for the table model.
-        :param text: The text content for the item.
+        :param value: The value for the item. Can be string, float, int, or ISO formatted datetime string.
         :return: The created QStandardItem.
         """
-        item = QStandardItem(str(text))
+        item = QStandardItem()
         item.setEditable(False)
+
+        if isinstance(value, float):
+            # Format the float to a string with 2 decimal places for display
+            display_text = "{:.2f}".format(value)
+            item.setText(display_text)
+
+            # Set the actual float value for sorting
+            item.setData(value, Qt.UserRole)
+
+            # Set text alignment to right and vertical center
+            item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        elif isinstance(value, str) and is_iso8601_datetime(value):
+            # Convert the ISO formatted string to a QDateTime object
+            datetime_obj = QDateTime.fromString(value, Qt.ISODateWithMs)
+
+            # Format the QDateTime object to a more readable string
+            display_text = datetime_obj.toString("yyyy-MM-dd HH:mm:ss")
+            item.setText(display_text)
+
+            # Set the QDateTime object for sorting
+            item.setData(datetime_obj, Qt.UserRole)
+
+            # Set text alignment to right and vertical center (optional)
+            item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        else:
+            item.setText(str(value))
+
+            # If value is an integer, also align it to the right
+            if isinstance(value, int):
+                item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
         return item
 
     def openContextMenu(self, position):

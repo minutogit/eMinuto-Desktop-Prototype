@@ -1,6 +1,7 @@
 # utils.py
 import inspect
 import json
+import re
 from datetime import datetime
 import os, random, string
 
@@ -93,6 +94,15 @@ def get_timestamp(years_to_add=0, end_of_year=False):
         future_time = future_time.replace(month=12, day=31, hour=23, minute=59, second=59, microsecond=999999)
 
     return future_time.isoformat() + "Z"
+
+def is_iso8601_datetime(string):
+    """
+    Checks if a string matches the ISO 8601 datetime format.
+    :param string: The string to check.
+    :return: True if the string is a valid ISO 8601 datetime, False otherwise.
+    """
+    iso8601_regex = r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$'
+    return bool(re.match(iso8601_regex, string))
 
 def get_years_valid(timestamp):
     """
