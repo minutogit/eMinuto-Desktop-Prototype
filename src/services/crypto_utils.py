@@ -23,6 +23,11 @@ def generate_seed():
     mnemo = Mnemonic("english")
     return mnemo.generate(strength=128)
 
+def check_word_seed(seed) -> bool:
+    """check if word seed is valid"""
+    mnemo = Mnemonic('english')
+    return mnemo.check(seed)
+
 def create_key_pair(seed_words):
     """ Creates a key pair from the seed. """
     mnemo = Mnemonic("english")

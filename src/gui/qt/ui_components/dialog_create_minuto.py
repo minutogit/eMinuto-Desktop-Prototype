@@ -159,13 +159,6 @@ class Ui_DialogCreateMinuto(object):
         self.horizontalLayout_test_voucher = QHBoxLayout(self.widget_creator_organization_3)
         self.horizontalLayout_test_voucher.setObjectName(u"horizontalLayout_test_voucher")
         self.horizontalLayout_test_voucher.setContentsMargins(0, 0, 0, 0)
-        self.label_region_2 = QLabel(self.widget_creator_organization_3)
-        self.label_region_2.setObjectName(u"label_region_2")
-        self.label_region_2.setMinimumSize(QSize(150, 0))
-        self.label_region_2.setFont(font)
-
-        self.horizontalLayout_test_voucher.addWidget(self.label_region_2)
-
         self.checkBox_is_test_voucher = QCheckBox(self.widget_creator_organization_3)
         self.checkBox_is_test_voucher.setObjectName(u"checkBox_is_test_voucher")
         sizePolicy1 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -378,8 +371,7 @@ class Ui_DialogCreateMinuto(object):
         self.lineEdit_amount.setInputMask(QCoreApplication.translate("DialogCreateMinuto", u"99999", None))
         self.lineEdit_amount.setText("")
         self.lineEdit_amount.setPlaceholderText(QCoreApplication.translate("DialogCreateMinuto", u"1000", None))
-        self.label_region_2.setText(QCoreApplication.translate("DialogCreateMinuto", u"Testgutschein?", None))
-        self.checkBox_is_test_voucher.setText(QCoreApplication.translate("DialogCreateMinuto", u"Als Testgutschein markieren", None))
+        self.checkBox_is_test_voucher.setText(QCoreApplication.translate("DialogCreateMinuto", u"Als Testgutschein nutzen (ohne Wert)", None))
         self.label_phone.setText(QCoreApplication.translate("DialogCreateMinuto", u"Telefon", None))
         self.label_email.setText(QCoreApplication.translate("DialogCreateMinuto", u"eMail Adresse", None))
         self.label_own_data.setText(QCoreApplication.translate("DialogCreateMinuto", u"Eigene Daten", None))

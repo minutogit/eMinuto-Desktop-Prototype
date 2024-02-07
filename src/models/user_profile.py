@@ -356,6 +356,7 @@ class UserProfile(Serializable):
                                                       key=self.encryption_key.encode('utf-8'),
                                                       salt=b64d(self.encryption_salt))
         self.person = Person(self.person_data, seed=seed)
+        self._secure_file_handler = SecureFileHandler(self.person.key.private_key, self.person.id)
         self.save_profile_to_disk(second_password=seed)
         return True
 

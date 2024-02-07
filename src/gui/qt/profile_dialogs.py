@@ -7,7 +7,7 @@ from src.gui.qt.ui_components.dialog_profile import Ui_Form_Profile
 from src.gui.qt.ui_components.dialog_profile_create_selection import Ui_Dialog_Profile_Create_Selection
 from src.gui.qt.ui_components.dialog_profile_login import Ui_DialogProfileLogin
 from src.gui.qt.ui_components.dialog_generate_profile import Ui_DialogGenerateProfile
-from src.gui.qt.utils import show_message_box
+from src.gui.qt.utils import show_message_box, show_yes_no_box
 from src.models.user_profile import user_profile
 from src.services.crypto_utils import generate_seed
 from src.services.utils import is_password_valid
@@ -57,6 +57,7 @@ class Dialog_Generate_Profile(QMainWindow, Ui_DialogGenerateProfile):
 
 class Dialog_Profile_Login(QMainWindow, Ui_DialogProfileLogin):
     profileLogin = Signal()
+    overwritePassword = Signal()
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -64,6 +65,7 @@ class Dialog_Profile_Login(QMainWindow, Ui_DialogProfileLogin):
         self.lineEdit_entered_password.returnPressed.connect(self.check_password)
 
         self.lineEdit_entered_password.textChanged.connect(self.on_password_text_changed)
+        self.failed_attempts = 0
 
     def on_password_text_changed(self, text):
         # Setzt das Label nur zurück, wenn der Benutzer etwas eingibt
@@ -73,17 +75,27 @@ class Dialog_Profile_Login(QMainWindow, Ui_DialogProfileLogin):
     def check_password(self):
         password = self.lineEdit_entered_password.text()
         if not user_profile.init_existing_profile(password):
+            self.failed_attempts += 1  # Fehlgeschlagene Versuche erhöhen
             self.label_status.setText("Passwort falsch")
             self.lineEdit_entered_password.clear()
             self.lineEdit_entered_password.setFocus()
+
+            if self.failed_attempts % 3 == 0:
+                if show_yes_no_box("Passwort vergessen?", "Soll ein neues Passwort gesetzt werden?"):
+                    self.label_status.setText("")
+                    self.overwritePassword.emit()
+                    self.close()
             return
+
+        self.failed_attempts = 0
         self.lineEdit_entered_password.clear()
-        #frm_main_window.profile_login()
-        self.profileLogin.emit()  # emit signal
+        self.profileLogin.emit()  # Signal senden
         self.close()
 
     def login(self):
+        self.label_status.setText("")
         self.lineEdit_entered_password.setFocus()
+        self.failed_attempts = 0
         self.show()
 
 

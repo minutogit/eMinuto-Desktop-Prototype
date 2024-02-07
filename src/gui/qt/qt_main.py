@@ -17,15 +17,18 @@ from src.gui.qt.ui_components.main_window import Ui_MainWindow
 from src.gui.qt.ui_components.form_send_to_guarantor import Ui_FormSendToGuarantor
 from src.gui.qt.ui_components.form_sign_as_guarantor import Ui_FormSignVoucherAsGuarantor
 from src.gui.qt.ui_components.form_send_minuto import Ui_FormSendMinuto
-from src.services.crypto_utils import verify_user_ID
+from src.gui.qt.ui_components.dialog_forgot_password import Ui_DialogForgotPassword
+from src.services.crypto_utils import verify_user_ID, check_word_seed
 
 from src.gui.qt.utils import apply_global_styles, show_message_box, show_yes_no_box, DecimalFormatValidator
 from src.models.user_profile import user_profile
 from src.models.minuto_voucher import MinutoVoucher, VoucherStatus
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import QAbstractItemView
+from src import config
 
-from src.services.utils import dprint, display_balance, is_iso8601_datetime
+
+from src.services.utils import dprint, display_balance, is_iso8601_datetime, is_password_valid
 
 
 def open_data_file(file_type=""):
@@ -54,6 +57,38 @@ def open_data_file(file_type=""):
         show_message_box("Info", info_msg) # display info to user
         if voucher is not None:
             win['form_show_voucher'].show_voucher(voucher)
+
+class DialogForgotPassword(QMainWindow, Ui_DialogForgotPassword):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.pushButton_save_new_password.clicked.connect(self.overwrite_old_password)
+
+    def overwrite_old_password(self):
+        seed = self.lineEdit_seed_words.text().strip()
+        password = self.lineEdit_new_password.text()
+        password_retyped = self.lineEdit_new_password_retyped.text()
+
+        if not is_password_valid(password) and not config.TEST_MODE:
+            show_message_box("Fehler!", "Passwort muss mindestens 8 Zeichen haben.")
+            return
+
+        if password != password_retyped:
+            show_message_box("Fehler", "Die Passwörter sind müssen gleich sein.")
+            return
+
+        if not check_word_seed(seed):
+            show_message_box("Fehler", "Die Schlüsselwörter sind nicht korrekt.")
+            return
+
+        if not user_profile.recover_password_with_seed(seed, password):
+            show_message_box("Fehler", "Die Schlüsselwörter sind nicht korrekt.")
+            return
+        else:
+            self.close()
+            show_message_box("Passwort geändert", "Das Passwort wurde erfolgreich geändert.")
+            frm_main_window.profile_logout()
+            frm_main_window.dialog_profile_login.login()
 
 
 class FormSendMinuto(QMainWindow, Ui_FormSendMinuto):
@@ -1044,8 +1079,6 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
 
 
 
-
-
 class Frm_Mainwin(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
@@ -1055,6 +1088,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.dialog_generate_profile.profileCreated.connect(self.onProfileCreated)
         self.dialog_profile_login = Dialog_Profile_Login()
         self.dialog_profile_login.profileLogin.connect(self.profile_login)
+        self.dialog_profile_login.overwritePassword.connect(self.forgot_password)
         self.dialog_profile = Dialog_Profile()
         self.dialog_profile.frm_main_window_update_values.connect(self.update_values)
         self.dialog_profile_create_selection = Dialog_Profile_Create_Selection()
@@ -1089,6 +1123,10 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
 
         super().closeEvent(event)
 
+    def forgot_password(self):
+        win['dialog_forgot_password'].show()
+
+
     def sendMinuto(self):
         win['form_send_minuto'].show_init()
 
@@ -1101,7 +1139,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
 
     def onProfileCreated(self):
         self.profile_logout()
-        win['dialog_profile_login'].show()
+        self.dialog_profile_login.show()
 
     def update_values(self):
         self.setWindowTitle(f"eMinuto - Profil: {user_profile.profile_name}")
@@ -1173,6 +1211,9 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
             hide(self.actionCreateProfile)
 
         if profile_exists and not profile_initialized:
+            self.label_user_id.setText("")
+            self.lineEdit_own_balance.setText("0")
+            self.lineEdit_other_balance.setText("0")
             show(self.actionProfileLogin)
 
             hide(self.actionEditProfile)
@@ -1212,6 +1253,7 @@ win = {
     'form_show_raw_data': FormShowRawData(),
     'dialog_create_minuto': Dialog_Create_Minuto(),
     'dialog_voucher_list': DialogVoucherList(),
+    'dialog_forgot_password': DialogForgotPassword(),
     'form_show_voucher': FormShowVoucher()
 }
 

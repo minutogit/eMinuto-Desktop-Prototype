@@ -303,24 +303,6 @@
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_test_voucher">
     <item>
-     <widget class="QLabel" name="label_region_2">
-      <property name="minimumSize">
-       <size>
-        <width>150</width>
-        <height>0</height>
-       </size>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>11</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Testgutschein?</string>
-      </property>
-     </widget>
-    </item>
-    <item>
      <widget class="QCheckBox" name="checkBox_is_test_voucher">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -334,7 +316,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Als Testgutschein markieren</string>
+       <string>Als Testgutschein nutzen (ohne Wert)</string>
       </property>
      </widget>
     </item>
