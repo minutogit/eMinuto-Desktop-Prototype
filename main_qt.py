@@ -21,9 +21,9 @@ def main():
     # Application's main logic
     qt_main.frm_main_window.show()
     if user_profile.profile_exists():
-        qt_main.win['dialog_profile_login'].show()
+        qt_main.frm_main_window.dialog_profile_login.show()
     else:
-        qt_main.win['dialog_profile_create_selection'].show()
+        qt_main.frm_main_window.dialog_profile_create_selection.show()
 
     app.exec()
 

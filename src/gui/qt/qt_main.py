@@ -7,11 +7,9 @@ from PySide6.QtWidgets import QApplication, QStatusBar, QLabel, QHBoxLayout, QWi
     QCheckBox, QVBoxLayout
 from PySide6.QtWidgets import QMainWindow, QMenu, QHeaderView
 
-from src.gui.qt.profile_dialogs import Dialog_Generate_Profile
+from src.gui.qt.profile_dialogs import Dialog_Generate_Profile, Dialog_Profile_Login, Dialog_Profile, \
+    Dialog_Profile_Create_Selection
 from src.gui.qt.ui_components.dialog_create_minuto import Ui_DialogCreateMinuto
-from src.gui.qt.ui_components.dialog_profile import Ui_Form_Profile
-from src.gui.qt.ui_components.dialog_profile_create_selection import Ui_Dialog_Profile_Create_Selection
-from src.gui.qt.ui_components.dialog_profile_login import Ui_DialogProfileLogin
 from src.gui.qt.ui_components.dialog_voucher_list import Ui_DialogVoucherList
 from src.gui.qt.ui_components.form_show_raw_data import Ui_FormShowRawData
 from src.gui.qt.ui_components.form_show_voucher import Ui_FormShowVoucher
@@ -1045,112 +1043,30 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         self.raise_()
 
 
-class Dialog_Profile_Login(QMainWindow, Ui_DialogProfileLogin):
-    def __init__(self):
-        super().__init__()
-        self.setupUi(self)
-        self.pushButton_OK.clicked.connect(self.check_password)
-        self.lineEdit_entered_password.returnPressed.connect(self.check_password)
 
-        self.lineEdit_entered_password.textChanged.connect(self.on_password_text_changed)
-
-    def on_password_text_changed(self, text):
-        # Setzt das Label nur zurück, wenn der Benutzer etwas eingibt
-        if text:
-            self.label_status.setText("")
-
-    def check_password(self):
-        password = self.lineEdit_entered_password.text()
-        if not user_profile.init_existing_profile(password):
-            self.label_status.setText("Passwort falsch")
-            self.lineEdit_entered_password.clear()
-            self.lineEdit_entered_password.setFocus()
-            return
-        self.lineEdit_entered_password.clear()
-        frm_main_window.profile_login()
-        self.close()
-
-    def login(self):
-        self.lineEdit_entered_password.setFocus()
-        self.show()
-
-
-class Dialog_Profile(QMainWindow, Ui_Form_Profile):
-    def __init__(self):
-        super().__init__()
-        self.setupUi(self)
-
-        self.pushButton_save.clicked.connect(self.save_profile)
-        self.pushButton_close.clicked.connect(self.close)
-
-    def init_and_show(self):
-        self.lineEdit_profile_name.setText(user_profile.profile_name)
-        self.lineEdit_first_name.setText(user_profile.person_data['first_name'])
-        self.lineEdit_last_name.setText(user_profile.person_data['last_name'])
-        self.lineEdit_organization.setText(user_profile.person_data['organization'])
-        self.comboBox_gender.setCurrentIndex(user_profile.person_data['gender'])
-        self.lineEdit_street.setText(user_profile.person_data['street'])
-        self.lineEdit_zip_code.setText(user_profile.person_data['zip_code'])
-        self.lineEdit_city.setText(user_profile.person_data['city'])
-        self.lineEdit_state_or_region.setText(user_profile.person_data['state_or_region'])
-        self.lineEdit_country.setText(user_profile.person_data['country'])
-        self.lineEdit_email.setText(user_profile.person_data['email'])
-        self.lineEdit_phone.setText(user_profile.person_data['phone'])
-        self.textEdit_service_offer.setText(user_profile.person_data['service_offer'])
-        self.lineEdit_coordinates.setText(user_profile.person_data['coordinates'])
-        self.show()
-        self.raise_()
-
-    def save_profile(self):
-        user_profile.profile_name = self.lineEdit_profile_name.text()
-        user_profile.person_data['first_name'] = self.lineEdit_first_name.text()
-        user_profile.person_data['last_name'] = self.lineEdit_last_name.text()
-        user_profile.person_data['organization'] = self.lineEdit_organization.text()
-        user_profile.person_data['street'] = self.lineEdit_street.text()
-        user_profile.person_data['zip_code'] = self.lineEdit_zip_code.text()
-        user_profile.person_data['city'] = self.lineEdit_city.text()
-        user_profile.person_data['state_or_region'] = self.lineEdit_state_or_region.text()
-        user_profile.person_data['country'] = self.lineEdit_country.text()
-        user_profile.person_data['gender'] = self.comboBox_gender.currentIndex()
-        user_profile.person_data['email'] = self.lineEdit_email.text()
-        user_profile.person_data['phone'] = self.lineEdit_phone.text()
-        user_profile.person_data['service_offer'] = self.textEdit_service_offer.toPlainText()
-        user_profile.person_data['coordinates'] = self.lineEdit_coordinates.text()
-        user_profile.person.set_person_data(user_profile.person_data)  # update person from person_data in profile
-        frm_main_window.update_values()
-        user_profile.save_profile_to_disk()
-
-
-class Dialog_Profile_Create_Selection(QMainWindow, Ui_Dialog_Profile_Create_Selection):
-    def __init__(self):
-        super().__init__()
-        self.setupUi(self)
-        self.setWindowTitle("Kein Profil gefunden")
-
-        self.pushButton_create_new_profile.clicked.connect(self.generate_new_profile)
-        self.pushButton_restore_exisitin_profile.clicked.connect(self.restore_profile)
-
-    def generate_new_profile(self):
-        self.close()
-        frm_main_window.dialog_generate_profile.show()
-
-    def restore_profile(self):
-        self.close()
 
 
 class Frm_Mainwin(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        # load porfile windows - connect signals
         self.dialog_generate_profile = Dialog_Generate_Profile()
         self.dialog_generate_profile.profileCreated.connect(self.onProfileCreated)
+        self.dialog_profile_login = Dialog_Profile_Login()
+        self.dialog_profile_login.profileLogin.connect(self.profile_login)
+        self.dialog_profile = Dialog_Profile()
+        self.dialog_profile.frm_main_window_update_values.connect(self.update_values)
+        self.dialog_profile_create_selection = Dialog_Profile_Create_Selection()
+        self.dialog_profile_create_selection.frm_main_window_generate_profile.connect(self.dialog_generate_profile.show)
+
 
         self.setWindowTitle(f"eMinuto")
         # menu actions
         self.actionCreateProfile.triggered.connect(self.dialog_generate_profile.show)
-        self.actionEditProfile.triggered.connect(win['dialog_profile'].init_and_show)
+        self.actionEditProfile.triggered.connect(self.dialog_profile.init_and_show)
         self.actionCreateMinuto.triggered.connect(win['dialog_create_minuto'].show)
-        self.actionProfileLogin.triggered.connect(win['dialog_profile_login'].login)
+        self.actionProfileLogin.triggered.connect(self.dialog_profile_login.login)
         self.actionProfileLogout.triggered.connect(self.profile_logout)
         self.actionVoucherList.triggered.connect(win['dialog_voucher_list'].init_show)
         self.actionOpenFile.triggered.connect(open_data_file)
@@ -1294,9 +1210,6 @@ win = {
     'form_sign_as_guarantor': FormSignAsGuarantor(),
     'form_send_to_guarantor': FormSendToGuarantor(),
     'form_show_raw_data': FormShowRawData(),
-    'dialog_profile_login': Dialog_Profile_Login(),
-    'dialog_profile_create_selection': Dialog_Profile_Create_Selection(),
-    'dialog_profile': Dialog_Profile(),
     'dialog_create_minuto': Dialog_Create_Minuto(),
     'dialog_voucher_list': DialogVoucherList(),
     'form_show_voucher': FormShowVoucher()
