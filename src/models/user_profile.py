@@ -161,7 +161,9 @@ class UserProfile(Serializable):
                         return_info = ("Transaktion konnte nicht empfangen werden, da die enthaltenen Gutscheine schon "
                                        "existieren. (Alte bereits empfangene Transaktion?)")
                     else: # avoid adding same voucher again (possible if try to load same transaction again)
-                        for voucher in self.person.voucherlist[VoucherStatus.TEMP.value]:
+                        # Iterate over a copy to avoid errors from modifying the list during iteration.
+                        temp_voucher_list = self.person.voucherlist[VoucherStatus.TEMP.value][:]
+                        for voucher in temp_voucher_list:
                             # Retrieve and store the local voucher ID
                             local_id, _ = voucher.get_local_voucher_id(self.person.id)
 
