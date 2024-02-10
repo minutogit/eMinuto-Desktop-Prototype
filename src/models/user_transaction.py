@@ -1,5 +1,6 @@
 # user_transaction.py
 from src.models.voucher_transaction import VoucherTransaction
+from src.services.crypto_utils import get_hash
 from src.services.utils import dprint, amount_precision, Serializable, get_timestamp
 from src.models.minuto_voucher import VoucherStatus, MinutoVoucher
 
@@ -14,6 +15,7 @@ class UserTransaction(Serializable):
         self.transaction_purpose = ""
         self.transaction_start_timestamp = ""
         self.transaction_end_timestamp = ""
+        self.transaction_id = ""
         self.transaction_vouchers = []
         self.transaction_successful = False
         self.transaction_failure_reason = ""
@@ -66,7 +68,7 @@ class UserTransaction(Serializable):
 
         user_transaction.transaction_successful = True
         user_transaction.transaction_end_timestamp = get_timestamp()
-        #dprint(user_transaction)
+        user_transaction.calculate_transaction_id()
         return user_transaction
 
     def receive_transaction_from_user(self, transaction, person, verbose=False, receive_temp = False):
@@ -103,6 +105,8 @@ class UserTransaction(Serializable):
                     voucher_status = voucher.voucher_status(person.id)
                     person.voucherlist[voucher_status.value].append(voucher) # append to the relevant list
                 transaction.transaction_amount += v_amount
+        # recalculate transaction_id (if not set or changed by sender, not critical but uniqe id needed for management)
+        transaction.calculate_transaction_id()
         return True  # Transaction successfully received
 
     def return_transaction_failure(self, failure_reason=""):
@@ -123,6 +127,19 @@ class UserTransaction(Serializable):
         self.transaction_successful = False
         self.transaction_failure_reason = failure_reason
         return self
+
+
+    def calculate_transaction_id(self):
+        """
+        Generates a unique transaction_id by hashing all transaction attributes except for the transaction_id itself.
+        This hash is a combination of sender ID, recipient ID, amount, purpose, start timestamp, and end timestamp.
+        """
+        combined_data = (self.transaction_sender_id + self.transaction_recipient_id +
+                         str(self.transaction_amount) + self.transaction_purpose +
+                         self.transaction_start_timestamp + self.transaction_end_timestamp)
+
+        data_bytes = combined_data.encode()
+        self.transaction_id = get_hash(data_bytes)
 
 
     def to_dict(self):

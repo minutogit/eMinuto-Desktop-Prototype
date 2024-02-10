@@ -57,6 +57,10 @@ class UserProfile(Serializable):
         # won't be stored on disk (excluded in the self.to_dict method). It is initialized at startup.
         self.vouchers = {}
 
+        # Initialize the transaction management dictionary
+        self.transactions = {}
+
+
     def init_existing_profile(self,password):
         if not self.load_profile_from_disk(password):
             return False
@@ -64,6 +68,7 @@ class UserProfile(Serializable):
         self.person = Person(self.person_data, seed=seed)
         self._secure_file_handler = SecureFileHandler(self.person.key.private_key, self.person.id) # prvate key needed for encrytion with other users
         self.read_vouchers_from_disk()
+        self.read_transactions_from_disk()
         return True
 
     def read_vouchers_from_disk(self):
@@ -86,6 +91,24 @@ class UserProfile(Serializable):
                         self.open_voucher(full_file_path, trashed=True)
                     else:
                         self.open_voucher(full_file_path)
+
+
+    def read_transactions_from_disk(self):
+        """
+        Reads done transactoin from disk
+        """
+        import os
+        folder_name = "transactions"  # folder name where done transaction are located
+        folder_path = os.path.join(self.data_folder, folder_name)
+        os.makedirs(folder_path, exist_ok=True)
+
+        # List all files in the directory
+        for filename in os.listdir(folder_path):
+            # Check if the file is a .mt file
+            if filename.endswith('.mt'):
+                full_file_path = os.path.join(folder_path, filename)
+                self.open_transaction(full_file_path) # adds transaction to transaction manaagement list
+
 
     def open_file(self, file_path):
         """
@@ -157,6 +180,8 @@ class UserProfile(Serializable):
                                          for voucher in self.person.voucherlist[VoucherStatus.TEMP.value])
 
                     # if there are existing vouchers in the transaction don't import vouchers of transaction
+                    # todo can be change to check user_transaction_id
+                    #  and keep exisiting voucher check  if local transaction files deleted
                     if existing_vouchers:
                         return_info = ("Transaktion konnte nicht empfangen werden, da die enthaltenen Gutscheine schon "
                                        "existieren. (Alte bereits empfangene Transaktion?)")
@@ -171,6 +196,7 @@ class UserProfile(Serializable):
                             self.vouchers[id(voucher)] = {'local_vid': local_id, 'file_path': None, 'trashed': False}
                             # Todo: Ask user if store vouchers
                             self.save_voucher_to_disk(voucher)
+                        self.save_transaction_to_disk(transaction_object)
                         return_info = f"Transaktion mit {transaction_object.transaction_amount} Minuto erfolgreich empfangen"
 
                     self.person.voucherlist[VoucherStatus.TEMP.value] = []  # Clean temp list
@@ -246,6 +272,62 @@ class UserProfile(Serializable):
                 self.person.voucherlist[voucher_status.value].append(self.person.current_voucher)
                 self.person.current_voucher = None  # Reset the current voucher
 
+    def add_transaction_to_management_list(self, transaction):
+        """
+        Adds a given transaction to the management list (self.transactions) with all relevant details.
+
+        Args:
+            transaction (UserTransaction): The transaction object to be added.
+        """
+        transaction_id = transaction.transaction_id
+        transaction_sender = transaction.transaction_sender_id
+        transaction_recipient = transaction.transaction_recipient_id
+        transaction_amount = transaction.transaction_amount
+        transaction_purpose = transaction.transaction_purpose
+        transaction_time = transaction.transaction_end_timestamp
+
+        self.transactions[transaction_id] = {
+            'id': transaction_id,
+            'sender': transaction_sender,
+            'recipient': transaction_recipient,
+            'amount': transaction_amount,
+            'purpose': transaction_purpose,
+            'time': transaction_time,
+            'transaction_object': transaction  # Needed for operations like file creation to resend transactions.
+        }
+
+
+
+    def open_transaction(self, file_path):
+        """
+        Opens and reads a transaction file at startup from transaction directory (not used for new send or received transactions).
+
+        Args:
+            file_path (str): The path of the file to be opened.
+
+       """
+
+        file_content = read_file_content(file_path)
+
+        # Decrypt the content if it's encrypted
+        if is_encrypted_string(file_content):
+            try:
+                file_content = symmetric_decrypt(file_content, key=self.file_enc_key)
+            except Exception as e:
+                print(f"Local transaction decryption failed: {e}")
+
+        # Validate and process the voucher content
+        if is_valid_object(file_content):
+            # Convert string to dictionary if necessary
+            if isinstance(file_content, str):
+                file_content = convert_json_string_to_dict(file_content)
+
+            # Process the transaction if it's in the correct format
+            if is_user_transaction_dict(file_content):
+                transaction = UserTransaction.from_dict(file_content)
+                self.add_transaction_to_management_list(transaction)
+
+
     def delete_voucher(self, voucher):
         """
         Permanently deletes a voucher file, making recovery impossible, and removes it from the user's trashed voucher list and management list.
@@ -313,6 +395,16 @@ class UserProfile(Serializable):
         if old_path:
             self._secure_file_handler.delete_file(old_path)
 
+
+    def save_transaction_to_disk(self, transaction:UserTransaction):
+        # save user transaction to disk
+        import os
+        transaction_folder = "transactions"
+        file_path = os.path.join(self.data_folder, transaction_folder)
+        transaction_name = f"eMinuto-transaction-{transaction.transaction_id[:16]}.mt"
+        self._secure_file_handler.encrypt_and_save(transaction, transaction_name, key=self.file_enc_key.encode('utf-8'), subfolder=file_path)
+
+
     def send_minuto(self, amount, recipient_id):
         # creates a transaction and returns an encrypted transaction file
 
@@ -324,9 +416,9 @@ class UserProfile(Serializable):
         for voucher in transaction.transaction_vouchers:
             self.save_voucher_to_disk(voucher)
 
-
-        # todo save transaction backup to disk (to send again, store file again for sending)
-        # todo gui with transaction list
+        self.save_transaction_to_disk(transaction)
+        self.add_transaction_to_management_list(transaction)
+        # todo gui with transaction list and with (send again feature)
         return transaction
 
     def create_new_profile(self, profile_name, first_name, last_name, organization, seed, profile_password):
