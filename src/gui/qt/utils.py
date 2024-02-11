@@ -1,4 +1,8 @@
+from PySide6.QtCore import QDateTime
 from PySide6.QtWidgets import QMessageBox
+
+from src.services.utils import dprint
+
 
 def show_message_box(title, text):
     dlg = QMessageBox()
@@ -41,7 +45,7 @@ def apply_global_styles(app):
 
 
 # utils.py
-from PySide6.QtGui import QValidator
+from PySide6.QtGui import QValidator, QStandardItem, Qt, QBrush, QFont, QColor
 import re
 
 
@@ -81,3 +85,58 @@ class DecimalFormatValidator(QValidator):
         :return: The corrected string.
         """
         return input_str.replace(',', '.')
+
+def is_iso8601_datetime(value):
+    """Check if the string value is in ISO 8601 datetime format."""
+    datetime_obj = QDateTime.fromString(value, Qt.ISODateWithMs)
+    return datetime_obj.isValid()
+
+
+def format_table_cell(value, color=False):
+    """
+    Creates a non-editable QStandardItem for display in a PyQt TableView.
+
+    Args:
+        value: The value to be displayed in the table cell. Can be of type string, float, int, or an ISO formatted datetime string.
+        color: A boolean indicating if the value should be color-coded based on its value (applies to float types).
+
+    Returns:
+        A QStandardItem configured for display, with appropriate formatting based on the value type.
+    """
+    item = QStandardItem()  # Create a new QStandardItem.
+    item.setEditable(False)  # Make the item non-editable.
+
+    if isinstance(value, float):
+        # Format float values to a string with 2 decimal places.
+        display_text = "{:.2f}".format(value)
+        item.setText(display_text)
+        # Align float values to the right, making them easier to compare visually.
+        item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        if color:  # Apply color and bold font for float values based on their magnitude.
+            font = QFont()
+            font.setBold(True)
+            item.setFont(font)
+
+            if value > 0:
+                item.setForeground(QBrush(QColor(0, 150, 0))) # dark green
+            elif value < 0:
+                item.setForeground(QBrush(Qt.red))
+            else:  # value == 0
+                item.setForeground(QBrush(Qt.black))
+
+    elif isinstance(value, str) and is_iso8601_datetime(value):
+        # Convert ISO formatted datetime strings to a more readable format.
+        datetime_obj = QDateTime.fromString(value, Qt.ISODateWithMs)
+        display_text = datetime_obj.toString("yyyy-MM-dd HH:mm:ss")
+        item.setText(display_text)
+        # Align datetime values to the right.
+        item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+    else:
+        # For other types, simply convert the value to a string.
+        item.setText(str(value))
+        # Integer values are also right-aligned for consistency.
+        if isinstance(value, int):
+            item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+    return item  # Return the configured QStandardItem.

@@ -44,6 +44,8 @@ class Ui_MainWindow(object):
         self.actionVoucherList.setObjectName(u"actionVoucherList")
         self.actionOpenFile = QAction(MainWindow)
         self.actionOpenFile.setObjectName(u"actionOpenFile")
+        self.actionTransactions = QAction(MainWindow)
+        self.actionTransactions.setObjectName(u"actionTransactions")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.layoutWidget = QWidget(self.centralwidget)
@@ -216,6 +218,7 @@ class Ui_MainWindow(object):
         self.menuProfile.addAction(self.actionProfileLogout)
         self.menuMinuto.addAction(self.actionCreateMinuto)
         self.menuMinuto.addAction(self.actionVoucherList)
+        self.menuMinuto.addAction(self.actionTransactions)
 
         self.retranslateUi(MainWindow)
 
@@ -233,6 +236,7 @@ class Ui_MainWindow(object):
         self.actionCreateMinuto.setText(QCoreApplication.translate("MainWindow", u"Minuto sch\u00f6pfen", None))
         self.actionVoucherList.setText(QCoreApplication.translate("MainWindow", u"Gutscheinliste", None))
         self.actionOpenFile.setText(QCoreApplication.translate("MainWindow", u"Datei \u00f6ffnen", None))
+        self.actionTransactions.setText(QCoreApplication.translate("MainWindow", u"Transaktionen", None))
         self.label_username.setText("")
         self.label_user_id_text.setText(QCoreApplication.translate("MainWindow", u"ID:", None))
         self.label_user_id.setText("")

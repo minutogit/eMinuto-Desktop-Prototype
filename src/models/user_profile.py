@@ -197,6 +197,7 @@ class UserProfile(Serializable):
                             # Todo: Ask user if store vouchers
                             self.save_voucher_to_disk(voucher)
                         self.save_transaction_to_disk(transaction_object)
+                        self.add_transaction_to_management_list(transaction_object)
                         return_info = f"Transaktion mit {transaction_object.transaction_amount} Minuto erfolgreich empfangen"
 
                     self.person.voucherlist[VoucherStatus.TEMP.value] = []  # Clean temp list

@@ -4,23 +4,28 @@ import re
 from PySide6.QtCore import QSortFilterProxyModel, Qt, QSize, QModelIndex, QDateTime
 from PySide6.QtGui import QAction, QShowEvent, QIcon
 from PySide6.QtWidgets import QApplication, QStatusBar, QLabel, QHBoxLayout, QWidget, QPushButton, QFileDialog, \
-    QCheckBox, QVBoxLayout
+    QCheckBox, QVBoxLayout, QMessageBox
 from PySide6.QtWidgets import QMainWindow, QMenu, QHeaderView
 
 from src.gui.qt.profile_dialogs import Dialog_Generate_Profile, Dialog_Profile_Login, Dialog_Profile, \
     Dialog_Profile_Create_Selection
 from src.gui.qt.ui_components.dialog_create_minuto import Ui_DialogCreateMinuto
 from src.gui.qt.ui_components.dialog_voucher_list import Ui_DialogVoucherList
+from src.gui.qt.ui_components.dialog_transaction_list import Ui_DialogTransactionList
+
 from src.gui.qt.ui_components.form_show_raw_data import Ui_FormShowRawData
 from src.gui.qt.ui_components.form_show_voucher import Ui_FormShowVoucher
+from src.gui.qt.ui_components.form_show_transaction import Ui_FormShowTransaction
 from src.gui.qt.ui_components.main_window import Ui_MainWindow
 from src.gui.qt.ui_components.form_send_to_guarantor import Ui_FormSendToGuarantor
 from src.gui.qt.ui_components.form_sign_as_guarantor import Ui_FormSignVoucherAsGuarantor
 from src.gui.qt.ui_components.form_send_minuto import Ui_FormSendMinuto
 from src.gui.qt.ui_components.dialog_forgot_password import Ui_DialogForgotPassword
+from src.models.user_transaction import UserTransaction
 from src.services.crypto_utils import verify_user_ID, check_word_seed
 
-from src.gui.qt.utils import apply_global_styles, show_message_box, show_yes_no_box, DecimalFormatValidator
+from src.gui.qt.utils import apply_global_styles, show_message_box, show_yes_no_box, DecimalFormatValidator, \
+    format_table_cell
 from src.models.user_profile import user_profile
 from src.models.minuto_voucher import MinutoVoucher, VoucherStatus
 from PySide6.QtGui import QStandardItemModel, QStandardItem
@@ -174,6 +179,7 @@ class FormSendMinuto(QMainWindow, Ui_FormSendMinuto):
 
 
     def show_init(self):
+        self.setWindowTitle(f"Minuto versenden - Profil: {user_profile.profile_name}")
         self.available_amount = user_profile.person.get_amount_of_all_vouchers()
         self.lineEdit_recipient_id.setText("")
         self.lineEdit_transfer_amount.setText("")
@@ -360,12 +366,15 @@ class FormShowRawData(QMainWindow, Ui_FormShowRawData):
         self.setupUi(self)
         self.pushButton_Close.clicked.connect(self.close)
 
-    def show_data(self, object):
+    def show_data(self, object, title_prefix=""):
         import json
-        # Convert the object's dictionary to a JSON-formatted string
-        json_representation = json.dumps(object.__dict__, sort_keys=False, indent=4, ensure_ascii=False)
+        # Zuerst das Objekt in ein serialisierbares Dictionary umwandeln
+        serializable_representation = object.to_dict()
+
+        # Convert the dictionary to a JSON-formatted string
+        json_representation = json.dumps(serializable_representation, sort_keys=False, indent=4, ensure_ascii=False)
         self.textEdit_text_data.setText(json_representation)
-        self.setWindowTitle(f"eMinuto Rohdaten - Profil: {user_profile.profile_name}")
+        self.setWindowTitle(f"{title_prefix}Rohdaten - Profil: {user_profile.profile_name}")
         self.show()
         self.raise_()
 
@@ -562,7 +571,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
 
     def show_raw_data(self):
         """ Display raw data of the voucher. """
-        win['form_show_raw_data'].show_data(self.voucher)
+        win['form_show_raw_data'].show_data(self.voucher, "eMinuto-")
 
     def init_table(self, voucher: MinutoVoucher = None):
         if voucher is None:
@@ -644,11 +653,132 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
             show_message_box("Gutschein mit Unterschrift vervollständigen",
                              "Unterschreibe diesen Gutschein damit dieser genutzt werden kann.")
 
-    def create_non_editable_item(self, text):
-        """ Create a non-editable table item with the provided text. """
-        item = QStandardItem(str(text))
-        item.setEditable(False)
-        return item
+
+
+
+
+class FormShowTransaction(QMainWindow, Ui_FormShowTransaction):
+    """
+    FormShowVoucher class for displaying and managing voucher information.
+    """
+
+    def __init__(self):
+        """ Initialize the FormShowVoucher window. """
+        super().__init__()
+        self.setupUi(self)
+        self.voucher:MinutoVoucher() = None
+        self.pushButtonClose.clicked.connect(self.close)
+        self.pushButtonRawData.clicked.connect(self.show_raw_data)
+        self.pushButtonSaveTransactionFile.clicked.connect(self.save_transaction)
+        self.apply_stylesheet_to_buttons()
+        self.transaction: UserTransaction = None
+
+    def apply_stylesheet_to_buttons(self):
+        """ Apply custom stylesheet to buttons in the form. """
+        button_stylesheet = """
+                QPushButton {
+                    /* Stylesheet for normal button states */
+                }
+                QPushButton:disabled {
+                    background-color: #d3d3d3;
+                    color: #a0a0a0;
+                }
+            """
+        for button in self.findChildren(QPushButton):
+            button.setStyleSheet(button_stylesheet)
+
+
+    def show_raw_data(self):
+        """ Display raw data of the voucher. """
+        win['form_show_raw_data'].show_data(self.transaction, "Transaktions-")
+
+    def init_table(self, transaction:UserTransaction = None):
+        if transaction is None:
+            transaction = self.transaction
+
+        model = QStandardItemModel(self)
+        model.setColumnCount(2)
+        model.setHorizontalHeaderLabels(["Inhalt", "Wert"])
+
+        # Translate and display each voucher attribute
+        translations = {
+            'voucher_id': 'Gutschein-ID',
+            'creator_id': 'Ersteller-ID',
+            'creator_first_name': 'Vorname',
+            'creator_last_name': 'Nachname',
+            'creator_organization': 'Organisation',
+        }
+
+        for attr, value in vars(transaction).items():
+            translated_attr = translations.get(attr, attr)  # Translate or use original attribute name
+
+            # Convert value to a more human-readable format if necessary
+            if attr == 'creator_gender':
+                value = {0: "Unbekannt", 1: "Männlich", 2: "Weiblich"}.get(value, "Unbekannt")
+            elif attr == 'is_test_voucher':
+                value = "Ja" if value else "Nein"
+            elif isinstance(value, list):
+                value = str(len(value))  # For lists, show their length
+            elif attr == 'creator_signature':
+                value = "Unterschrieben" if value else "Nicht unterschrieben"
+
+            label_item = QStandardItem(translated_attr)
+            value_item = QStandardItem(str(value))
+            model.appendRow([label_item, value_item])
+
+        self.tableView_transaction.setModel(model)
+        self.tableView_transaction.verticalHeader().setVisible(False)
+        self.tableView_transaction.horizontalHeader().setVisible(True)
+        self.tableView_transaction.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tableView_transaction.setSelectionMode(QAbstractItemView.NoSelection)
+        self.tableView_transaction.setWordWrap(True)
+        self.tableView_transaction.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.tableView_transaction.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+
+    def save_transaction(self):
+        # saves the transaction to file (for sending agein to recipient)
+        recipient_id = self.transaction.transaction_recipient_id
+
+        if not show_yes_no_box("Minuto Transaktionsdatei speicher?", "Sollen die Minuto Transaktionsdatei gespeichert werden um sie dem Empfänger nochmal senden zu können?"):
+            return
+
+        if self.transaction.transaction_recipient_id == user_profile.person.id:
+            show_message_box("Fehler","Empfangene Transaktion kann nicht versendet werden.")
+            return
+
+        suggested_filename = f"eMinuto-Transaktion-an-{recipient_id[:6]}.mt"
+        file_filter = "Minuto Transaction (*.mt)"
+
+        # Open file save dialog
+        filename_with_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Transaktion speichern",
+            suggested_filename,
+            file_filter
+        )
+
+        # Check if the user has entered a file name
+        if filename_with_path:
+            # Encrypt and save the transaction
+            user_profile._secure_file_handler.encrypt_with_shared_secret_and_save(
+                self.transaction, filename_with_path, recipient_id, user_profile.person.id)
+
+
+
+    def show_transaction(self, transaction: UserTransaction):
+        """
+        Display transactoin details in a table view.
+        Translates attribute names and formats values for presentation.
+        """
+        self.transaction = transaction
+        self.pushButtonSaveTransactionFile.hide()
+        if transaction.transaction_recipient_id != user_profile.person.id:
+            self.pushButtonSaveTransactionFile.show()
+        self.init_table(transaction)
+        self.setWindowTitle(f"Transaktion Details - Profil: {user_profile.profile_name}")
+        self.show()
+        self.raise_()
+
 
 
 class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
@@ -963,73 +1093,32 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         gender_text = {0: "Unbekannt", 1: "Männlich", 2: "Weiblich"}.get(voucher.creator_gender, "Unbekannt")
         test_voucher_text = "Ja" if voucher.is_test_voucher else "Nein"
         creator_signature_text = "Ja" if voucher.creator_signature else "Nein"
-        available_balance = self.create_non_editable_item(
+        available_balance = format_table_cell(
             (voucher.get_voucher_amount(user_profile.person.id))
         )
 
         row = [
-            self.create_non_editable_item(voucher.voucher_id),
-            self.create_non_editable_item(float(voucher.amount)),
+            format_table_cell(voucher.voucher_id),
+            format_table_cell(float(voucher.amount)),
             available_balance,
-            self.create_non_editable_item(voucher.valid_until),
-            self.create_non_editable_item(f"{voucher.creator_first_name} {voucher.creator_last_name}"),
-            self.create_non_editable_item(voucher.creator_organization),
-            self.create_non_editable_item(voucher.creator_address),
-            self.create_non_editable_item(gender_text),
-            self.create_non_editable_item(voucher.service_offer),
-            self.create_non_editable_item(voucher.region),
-            self.create_non_editable_item(voucher.coordinates),
-            self.create_non_editable_item(voucher.email),
-            self.create_non_editable_item(voucher.phone),
-            self.create_non_editable_item(voucher.creation_date),
-            self.create_non_editable_item(test_voucher_text),
-            self.create_non_editable_item(str(len(voucher.guarantor_signatures))),
-            self.create_non_editable_item(creator_signature_text),
-            self.create_non_editable_item(str(len(voucher.transactions)))
+            format_table_cell(voucher.valid_until),
+            format_table_cell(f"{voucher.creator_first_name} {voucher.creator_last_name}"),
+            format_table_cell(voucher.creator_organization),
+            format_table_cell(voucher.creator_address),
+            format_table_cell(gender_text),
+            format_table_cell(voucher.service_offer),
+            format_table_cell(voucher.region),
+            format_table_cell(voucher.coordinates),
+            format_table_cell(voucher.email),
+            format_table_cell(voucher.phone),
+            format_table_cell(voucher.creation_date),
+            format_table_cell(test_voucher_text),
+            format_table_cell(str(len(voucher.guarantor_signatures))),
+            format_table_cell(creator_signature_text),
+            format_table_cell(str(len(voucher.transactions)))
         ]
         model.appendRow(row)
 
-    def create_non_editable_item(self, value):
-        """
-        Creates a non-editable item for the table model.
-        :param value: The value for the item. Can be string, float, int, or ISO formatted datetime string.
-        :return: The created QStandardItem.
-        """
-        item = QStandardItem()
-        item.setEditable(False)
-
-        if isinstance(value, float):
-            # Format the float to a string with 2 decimal places for display
-            display_text = "{:.2f}".format(value)
-            item.setText(display_text)
-
-            # Set the actual float value for sorting
-            item.setData(value, Qt.UserRole)
-
-            # Set text alignment to right and vertical center
-            item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-        elif isinstance(value, str) and is_iso8601_datetime(value):
-            # Convert the ISO formatted string to a QDateTime object
-            datetime_obj = QDateTime.fromString(value, Qt.ISODateWithMs)
-
-            # Format the QDateTime object to a more readable string
-            display_text = datetime_obj.toString("yyyy-MM-dd HH:mm:ss")
-            item.setText(display_text)
-
-            # Set the QDateTime object for sorting
-            item.setData(datetime_obj, Qt.UserRole)
-
-            # Set text alignment to right and vertical center (optional)
-            item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        else:
-            item.setText(str(value))
-
-            # If value is an integer, also align it to the right
-            if isinstance(value, int):
-                item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-        return item
 
     def openContextMenu(self, position):
         """
@@ -1078,6 +1167,202 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         self.raise_()
 
 
+class DialogTransactionList(QMainWindow, Ui_DialogTransactionList):
+    """
+    A main window class that handles the display and filtering of transactions in a table view.
+    It allows for dynamic filtering based on text input and visible table columns.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)  # This method needs to be defined elsewhere, typically setup by Qt Designer UI files.
+        self.headers = []
+        self.column_translations = {
+            'id': "Transaktions-ID",
+            'sender': "Sender",
+            'recipient': "Empfänger",
+            'amount': "Betrag",
+            'purpose': "Zweck",
+            'time': "Zeit"
+        }
+        self.transaction_mapping = {}
+        self.isTableViewConnected = False
+        
+        # Setup context menu for table headers
+        self.tableView_transactions.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tableView_transactions.horizontalHeader().customContextMenuRequested.connect(self.openContextMenu)
+
+        # Initialize the base model
+        self.model = QStandardItemModel()
+        #self.model.setHorizontalHeaderLabels(self.headers)
+
+        self.base_proxy_model = CustomSortFilterProxyModel()  # This needs to be defined
+        self.base_proxy_model.setSourceModel(self.model)
+        self.base_proxy_model.setDynamicSortFilter(True)
+
+        # Set the top proxy model for the TableView
+        self.tableView_transactions.setModel(self.base_proxy_model)
+        self.tableView_transactions.setSortingEnabled(True)
+
+        self.add_filter()
+        self.lineEditFilter.textChanged.connect(self.apply_filter)
+
+        self.init_values()  # Populate the table with transactions
+
+    def get_visible_columns(self):
+        """
+        Returns a list of indexes of columns that are currently visible in the table view.
+        """
+        visible_columns = []
+        for i in range(self.model.columnCount()):
+            if not self.tableView_transactions.isColumnHidden(i):
+                visible_columns.append(i)
+        return visible_columns
+
+    def apply_filter(self):
+        """
+        Applies the filter based on the text in the filter input and the visible columns.
+        """
+        filter_text = self.lineEditFilter.text().lower()
+        self.base_proxy_model.set_filter_text(filter_text)
+        self.base_proxy_model.set_visible_columns(self.get_visible_columns())
+        self.tableView_transactions.setModel(self.base_proxy_model)
+
+    def add_filter(self):
+        """
+        Adjusted to handle transaction filtering for incoming and outgoing transactions.
+        """
+        # Simplify for the example; in real implementation, you would dynamically create these based on actual data
+        self.statusComboBox.addItem("Alle Transaktionen")
+        self.statusComboBox.addItem("Eingehend")
+        self.statusComboBox.addItem("Ausgehend")
+        # Connect comboBox changes to filter application or data reloading
+        self.statusComboBox.currentIndexChanged.connect(self.init_values)
+
+    def init_values(self):
+        """
+        Initializes the values in the table view based on the selected filter and transactions.
+        This implementation uses the index of the selection in the statusComboBox to determine
+        the filter to be applied, making it independent of the actual text, which is useful for localization.
+        """
+        self.setWindowTitle(f"Transaction List - Profile: {user_profile.profile_name}")
+
+        self.model.clear()  # Clear existing items from the table model.
+
+        # Determine the current filter based on the index of the selection in the statusComboBox.
+        current_filter_index = self.statusComboBox.currentIndex()
+
+        filtered_transactions = []
+        for transaction_id, transaction_details in user_profile.transactions.items():
+            if current_filter_index == 0:  # Index 0 corresponds to "All Transactions".
+                filtered_transactions.append((transaction_id, transaction_details))
+            elif current_filter_index == 1:  # Index 1 corresponds to "Incoming Transactions".
+                if transaction_details['recipient'] == user_profile.person.id:
+                    filtered_transactions.append((transaction_id, transaction_details))
+            elif current_filter_index == 2:  # Index 2 corresponds to "Outgoing Transactions".
+                if transaction_details['sender'] == user_profile.person.id:
+                    filtered_transactions.append((transaction_id, transaction_details))
+
+        # If there are any transactions to display, set up the table headers based on the keys of the first transaction
+        # and exclude 'transaction_object' from being displayed.
+        if filtered_transactions:
+            first_transaction = filtered_transactions[0][1]
+            headers_keys = [key for key in first_transaction.keys() if key != 'transaction_object']
+            self.headers = [self.column_translations.get(key, key) for key in headers_keys]
+            self.model.setHorizontalHeaderLabels(self.headers)
+
+        # Clearing the transaction mapping to ensure it's in sync with the currently displayed transactions.
+        self.transaction_mapping.clear()
+
+        # Populate the table with filtered transactions.
+        for transaction_id, transaction_details in filtered_transactions:
+            self.add_transaction_to_model(self.model, transaction_details)
+            # Update the transaction mapping for each transaction using its row index.
+            self.transaction_mapping[
+                self.model.indexFromItem(self.model.item(self.model.rowCount() - 1, 0)).row()] = transaction_id
+
+        # Apply the filter settings.
+        self.apply_filter()
+
+        # Set the updated model to the tableView_transactions.
+        self.tableView_transactions.setModel(self.base_proxy_model)
+        self.tableView_transactions.setSortingEnabled(True)
+
+        # Connect signals for handling table view interactions, ensuring they are only connected once.
+        if not self.isTableViewConnected:
+            self.tableView_transactions.doubleClicked.connect(self.on_table_view_clicked)
+            self.isTableViewConnected = True
+
+    def add_transaction_to_model(self, model, transaction):
+        """
+        Adds a transaction to the table model.
+        :param model: The table model to which the transaction will be added.
+        :param transaction: The transaction object to add.
+        """
+        amount = float(transaction['amount'])
+        if transaction['recipient'] != user_profile.person.id:
+            amount *= -1
+        row = [
+            format_table_cell(transaction['id']),
+            format_table_cell(transaction['sender']),
+            format_table_cell(transaction['recipient']),
+            format_table_cell(amount, color=True),
+            format_table_cell(transaction['purpose']),
+            format_table_cell(transaction['time']),
+        ]
+        model.appendRow(row)
+
+
+    def openContextMenu(self, position):
+        """
+        Opens a context menu at the header position if the click is a right-click.
+        :param position: The position where the context menu will be opened.
+        """
+        # Überprüfen, ob der Klick ein Rechtsklick war
+        if QApplication.mouseButtons() == Qt.RightButton:
+            menu = QMenu()
+            for i, header in enumerate(self.headers):
+                action = QAction(header, menu)
+                action.setCheckable(True)
+                action.setChecked(not self.tableView_transactions.isColumnHidden(i))
+                action.setData(i)
+                action.toggled.connect(self.toggleColumnVisibility)
+                menu.addAction(action)
+            menu.exec_(self.tableView_transactions.horizontalHeader().viewport().mapToGlobal(position))
+
+    def toggleColumnVisibility(self, visible):
+        """
+        Toggles the visibility of a column.
+        :param visible: A boolean indicating the desired visibility state.
+        """
+        column = self.sender().data()
+        if visible:
+            self.tableView_transactions.showColumn(column)
+        else:
+            self.tableView_transactions.hideColumn(column)
+
+    def on_table_view_clicked(self, index):
+        source_index = self.base_proxy_model.mapToSource(index)
+        if source_index.isValid():
+            row = source_index.row()
+            # Using the transaction_mapping to get the transaction_id
+            transaction_id = self.transaction_mapping.get(row)
+            if transaction_id:
+                # Access the transaction details directly from user_profile.transactions
+                transaction = user_profile.transactions.get(transaction_id)
+                transaction = transaction['transaction_object']
+                if transaction:
+                    win['form_show_transaction'].show_transaction(transaction)
+
+    def init_show(self):
+        """
+        Initializes and shows the main window.
+        """
+        self.init_values()
+        self.show()
+        self.raise_()
+
+
 
 class Frm_Mainwin(QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -1103,6 +1388,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.actionProfileLogin.triggered.connect(self.dialog_profile_login.login)
         self.actionProfileLogout.triggered.connect(self.profile_logout)
         self.actionVoucherList.triggered.connect(win['dialog_voucher_list'].init_show)
+        self.actionTransactions.triggered.connect(win['dialog_transaction_list'].init_show)
         self.actionOpenFile.triggered.connect(open_data_file)
 
         self.actionClose.triggered.connect(self.close)
@@ -1253,8 +1539,10 @@ win = {
     'form_show_raw_data': FormShowRawData(),
     'dialog_create_minuto': Dialog_Create_Minuto(),
     'dialog_voucher_list': DialogVoucherList(),
+    'dialog_transaction_list': DialogTransactionList(),
     'dialog_forgot_password': DialogForgotPassword(),
-    'form_show_voucher': FormShowVoucher()
+    'form_show_voucher': FormShowVoucher(),
+    'form_show_transaction': FormShowTransaction()
 }
 
 frm_main_window = Frm_Mainwin()

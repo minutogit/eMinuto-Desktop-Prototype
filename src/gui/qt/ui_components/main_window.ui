@@ -291,6 +291,7 @@
     </property>
     <addaction name="actionCreateMinuto"/>
     <addaction name="actionVoucherList"/>
+    <addaction name="actionTransactions"/>
    </widget>
    <addaction name="menuStart"/>
    <addaction name="menuMinuto"/>
@@ -340,6 +341,11 @@
   <action name="actionOpenFile">
    <property name="text">
     <string>Datei öffnen</string>
+   </property>
+  </action>
+  <action name="actionTransactions">
+   <property name="text">
+    <string>Transaktionen</string>
    </property>
   </action>
  </widget>
