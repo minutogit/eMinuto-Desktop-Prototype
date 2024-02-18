@@ -23,74 +23,77 @@ class Ui_FormSendMinuto(object):
     def setupUi(self, FormSendMinuto):
         if not FormSendMinuto.objectName():
             FormSendMinuto.setObjectName(u"FormSendMinuto")
-        FormSendMinuto.resize(811, 311)
-        self.layoutWidget = QWidget(FormSendMinuto)
-        self.layoutWidget.setObjectName(u"layoutWidget")
-        self.layoutWidget.setGeometry(QRect(10, 10, 791, 281))
-        self.verticalLayout_3 = QVBoxLayout(self.layoutWidget)
+        FormSendMinuto.resize(687, 325)
+        self.label_recipient_id_check = QLabel(FormSendMinuto)
+        self.label_recipient_id_check.setObjectName(u"label_recipient_id_check")
+        self.label_recipient_id_check.setGeometry(QRect(328, 50, 30, 30))
+        self.label_recipient_id_check.setMinimumSize(QSize(30, 30))
+        self.label_recipient_id_check.setMaximumSize(QSize(30, 16777215))
+        font = QFont()
+        font.setPointSize(12)
+        self.label_recipient_id_check.setFont(font)
+        self.widget = QWidget(FormSendMinuto)
+        self.widget.setObjectName(u"widget")
+        self.widget.setGeometry(QRect(10, 20, 661, 281))
+        self.verticalLayout_3 = QVBoxLayout(self.widget)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.label = QLabel(self.layoutWidget)
+        self.label = QLabel(self.widget)
         self.label.setObjectName(u"label")
         self.label.setMaximumSize(QSize(16777215, 30))
-        font = QFont()
-        font.setPointSize(13)
-        font.setBold(True)
-        self.label.setFont(font)
+        font1 = QFont()
+        font1.setPointSize(13)
+        font1.setBold(True)
+        self.label.setFont(font1)
 
         self.verticalLayout_3.addWidget(self.label)
 
         self.horizontalLayout_2 = QHBoxLayout()
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.verticalLayout_2 = QVBoxLayout()
-        self.verticalLayout_2.setSpacing(10)
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.label_recipient_id = QLabel(self.layoutWidget)
-        self.label_recipient_id.setObjectName(u"label_recipient_id")
-        font1 = QFont()
-        font1.setPointSize(11)
-        self.label_recipient_id.setFont(font1)
-
-        self.verticalLayout_2.addWidget(self.label_recipient_id)
-
-        self.label_transfer_amount_text = QLabel(self.layoutWidget)
-        self.label_transfer_amount_text.setObjectName(u"label_transfer_amount_text")
-        self.label_transfer_amount_text.setFont(font1)
-
-        self.verticalLayout_2.addWidget(self.label_transfer_amount_text)
-
-
-        self.horizontalLayout_2.addLayout(self.verticalLayout_2)
-
         self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.horizontalLayout6 = QHBoxLayout()
-        self.horizontalLayout6.setObjectName(u"horizontalLayout6")
-        self.lineEdit_recipient_id = QLineEdit(self.layoutWidget)
+        self.label_recipient_id = QLabel(self.widget)
+        self.label_recipient_id.setObjectName(u"label_recipient_id")
+        font2 = QFont()
+        font2.setPointSize(11)
+        self.label_recipient_id.setFont(font2)
+
+        self.verticalLayout.addWidget(self.label_recipient_id)
+
+        self.label_purpose = QLabel(self.widget)
+        self.label_purpose.setObjectName(u"label_purpose")
+        self.label_purpose.setFont(font2)
+
+        self.verticalLayout.addWidget(self.label_purpose)
+
+        self.label_transfer_amount_text = QLabel(self.widget)
+        self.label_transfer_amount_text.setObjectName(u"label_transfer_amount_text")
+        self.label_transfer_amount_text.setFont(font2)
+
+        self.verticalLayout.addWidget(self.label_transfer_amount_text)
+
+
+        self.horizontalLayout_2.addLayout(self.verticalLayout)
+
+        self.verticalLayout_2 = QVBoxLayout()
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.lineEdit_recipient_id = QLineEdit(self.widget)
         self.lineEdit_recipient_id.setObjectName(u"lineEdit_recipient_id")
         self.lineEdit_recipient_id.setMaximumSize(QSize(16777215, 30))
-        font2 = QFont()
-        font2.setPointSize(10)
-        self.lineEdit_recipient_id.setFont(font2)
-
-        self.horizontalLayout6.addWidget(self.lineEdit_recipient_id)
-
-        self.label_recipient_id_check = QLabel(self.layoutWidget)
-        self.label_recipient_id_check.setObjectName(u"label_recipient_id_check")
-        self.label_recipient_id_check.setMinimumSize(QSize(30, 30))
-        self.label_recipient_id_check.setMaximumSize(QSize(30, 16777215))
         font3 = QFont()
-        font3.setPointSize(12)
-        self.label_recipient_id_check.setFont(font3)
+        font3.setPointSize(10)
+        self.lineEdit_recipient_id.setFont(font3)
 
-        self.horizontalLayout6.addWidget(self.label_recipient_id_check)
+        self.verticalLayout_2.addWidget(self.lineEdit_recipient_id)
 
+        self.lineEdit_purpose = QLineEdit(self.widget)
+        self.lineEdit_purpose.setObjectName(u"lineEdit_purpose")
 
-        self.verticalLayout.addLayout(self.horizontalLayout6)
+        self.verticalLayout_2.addWidget(self.lineEdit_purpose)
 
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.lineEdit_transfer_amount = QLineEdit(self.layoutWidget)
+        self.lineEdit_transfer_amount = QLineEdit(self.widget)
         self.lineEdit_transfer_amount.setObjectName(u"lineEdit_transfer_amount")
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
@@ -99,14 +102,14 @@ class Ui_FormSendMinuto(object):
         self.lineEdit_transfer_amount.setSizePolicy(sizePolicy)
         self.lineEdit_transfer_amount.setMinimumSize(QSize(50, 0))
         self.lineEdit_transfer_amount.setMaximumSize(QSize(100, 40))
-        self.lineEdit_transfer_amount.setFont(font1)
+        self.lineEdit_transfer_amount.setFont(font2)
         self.lineEdit_transfer_amount.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
 
         self.horizontalLayout.addWidget(self.lineEdit_transfer_amount)
 
-        self.label_amount_currency_text = QLabel(self.layoutWidget)
+        self.label_amount_currency_text = QLabel(self.widget)
         self.label_amount_currency_text.setObjectName(u"label_amount_currency_text")
-        self.label_amount_currency_text.setFont(font1)
+        self.label_amount_currency_text.setFont(font2)
 
         self.horizontalLayout.addWidget(self.label_amount_currency_text)
 
@@ -115,23 +118,23 @@ class Ui_FormSendMinuto(object):
         self.horizontalLayout.addItem(self.horizontalSpacer)
 
 
-        self.verticalLayout.addLayout(self.horizontalLayout)
+        self.verticalLayout_2.addLayout(self.horizontalLayout)
 
 
-        self.horizontalLayout_2.addLayout(self.verticalLayout)
+        self.horizontalLayout_2.addLayout(self.verticalLayout_2)
 
 
         self.verticalLayout_3.addLayout(self.horizontalLayout_2)
 
-        self.pushButton_Send_Minuto = QPushButton(self.layoutWidget)
+        self.pushButton_Send_Minuto = QPushButton(self.widget)
         self.pushButton_Send_Minuto.setObjectName(u"pushButton_Send_Minuto")
-        self.pushButton_Send_Minuto.setFont(font1)
+        self.pushButton_Send_Minuto.setFont(font2)
 
         self.verticalLayout_3.addWidget(self.pushButton_Send_Minuto)
 
         self.horizontalLayout_3 = QHBoxLayout()
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.label_note_text = QLabel(self.layoutWidget)
+        self.label_note_text = QLabel(self.widget)
         self.label_note_text.setObjectName(u"label_note_text")
         sizePolicy1 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         sizePolicy1.setHorizontalStretch(0)
@@ -147,14 +150,14 @@ class Ui_FormSendMinuto(object):
 
         self.horizontalLayout_3.addWidget(self.label_note_text)
 
-        self.label_note = QLabel(self.layoutWidget)
+        self.label_note = QLabel(self.widget)
         self.label_note.setObjectName(u"label_note")
         sizePolicy2 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         sizePolicy2.setHorizontalStretch(0)
         sizePolicy2.setVerticalStretch(0)
         sizePolicy2.setHeightForWidth(self.label_note.sizePolicy().hasHeightForWidth())
         self.label_note.setSizePolicy(sizePolicy2)
-        self.label_note.setFont(font1)
+        self.label_note.setFont(font2)
         self.label_note.setWordWrap(True)
 
         self.horizontalLayout_3.addWidget(self.label_note)
@@ -170,13 +173,14 @@ class Ui_FormSendMinuto(object):
 
     def retranslateUi(self, FormSendMinuto):
         FormSendMinuto.setWindowTitle(QCoreApplication.translate("FormSendMinuto", u"Minuto versenden", None))
-        self.label.setText(QCoreApplication.translate("FormSendMinuto", u"Minuto versenden", None))
-        self.label_recipient_id.setText(QCoreApplication.translate("FormSendMinuto", u"Empf\u00e4nger ID (Adresse):", None))
-        self.label_transfer_amount_text.setText(QCoreApplication.translate("FormSendMinuto", u"Betrag:", None))
 #if QT_CONFIG(tooltip)
         self.label_recipient_id_check.setToolTip("")
 #endif // QT_CONFIG(tooltip)
         self.label_recipient_id_check.setText("")
+        self.label.setText(QCoreApplication.translate("FormSendMinuto", u"Minuto versenden", None))
+        self.label_recipient_id.setText(QCoreApplication.translate("FormSendMinuto", u"Empf\u00e4nger ID (Adresse):", None))
+        self.label_purpose.setText(QCoreApplication.translate("FormSendMinuto", u"Zweck:", None))
+        self.label_transfer_amount_text.setText(QCoreApplication.translate("FormSendMinuto", u"Betrag:", None))
         self.lineEdit_transfer_amount.setInputMask("")
         self.label_amount_currency_text.setText(QCoreApplication.translate("FormSendMinuto", u"Minuto", None))
         self.pushButton_Send_Minuto.setText(QCoreApplication.translate("FormSendMinuto", u"Minuto jetzt versenden", None))

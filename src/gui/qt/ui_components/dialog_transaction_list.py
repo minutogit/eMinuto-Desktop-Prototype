@@ -32,7 +32,7 @@ class Ui_DialogTransactionList(object):
         DialogTransactionList.setMaximumSize(QSize(16777215, 16777215))
         self.label_voucher_list = QLabel(DialogTransactionList)
         self.label_voucher_list.setObjectName(u"label_voucher_list")
-        self.label_voucher_list.setGeometry(QRect(10, 10, 103, 19))
+        self.label_voucher_list.setGeometry(QRect(10, 10, 521, 19))
         font = QFont()
         font.setPointSize(12)
         self.label_voucher_list.setFont(font)
@@ -85,7 +85,7 @@ class Ui_DialogTransactionList(object):
 
     def retranslateUi(self, DialogTransactionList):
         DialogTransactionList.setWindowTitle(QCoreApplication.translate("DialogTransactionList", u"Transaktionsliste", None))
-        self.label_voucher_list.setText(QCoreApplication.translate("DialogTransactionList", u"Gutscheinliste", None))
+        self.label_voucher_list.setText(QCoreApplication.translate("DialogTransactionList", u"Liste aller Transaktionen", None))
         self.labelFilter.setText(QCoreApplication.translate("DialogTransactionList", u"  Filter:", None))
     # retranslateUi
 

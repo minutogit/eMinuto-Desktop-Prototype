@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>621</width>
-    <height>364</height>
+    <width>630</width>
+    <height>418</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,8 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>581</width>
-      <height>301</height>
+      <width>591</width>
+      <height>351</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -80,24 +80,18 @@
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="label_user_id">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
+        <widget class="QLineEdit" name="lineEdit_user_id">
+         <property name="maximumSize">
           <size>
-           <width>50</width>
-           <height>0</height>
+           <width>150</width>
+           <height>16777215</height>
           </size>
          </property>
-         <property name="frameShape">
-          <enum>QFrame::Box</enum>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
-         <property name="text">
-          <string/>
+         <property name="readOnly">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -107,10 +101,10 @@
           <string>Kopieren</string>
          </property>
          <property name="text">
-          <string/>
+          <string>ID Kopieren</string>
          </property>
          <property name="icon">
-          <iconset theme="edit-copy">
+          <iconset>
            <normaloff>.</normaloff>.</iconset>
          </property>
          <property name="iconSize">
@@ -143,7 +137,7 @@
           <x>10</x>
           <y>10</y>
           <width>471</width>
-          <height>190</height>
+          <height>285</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -253,6 +247,27 @@
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="Line" name="line">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_show_transactions">
+           <property name="text">
+            <string>Transaktionen anzeigen</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_show_vouchers">
+           <property name="text">
+            <string>Gutscheine anzeigen</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </widget>
@@ -265,7 +280,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>621</width>
+     <width>630</width>
      <height>22</height>
     </rect>
    </property>

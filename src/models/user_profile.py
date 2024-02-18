@@ -57,7 +57,7 @@ class UserProfile(Serializable):
         # won't be stored on disk (excluded in the self.to_dict method). It is initialized at startup.
         self.vouchers = {}
 
-        # Initialize the transaction management dictionary
+        # Initialize the transaction management dictionary (excluded in the self.to_dict method)
         self.transactions = {}
 
 
@@ -116,6 +116,7 @@ class UserProfile(Serializable):
         Decrypts the content if necessary and processes it based on its type (voucher, transaction, or signature).
         """
         return_info = ""
+        transaction = None
         file_content = read_file_content(file_path)
 
         if is_encrypted_string(file_content):
@@ -199,6 +200,7 @@ class UserProfile(Serializable):
                         self.save_transaction_to_disk(transaction_object)
                         self.add_transaction_to_management_list(transaction_object)
                         return_info = f"Transaktion mit {transaction_object.transaction_amount} Minuto erfolgreich empfangen"
+                        transaction = transaction_object
 
                     self.person.voucherlist[VoucherStatus.TEMP.value] = []  # Clean temp list
 
@@ -223,7 +225,7 @@ class UserProfile(Serializable):
 
         voucher = self.person.current_voucher
         self.person.current_voucher = None
-        return voucher ,return_info
+        return voucher ,transaction, return_info
 
     def open_voucher(self, file_path, trashed=False):
         """
@@ -273,31 +275,54 @@ class UserProfile(Serializable):
                 self.person.voucherlist[voucher_status.value].append(self.person.current_voucher)
                 self.person.current_voucher = None  # Reset the current voucher
 
+
     def add_transaction_to_management_list(self, transaction):
         """
-        Adds a given transaction to the management list (self.transactions) with all relevant details.
+           Adds a given transaction to the management dict (self.transactions) in descending order based on the transaction time.
+           This method ensures that the most recent transactions are always at the beginning of the dictionary.
+           Note: This approach relies on the dictionary maintaining insertion order, a feature available in Python 3.7 and later versions.
+           It iteratively inserts the new transaction at its correct position based on its timestamp to maintain the order.
 
-        Args:
-            transaction (UserTransaction): The transaction object to be added.
-        """
+           Args:
+               transaction (UserTransaction): The transaction object to be added.
+           """
         transaction_id = transaction.transaction_id
-        transaction_sender = transaction.transaction_sender_id
-        transaction_recipient = transaction.transaction_recipient_id
-        transaction_amount = transaction.transaction_amount
-        transaction_purpose = transaction.transaction_purpose
         transaction_time = transaction.transaction_end_timestamp
 
-        self.transactions[transaction_id] = {
-            'id': transaction_id,
-            'sender': transaction_sender,
-            'recipient': transaction_recipient,
-            'amount': transaction_amount,
-            'purpose': transaction_purpose,
-            'time': transaction_time,
-            'transaction_object': transaction  # Needed for operations like file creation to resend transactions.
-        }
+        # Temporary dictionary to reorder transactions based on timestamp
+        temp_dict = {}
 
+        # Determine the position for the new transaction
+        inserted = False
+        for key, value in self.transactions.items():
+            if not inserted and transaction_time > value['time']:
+                # Insert the new transaction at the correct position
+                temp_dict[transaction_id] = {
+                    'id': transaction_id,
+                    'sender': transaction.transaction_sender_id,
+                    'recipient': transaction.transaction_recipient_id,
+                    'amount': transaction.transaction_amount,
+                    'purpose': transaction.transaction_purpose,
+                    'time': transaction_time,
+                    'transaction_object': transaction
+                }
+                inserted = True
+            temp_dict[key] = value
 
+        # If the new transaction is the most recent, add it at the end
+        if not inserted:
+            temp_dict[transaction_id] = {
+                'id': transaction_id,
+                'sender': transaction.transaction_sender_id,
+                'recipient': transaction.transaction_recipient_id,
+                'amount': transaction.transaction_amount,
+                'purpose': transaction.transaction_purpose,
+                'time': transaction_time,
+                'transaction_object': transaction
+            }
+
+        # Update the main dictionary with the new order
+        self.transactions = temp_dict
 
     def open_transaction(self, file_path):
         """
@@ -406,10 +431,10 @@ class UserProfile(Serializable):
         self._secure_file_handler.encrypt_and_save(transaction, transaction_name, key=self.file_enc_key.encode('utf-8'), subfolder=file_path)
 
 
-    def send_minuto(self, amount, recipient_id):
+    def send_minuto(self, amount, purpose, recipient_id):
         # creates a transaction and returns an encrypted transaction file
 
-        transaction = self.person.send_amount(amount, recipient_id)
+        transaction = self.person.send_amount(amount, recipient_id, purpose=purpose)
         if not transaction.transaction_successful:
             return transaction # return failed transaction
 
@@ -495,7 +520,7 @@ class UserProfile(Serializable):
         Converts the attributes of the class into a dictionary. This method is essential for saving to disk.
         """
         # Exclude non-serializable attributes
-        exclude = ['person','vouchers']
+        exclude = ['person','vouchers','transactions']
         return {key: value for key, value in self.__dict__.items()
                 if not key.startswith('_') and key not in exclude}
 

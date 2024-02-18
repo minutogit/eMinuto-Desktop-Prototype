@@ -30,7 +30,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>103</width>
+     <width>521</width>
      <height>19</height>
     </rect>
    </property>
@@ -40,7 +40,7 @@
     </font>
    </property>
    <property name="text">
-    <string>Gutscheinliste</string>
+    <string>Liste aller Transaktionen</string>
    </property>
   </widget>
   <widget class="QWidget" name="layoutWidget">

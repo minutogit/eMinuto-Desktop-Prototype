@@ -328,7 +328,7 @@ class Person:
         voucher = voucher or self.current_voucher
         return voucher.verify_creator_signature(voucher)
 
-    def send_amount(self, amount, recipient_id):
+    def send_amount(self, amount, recipient_id, purpose = ""):
         """
         Send a specified amount to a person (recipient) using available vouchers.
 
@@ -336,7 +336,7 @@ class Person:
         :param recipient_id: The ID of the recipient.
         :return: List of vouchers used for the transaction.
         """
-        transaction = self.usertransaction.process_transaction_to_user(self, amount, recipient_id)
+        transaction = self.usertransaction.process_transaction_to_user(self, amount, recipient_id, purpose=purpose)
 
         # clean vouchers with empty amount (balance)
         # Create a new list for the remaining vouchers

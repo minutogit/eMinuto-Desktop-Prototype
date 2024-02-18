@@ -25,7 +25,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(621, 364)
+        MainWindow.resize(630, 418)
         self.actionProfile = QAction(MainWindow)
         self.actionProfile.setObjectName(u"actionProfile")
         self.actionClose = QAction(MainWindow)
@@ -50,7 +50,7 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName(u"centralwidget")
         self.layoutWidget = QWidget(self.centralwidget)
         self.layoutWidget.setObjectName(u"layoutWidget")
-        self.layoutWidget.setGeometry(QRect(10, 10, 581, 301))
+        self.layoutWidget.setGeometry(QRect(10, 10, 591, 351))
         self.verticalLayout_2 = QVBoxLayout(self.layoutWidget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
@@ -85,24 +85,18 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_3.addWidget(self.label_user_id_text)
 
-        self.label_user_id = QLabel(self.layoutWidget)
-        self.label_user_id.setObjectName(u"label_user_id")
-        sizePolicy1.setHeightForWidth(self.label_user_id.sizePolicy().hasHeightForWidth())
-        self.label_user_id.setSizePolicy(sizePolicy1)
-        self.label_user_id.setMinimumSize(QSize(50, 0))
-        self.label_user_id.setFrameShape(QFrame.Box)
+        self.lineEdit_user_id = QLineEdit(self.layoutWidget)
+        self.lineEdit_user_id.setObjectName(u"lineEdit_user_id")
+        self.lineEdit_user_id.setMaximumSize(QSize(150, 16777215))
+        self.lineEdit_user_id.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+        self.lineEdit_user_id.setReadOnly(True)
 
-        self.horizontalLayout_3.addWidget(self.label_user_id)
+        self.horizontalLayout_3.addWidget(self.lineEdit_user_id)
 
         self.pushButton_copy_user_ID = QPushButton(self.layoutWidget)
         self.pushButton_copy_user_ID.setObjectName(u"pushButton_copy_user_ID")
         icon = QIcon()
-        iconThemeName = u"edit-copy"
-        if QIcon.hasThemeIcon(iconThemeName):
-            icon = QIcon.fromTheme(iconThemeName)
-        else:
-            icon.addFile(u".", QSize(), QIcon.Normal, QIcon.Off)
-
+        icon.addFile(u".", QSize(), QIcon.Normal, QIcon.Off)
         self.pushButton_copy_user_ID.setIcon(icon)
         self.pushButton_copy_user_ID.setIconSize(QSize(18, 18))
 
@@ -122,7 +116,7 @@ class Ui_MainWindow(object):
         self.frame.setFrameShadow(QFrame.Raised)
         self.layoutWidget1 = QWidget(self.frame)
         self.layoutWidget1.setObjectName(u"layoutWidget1")
-        self.layoutWidget1.setGeometry(QRect(10, 10, 471, 190))
+        self.layoutWidget1.setGeometry(QRect(10, 10, 471, 285))
         self.verticalLayout = QVBoxLayout(self.layoutWidget1)
         self.verticalLayout.setSpacing(12)
         self.verticalLayout.setObjectName(u"verticalLayout")
@@ -189,13 +183,30 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addWidget(self.pushButton_receive_minuto)
 
+        self.line = QFrame(self.layoutWidget1)
+        self.line.setObjectName(u"line")
+        self.line.setFrameShape(QFrame.HLine)
+        self.line.setFrameShadow(QFrame.Sunken)
+
+        self.verticalLayout.addWidget(self.line)
+
+        self.pushButton_show_transactions = QPushButton(self.layoutWidget1)
+        self.pushButton_show_transactions.setObjectName(u"pushButton_show_transactions")
+
+        self.verticalLayout.addWidget(self.pushButton_show_transactions)
+
+        self.pushButton_show_vouchers = QPushButton(self.layoutWidget1)
+        self.pushButton_show_vouchers.setObjectName(u"pushButton_show_vouchers")
+
+        self.verticalLayout.addWidget(self.pushButton_show_vouchers)
+
 
         self.verticalLayout_2.addWidget(self.frame)
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 621, 22))
+        self.menubar.setGeometry(QRect(0, 0, 630, 22))
         self.menuStart = QMenu(self.menubar)
         self.menuStart.setObjectName(u"menuStart")
         self.menuProfile = QMenu(self.menubar)
@@ -239,16 +250,17 @@ class Ui_MainWindow(object):
         self.actionTransactions.setText(QCoreApplication.translate("MainWindow", u"Transaktionen", None))
         self.label_username.setText("")
         self.label_user_id_text.setText(QCoreApplication.translate("MainWindow", u"ID:", None))
-        self.label_user_id.setText("")
 #if QT_CONFIG(tooltip)
         self.pushButton_copy_user_ID.setToolTip(QCoreApplication.translate("MainWindow", u"Kopieren", None))
 #endif // QT_CONFIG(tooltip)
-        self.pushButton_copy_user_ID.setText("")
+        self.pushButton_copy_user_ID.setText(QCoreApplication.translate("MainWindow", u"ID Kopieren", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Kontostand", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"eigene Minuto", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"andere Minuto", None))
         self.pushButton_send_minuto.setText(QCoreApplication.translate("MainWindow", u"Minuto versenden", None))
         self.pushButton_receive_minuto.setText(QCoreApplication.translate("MainWindow", u"Minuto empfangen", None))
+        self.pushButton_show_transactions.setText(QCoreApplication.translate("MainWindow", u"Transaktionen anzeigen", None))
+        self.pushButton_show_vouchers.setText(QCoreApplication.translate("MainWindow", u"Gutscheine anzeigen", None))
         self.menuStart.setTitle(QCoreApplication.translate("MainWindow", u"Start", None))
         self.menuProfile.setTitle(QCoreApplication.translate("MainWindow", u"Profil", None))
         self.menuMinuto.setTitle(QCoreApplication.translate("MainWindow", u"Minuto", None))

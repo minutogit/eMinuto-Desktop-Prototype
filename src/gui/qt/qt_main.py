@@ -56,12 +56,17 @@ def open_data_file(file_type=""):
 
     if file_path:
         # if not a voucher then None will be returned
-        voucher, info_msg = user_profile.open_file(file_path)
+        voucher, transaction, info_msg = user_profile.open_file(file_path)
         win['dialog_voucher_list'].init_values()
+
         frm_main_window.update_values()  # update balances in main window
         show_message_box("Info", info_msg) # display info to user
         if voucher is not None:
             win['form_show_voucher'].show_voucher(voucher)
+
+        if transaction is not None:
+            win['dialog_transaction_list'].init_show()
+
 
 class DialogForgotPassword(QMainWindow, Ui_DialogForgotPassword):
     def __init__(self):
@@ -144,6 +149,7 @@ class FormSendMinuto(QMainWindow, Ui_FormSendMinuto):
 
     def send_minuto(self):
         recipient_id = self.lineEdit_recipient_id.text()
+        purpose = self.lineEdit_purpose.text()
         amount = float(self.lineEdit_transfer_amount.text().replace(",","."))
 
         if amount > self.available_amount:
@@ -153,7 +159,7 @@ class FormSendMinuto(QMainWindow, Ui_FormSendMinuto):
         if not show_yes_no_box("Minuto versenden?", "Sollen die Minuto versendet werden?"):
             return
 
-        transaction = user_profile.send_minuto(amount, recipient_id)
+        transaction = user_profile.send_minuto(amount, purpose, recipient_id)
         if not transaction.transaction_successful:
             show_message_box("Fehler","Transaktion fehlgeschlagen")
             return
@@ -175,6 +181,8 @@ class FormSendMinuto(QMainWindow, Ui_FormSendMinuto):
             user_profile._secure_file_handler.encrypt_with_shared_secret_and_save(
                 transaction, filename_with_path, recipient_id, user_profile.person.id)
 
+        self.close()
+        win['form_show_transaction'].show_transaction(transaction)
         frm_main_window.update_values() # update balances in main window
 
 
@@ -183,6 +191,7 @@ class FormSendMinuto(QMainWindow, Ui_FormSendMinuto):
         self.available_amount = user_profile.person.get_amount_of_all_vouchers()
         self.lineEdit_recipient_id.setText("")
         self.lineEdit_transfer_amount.setText("")
+        self.lineEdit_purpose.setText("")
         self.check_recipient_ID()
         self.show()
         self.raise_()
@@ -702,25 +711,31 @@ class FormShowTransaction(QMainWindow, Ui_FormShowTransaction):
 
         # Translate and display each voucher attribute
         translations = {
-            'voucher_id': 'Gutschein-ID',
-            'creator_id': 'Ersteller-ID',
-            'creator_first_name': 'Vorname',
-            'creator_last_name': 'Nachname',
-            'creator_organization': 'Organisation',
+            'transaction_id': 'Transaktions-ID',
+            'transaction_sender_id': 'Sender-ID',
+            'transaction_recipient_id': 'Empfänger-ID',
+            'transaction_amount': 'Betrag',
+            'transaction_purpose': 'Zweck',
+            'transaction_vouchers': 'Anzahl Gutscheine',
+            'transaction_successful': 'Gültige Transaktion',
+            'transaction_failure_reason': 'Transaktions-Fehlerursache',
+            'transaction_start_timestamp': 'Start-Zeitstempel',
+            'transaction_end_timestamp': 'End-Zeitstempel'
         }
 
         for attr, value in vars(transaction).items():
             translated_attr = translations.get(attr, attr)  # Translate or use original attribute name
 
             # Convert value to a more human-readable format if necessary
-            if attr == 'creator_gender':
-                value = {0: "Unbekannt", 1: "Männlich", 2: "Weiblich"}.get(value, "Unbekannt")
-            elif attr == 'is_test_voucher':
+            if attr == 'transaction_successful':
                 value = "Ja" if value else "Nein"
-            elif isinstance(value, list):
-                value = str(len(value))  # For lists, show their length
-            elif attr == 'creator_signature':
-                value = "Unterschrieben" if value else "Nicht unterschrieben"
+
+            # show number of vouchers
+            elif attr == 'transaction_vouchers':
+                value = len(value)
+
+            elif attr == 'transaction_failure_reason' and transaction.transaction_successful:
+                continue  # don't display failure reason if successful transaction
 
             label_item = QStandardItem(translated_attr)
             value_item = QStandardItem(str(value))
@@ -1245,7 +1260,7 @@ class DialogTransactionList(QMainWindow, Ui_DialogTransactionList):
         This implementation uses the index of the selection in the statusComboBox to determine
         the filter to be applied, making it independent of the actual text, which is useful for localization.
         """
-        self.setWindowTitle(f"Transaction List - Profile: {user_profile.profile_name}")
+        self.setWindowTitle(f"Transaktionen - Profile: {user_profile.profile_name}")
 
         self.model.clear()  # Clear existing items from the table model.
 
@@ -1398,6 +1413,9 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.pushButton_copy_user_ID.clicked.connect(self.copyUserIDToClipboard)
         self.pushButton_send_minuto.clicked.connect(self.sendMinuto)
         self.pushButton_receive_minuto.clicked.connect(self.receiveMinutoTransaction)
+        self.pushButton_show_transactions.clicked.connect(win['dialog_transaction_list'].init_show)
+        self.pushButton_show_vouchers.clicked.connect(win['dialog_voucher_list'].init_show)
+
 
     def closeEvent(self, event):
         # close all windows on close of main win
@@ -1428,9 +1446,10 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.dialog_profile_login.show()
 
     def update_values(self):
-        self.setWindowTitle(f"eMinuto - Profil: {user_profile.profile_name}")
+        self.setWindowTitle(f"eMinuto  -  Profil: {user_profile.profile_name}  -  ID: {user_profile.person.id[:8]}")
         self.set_vouchers_balances()
-        self.label_user_id.setText(f"{user_profile.person.id[:16]}...")
+        self.lineEdit_user_id.setText(f"{user_profile.person.id}")
+        self.lineEdit_user_id.setCursorPosition(0)
         self.label_username.setText(f"{user_profile.person_data['first_name']} {user_profile.person_data['last_name']}")
 
 
@@ -1497,7 +1516,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
             hide(self.actionCreateProfile)
 
         if profile_exists and not profile_initialized:
-            self.label_user_id.setText("")
+            self.lineEdit_user_id.setText("")
             self.lineEdit_own_balance.setText("0")
             self.lineEdit_other_balance.setText("0")
             show(self.actionProfileLogin)
