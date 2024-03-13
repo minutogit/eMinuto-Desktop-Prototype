@@ -1,0 +1,56 @@
+name: Build Windows with Release
+
+on: 
+  workflow_dispatch:
+
+permissions: # Explicitly setting permissions
+  contents: write
+  issues: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install nuitka PySide6 base58==2.1.1 cryptography==3.4.8 mnemonic==0.21 PySide6==6.6.1 PySide6_Addons==6.6.1 PySide6_Essentials==6.6.1 shiboken6==6.6.1
+
+    - name: Compile with Nuitka
+      run: |
+        python.exe -m nuitka --follow-imports --include-module=mnemonic --enable-plugin=pyside6 --disable-console --standalone --output-dir=./build --output-filename=eMinuto.exe main_qt.py --assume-yes-for-downloads
+
+    - name: Rename and Zip Output
+      run: |
+        Move-Item ./build/main_qt.dist ./build/eMinuto
+        Compress-Archive -Path ./build/eMinuto/* -DestinationPath ./build/eMinuto-windows.zip
+      shell: pwsh
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: release-${{ github.run_number }}
+        release_name: Release ${{ github.run_number }}
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build/eMinuto-windows.zip
+        asset_name: eMinuto.zip
+        asset_content_type: application/zip
+
