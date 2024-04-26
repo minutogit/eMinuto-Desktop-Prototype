@@ -48,8 +48,6 @@ class MinutoVoucher(Serializable):
         self.voucher_version = 1  # Voucher version to handle format changes. Enables backward compatibility with older vouchers.
 
 
-
-
     @classmethod
     def create(cls, creator_id: str, creator_first_name: str, creator_last_name: str, creator_organization: str, creator_address, creator_gender: int, email: str, phone: str, service_offer: str, coordinates: str,
                amount: float, region: str, validity: int, is_test_voucher: bool = False, description='', footnote=''):
@@ -83,7 +81,7 @@ class MinutoVoucher(Serializable):
         return voucher
 
     def get_voucher_data(self, type):
-        # Dynamically generate the data for signing and hashing, including optional guarantor signatures
+        # Dynamically generate the data for signing and hashing
 
         # Initially, these keys are excluded from the hashing process.
         excluded_keys = ['guarantor_signatures', 'voucher_id', 'creator_signature',
@@ -97,17 +95,10 @@ class MinutoVoucher(Serializable):
         if type in ["voucher_id_hashing"]:
             return json.dumps(data, sort_keys=True, ensure_ascii=False)
 
-        # guarantor and creator only signs the voucher id, the initial_transaction_hash is hash from voucher_id
+        # creator only signs the voucher id, the initial_transaction_hash is hash from voucher_id
         data = {'voucher_id': self.voucher_id}
-        if type in ["guarantor_signature",  "creator_signing", "initial_transaction_hash"]:
+        if type in ["creator_signing", "initial_transaction_hash"]:
             return json.dumps(data, sort_keys=True, ensure_ascii=False)
-
-        # Important: The initial_transaction_hash have to exclude the creator_signature (which changes with each signing)
-        # from the hashing process. Also have exclude guarantor_signatures, because different signature from the same guarantor would lead to different previous_hash.
-        #
-        # This ensures a consistent previous_hash for the initial transaction.
-        # A consistent previous_hash is necessary to detect double spending, particularly in cases of multiple
-        # initializations of the initial transaction.
 
         # if unknown type raise error
         raise ValueError("Unknown type")
