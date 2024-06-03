@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Dialogue</string>
   </property>
   <widget class="QPushButton" name="pushButton_create_new_profile">
    <property name="geometry">
@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Neues Profil erstellen</string>
+    <string>Create New Profile</string>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_restore_exisitin_profile">
@@ -36,7 +36,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Altes Profil wiederherstellen</string>
+    <string>Restore Old Profile</string>
    </property>
   </widget>
  </widget>

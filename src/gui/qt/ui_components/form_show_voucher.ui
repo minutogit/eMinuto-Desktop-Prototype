@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Gutscheindetails</string>
+   <string>Voucher Details</string>
   </property>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
@@ -62,28 +62,28 @@
       <item>
        <widget class="QPushButton" name="pushButtonAddGuarantorSignature">
         <property name="text">
-         <string>Erhaltene Bürgenunterschrift hinzufügen</string>
+         <string>Add Received Guarantor Signature</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="pushButtonSignAsCreator">
         <property name="text">
-         <string>Als Ersteller unterschreiben</string>
+         <string>Sign as Creator</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="pushButtonSignAsGuarantor">
         <property name="text">
-         <string>Als Bürge unterschreiben</string>
+         <string>Sign as Guarantor</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="pushButtonSendToGuarantor">
         <property name="text">
-         <string>An Bürge senden</string>
+         <string>Send to Guarantor</string>
         </property>
        </widget>
       </item>
@@ -94,28 +94,28 @@
       <item>
        <widget class="QPushButton" name="pushButtonRawData">
         <property name="text">
-         <string>Rohdaten</string>
+         <string>Raw Data</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="pushButtonClose">
         <property name="text">
-         <string>Schließen</string>
+         <string>Close</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="pushButtonRecover">
         <property name="text">
-         <string>Wiederherstellen</string>
+         <string>Restore</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="pushButtonTrash">
         <property name="text">
-         <string>Zum Papierkorb</string>
+         <string>To Trash</string>
         </property>
        </widget>
       </item>

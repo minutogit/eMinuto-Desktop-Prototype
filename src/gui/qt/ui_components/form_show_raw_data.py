@@ -55,8 +55,8 @@ class Ui_FormShowRawData(object):
     # setupUi
 
     def retranslateUi(self, FormShowRawData):
-        FormShowRawData.setWindowTitle(QCoreApplication.translate("FormShowRawData", u"Rohdaten", None))
-        self.labelRawData.setText(QCoreApplication.translate("FormShowRawData", u"Rohdaten", None))
-        self.pushButton_Close.setText(QCoreApplication.translate("FormShowRawData", u"Schlie\u00dfen", None))
+        FormShowRawData.setWindowTitle(QCoreApplication.translate("FormShowRawData", u"Raw Data", None))
+        self.labelRawData.setText(QCoreApplication.translate("FormShowRawData", u"Raw Data", None))
+        self.pushButton_Close.setText(QCoreApplication.translate("FormShowRawData", u"Close", None))
     # retranslateUi
 

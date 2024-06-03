@@ -56,8 +56,8 @@ class Ui_DialogProfileLogin(object):
     # setupUi
 
     def retranslateUi(self, DialogProfileLogin):
-        DialogProfileLogin.setWindowTitle(QCoreApplication.translate("DialogProfileLogin", u"Einloggen", None))
-        self.label_enter_password.setText(QCoreApplication.translate("DialogProfileLogin", u"Passwort eingeben:", None))
+        DialogProfileLogin.setWindowTitle(QCoreApplication.translate("DialogProfileLogin", u"Log in", None))
+        self.label_enter_password.setText(QCoreApplication.translate("DialogProfileLogin", u"Enter password:", None))
         self.pushButton_OK.setText(QCoreApplication.translate("DialogProfileLogin", u"OK", None))
         self.label_status.setText("")
     # retranslateUi

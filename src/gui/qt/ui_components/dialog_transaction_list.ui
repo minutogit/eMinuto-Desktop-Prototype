@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Transaktionsliste</string>
+   <string>Transaction List</string>
   </property>
   <widget class="QLabel" name="label_voucher_list">
    <property name="geometry">
@@ -40,7 +40,7 @@
     </font>
    </property>
    <property name="text">
-    <string>Liste aller Transaktionen</string>
+    <string>List of all transactions</string>
    </property>
   </widget>
   <widget class="QWidget" name="layoutWidget">
@@ -81,7 +81,7 @@
          </font>
         </property>
         <property name="text">
-         <string>  Filter:</string>
+         <string>Filter:</string>
         </property>
        </widget>
       </item>

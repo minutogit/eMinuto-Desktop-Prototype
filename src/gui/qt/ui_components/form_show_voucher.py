@@ -109,16 +109,16 @@ class Ui_FormShowVoucher(object):
     # setupUi
 
     def retranslateUi(self, FormShowVoucher):
-        FormShowVoucher.setWindowTitle(QCoreApplication.translate("FormShowVoucher", u"Gutscheindetails", None))
+        FormShowVoucher.setWindowTitle(QCoreApplication.translate("FormShowVoucher", u"Voucher Details", None))
         self.labelInfoTextLeft.setText("")
         self.labelInfoTextRight.setText("")
-        self.pushButtonAddGuarantorSignature.setText(QCoreApplication.translate("FormShowVoucher", u"Erhaltene B\u00fcrgenunterschrift hinzuf\u00fcgen", None))
-        self.pushButtonSignAsCreator.setText(QCoreApplication.translate("FormShowVoucher", u"Als Ersteller unterschreiben", None))
-        self.pushButtonSignAsGuarantor.setText(QCoreApplication.translate("FormShowVoucher", u"Als B\u00fcrge unterschreiben", None))
-        self.pushButtonSendToGuarantor.setText(QCoreApplication.translate("FormShowVoucher", u"An B\u00fcrge senden", None))
-        self.pushButtonRawData.setText(QCoreApplication.translate("FormShowVoucher", u"Rohdaten", None))
-        self.pushButtonClose.setText(QCoreApplication.translate("FormShowVoucher", u"Schlie\u00dfen", None))
-        self.pushButtonRecover.setText(QCoreApplication.translate("FormShowVoucher", u"Wiederherstellen", None))
-        self.pushButtonTrash.setText(QCoreApplication.translate("FormShowVoucher", u"Zum Papierkorb", None))
+        self.pushButtonAddGuarantorSignature.setText(QCoreApplication.translate("FormShowVoucher", u"Add Received Guarantor Signature", None))
+        self.pushButtonSignAsCreator.setText(QCoreApplication.translate("FormShowVoucher", u"Sign as Creator", None))
+        self.pushButtonSignAsGuarantor.setText(QCoreApplication.translate("FormShowVoucher", u"Sign as Guarantor", None))
+        self.pushButtonSendToGuarantor.setText(QCoreApplication.translate("FormShowVoucher", u"Send to Guarantor", None))
+        self.pushButtonRawData.setText(QCoreApplication.translate("FormShowVoucher", u"Raw Data", None))
+        self.pushButtonClose.setText(QCoreApplication.translate("FormShowVoucher", u"Close", None))
+        self.pushButtonRecover.setText(QCoreApplication.translate("FormShowVoucher", u"Restore", None))
+        self.pushButtonTrash.setText(QCoreApplication.translate("FormShowVoucher", u"To Trash", None))
     # retranslateUi
 

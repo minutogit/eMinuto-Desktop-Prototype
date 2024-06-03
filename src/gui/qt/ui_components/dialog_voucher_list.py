@@ -89,9 +89,9 @@ class Ui_DialogVoucherList(object):
     # setupUi
 
     def retranslateUi(self, DialogVoucherList):
-        DialogVoucherList.setWindowTitle(QCoreApplication.translate("DialogVoucherList", u"Gutscheinliste", None))
-        self.label_voucher_list.setText(QCoreApplication.translate("DialogVoucherList", u"Gutscheinliste", None))
-        self.labelFilter.setText(QCoreApplication.translate("DialogVoucherList", u"  Filter:", None))
-        self.pushButton_open_voucher_or_signature.setText(QCoreApplication.translate("DialogVoucherList", u"Gutschein oder B\u00fcrgenunterschrift aus Datei \u00f6ffen", None))
+        DialogVoucherList.setWindowTitle(QCoreApplication.translate("DialogVoucherList", u"Voucher List", None))
+        self.label_voucher_list.setText(QCoreApplication.translate("DialogVoucherList", u"Voucher List", None))
+        self.labelFilter.setText(QCoreApplication.translate("DialogVoucherList", u"Filter:", None))
+        self.pushButton_open_voucher_or_signature.setText(QCoreApplication.translate("DialogVoucherList", u"Open voucher or guarantor signature from file", None))
     # retranslateUi
 

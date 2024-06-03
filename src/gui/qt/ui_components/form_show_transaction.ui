@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Gutscheindetails</string>
+   <string>Voucher Details</string>
   </property>
   <widget class="QWidget" name="">
    <property name="geometry">
@@ -62,21 +62,21 @@
       <item>
        <widget class="QPushButton" name="pushButtonRawData">
         <property name="text">
-         <string>Rohdaten</string>
+         <string>Raw Data</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="pushButtonSaveTransactionFile">
         <property name="text">
-         <string>Transaktionsdatei speichern</string>
+         <string>Save Transaction File</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="pushButtonClose">
         <property name="text">
-         <string>Schließen</string>
+         <string>Close</string>
         </property>
        </widget>
       </item>

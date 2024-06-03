@@ -79,11 +79,11 @@ class Ui_FormShowTransaction(object):
     # setupUi
 
     def retranslateUi(self, FormShowTransaction):
-        FormShowTransaction.setWindowTitle(QCoreApplication.translate("FormShowTransaction", u"Gutscheindetails", None))
+        FormShowTransaction.setWindowTitle(QCoreApplication.translate("FormShowTransaction", u"Voucher Details", None))
         self.labelInfoTextLeft.setText("")
         self.labelInfoTextRight.setText("")
-        self.pushButtonRawData.setText(QCoreApplication.translate("FormShowTransaction", u"Rohdaten", None))
-        self.pushButtonSaveTransactionFile.setText(QCoreApplication.translate("FormShowTransaction", u"Transaktionsdatei speichern", None))
-        self.pushButtonClose.setText(QCoreApplication.translate("FormShowTransaction", u"Schlie\u00dfen", None))
+        self.pushButtonRawData.setText(QCoreApplication.translate("FormShowTransaction", u"Raw Data", None))
+        self.pushButtonSaveTransactionFile.setText(QCoreApplication.translate("FormShowTransaction", u"Save Transaction File", None))
+        self.pushButtonClose.setText(QCoreApplication.translate("FormShowTransaction", u"Close", None))
     # retranslateUi
 

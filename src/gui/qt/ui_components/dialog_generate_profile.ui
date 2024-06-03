@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Profil generieren</string>
+   <string>Generate profile</string>
   </property>
   <widget class="QPushButton" name="btn_new_seed_words">
    <property name="geometry">
@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Neue Wörter generieren</string>
+    <string>Generate new words</string>
    </property>
   </widget>
   <widget class="QLabel" name="label">
@@ -36,7 +36,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Schlüsselwörter</string>
+    <string>Keywords</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_2">
@@ -54,7 +54,7 @@
     </font>
    </property>
    <property name="text">
-    <string>Schlüsselwörter zur Bestätigung nochmal eingeben</string>
+    <string>Enter keywords again for confirmation</string>
    </property>
   </widget>
   <widget class="QPushButton" name="btn_create_profile">
@@ -67,7 +67,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Profil erstellen</string>
+    <string>Create profile</string>
    </property>
   </widget>
   <widget class="QLineEdit" name="lineEdit_profile_name">
@@ -95,7 +95,7 @@
     </font>
    </property>
    <property name="text">
-    <string>Profilname (beliebig wählbar)</string>
+    <string>Profile name (freely selectable)</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_info">
@@ -125,7 +125,7 @@
     <number>2</number>
    </property>
    <property name="text">
-    <string>Diese Wörter erzeugen eine digitale Identität. Aufschreiben und geheim halten. Die Worte dienen auch zur Profil- und Passwortwiederherstellung.</string>
+    <string>These words create a digital identity. Write down and keep secret. The words are also used for profile and password recovery.</string>
    </property>
    <property name="wordWrap">
     <bool>true</bool>
@@ -174,7 +174,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Organisation / Firma:</string>
+       <string>Organization / Company:</string>
       </property>
      </widget>
     </item>
@@ -186,7 +186,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Rufname</string>
+       <string>Nickname</string>
       </property>
      </widget>
     </item>
@@ -198,7 +198,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Familienname</string>
+       <string>Surname</string>
       </property>
      </widget>
     </item>
@@ -260,7 +260,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Passwort</string>
+       <string>Password</string>
       </property>
      </widget>
     </item>
@@ -272,7 +272,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Passwort wiederholen</string>
+       <string>Repeat password</string>
       </property>
      </widget>
     </item>

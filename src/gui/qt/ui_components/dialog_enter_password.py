@@ -46,8 +46,8 @@ class Ui_DialogEnterPassword(object):
     # setupUi
 
     def retranslateUi(self, DialogEnterPassword):
-        DialogEnterPassword.setWindowTitle(QCoreApplication.translate("DialogEnterPassword", u"Passwort eingeben", None))
-        self.label_enter_password.setText(QCoreApplication.translate("DialogEnterPassword", u"Passwort eingeben:", None))
+        DialogEnterPassword.setWindowTitle(QCoreApplication.translate("DialogEnterPassword", u"Enter password", None))
+        self.label_enter_password.setText(QCoreApplication.translate("DialogEnterPassword", u"Enter password:", None))
         self.pushButton_OK.setText(QCoreApplication.translate("DialogEnterPassword", u"OK", None))
     # retranslateUi
 

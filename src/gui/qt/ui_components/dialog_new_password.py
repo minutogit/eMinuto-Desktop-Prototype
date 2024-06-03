@@ -51,9 +51,9 @@ class Ui_DialogNewPassword(object):
     # setupUi
 
     def retranslateUi(self, DialogNewPassword):
-        DialogNewPassword.setWindowTitle(QCoreApplication.translate("DialogNewPassword", u"Neues Passwort eingeben", None))
-        self.label.setText(QCoreApplication.translate("DialogNewPassword", u"Neues Passwort:", None))
-        self.label_2.setText(QCoreApplication.translate("DialogNewPassword", u"Passwort wiederholen:", None))
-        self.pushButton_save_password.setText(QCoreApplication.translate("DialogNewPassword", u"Passwort speichern", None))
+        DialogNewPassword.setWindowTitle(QCoreApplication.translate("DialogNewPassword", u"Enter new password", None))
+        self.label.setText(QCoreApplication.translate("DialogNewPassword", u"New password:", None))
+        self.label_2.setText(QCoreApplication.translate("DialogNewPassword", u"Repeat password:", None))
+        self.pushButton_save_password.setText(QCoreApplication.translate("DialogNewPassword", u"Save password", None))
     # retranslateUi
 

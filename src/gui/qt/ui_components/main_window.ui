@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>630</width>
-    <height>418</height>
+    <width>624</width>
+    <height>415</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -98,10 +98,10 @@
        <item>
         <widget class="QPushButton" name="pushButton_copy_user_ID">
          <property name="toolTip">
-          <string>Kopieren</string>
+          <string>Copy</string>
          </property>
          <property name="text">
-          <string>ID Kopieren</string>
+          <string>Copy ID</string>
          </property>
          <property name="icon">
           <iconset>
@@ -131,7 +131,7 @@
        <property name="frameShadow">
         <enum>QFrame::Raised</enum>
        </property>
-       <widget class="QWidget" name="layoutWidget">
+       <widget class="QWidget" name="layoutWidget1">
         <property name="geometry">
          <rect>
           <x>10</x>
@@ -155,7 +155,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Kontostand</string>
+            <string>Account Balance</string>
            </property>
           </widget>
          </item>
@@ -175,7 +175,7 @@
               </font>
              </property>
              <property name="text">
-              <string>eigene Minuto</string>
+              <string>Own Minuto</string>
              </property>
             </widget>
            </item>
@@ -212,7 +212,7 @@
               </font>
              </property>
              <property name="text">
-              <string>andere Minuto</string>
+              <string>Other Minuto</string>
              </property>
             </widget>
            </item>
@@ -236,14 +236,14 @@
          <item>
           <widget class="QPushButton" name="pushButton_send_minuto">
            <property name="text">
-            <string>Minuto versenden</string>
+            <string>Send Minuto</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QPushButton" name="pushButton_receive_minuto">
            <property name="text">
-            <string>Minuto empfangen</string>
+            <string>Receive Minuto</string>
            </property>
           </widget>
          </item>
@@ -257,14 +257,14 @@
          <item>
           <widget class="QPushButton" name="pushButton_show_transactions">
            <property name="text">
-            <string>Transaktionen anzeigen</string>
+            <string>View Transactions</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QPushButton" name="pushButton_show_vouchers">
            <property name="text">
-            <string>Gutscheine anzeigen</string>
+            <string>View Vouchers</string>
            </property>
           </widget>
          </item>
@@ -280,7 +280,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>630</width>
+     <width>624</width>
      <height>22</height>
     </rect>
    </property>
@@ -288,12 +288,18 @@
     <property name="title">
      <string>Start</string>
     </property>
+    <widget class="QMenu" name="menuLanguage">
+     <property name="title">
+      <string>Language</string>
+     </property>
+    </widget>
     <addaction name="actionOpenFile"/>
+    <addaction name="menuLanguage"/>
     <addaction name="actionClose"/>
    </widget>
    <widget class="QMenu" name="menuProfile">
     <property name="title">
-     <string>Profil</string>
+     <string>Profile</string>
     </property>
     <addaction name="actionCreateProfile"/>
     <addaction name="actionEditProfile"/>
@@ -315,52 +321,57 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionProfile">
    <property name="text">
-    <string>Profil</string>
+    <string>Profile</string>
    </property>
   </action>
   <action name="actionClose">
    <property name="text">
-    <string>Beenden</string>
+    <string>Exit</string>
    </property>
   </action>
   <action name="actionEditProfile">
    <property name="text">
-    <string>Profil bearbeiten</string>
+    <string>Edit Profile</string>
    </property>
   </action>
   <action name="actionProfileLogin">
    <property name="text">
-    <string>Einloggen</string>
+    <string>Log in</string>
    </property>
   </action>
   <action name="actionProfileLogout">
    <property name="text">
-    <string>Ausloggen</string>
+    <string>Log out</string>
    </property>
   </action>
   <action name="actionCreateProfile">
    <property name="text">
-    <string>Profil erstellen</string>
+    <string>Create Profile</string>
    </property>
   </action>
   <action name="actionCreateMinuto">
    <property name="text">
-    <string>Minuto schöpfen</string>
+    <string>Create Minuto</string>
    </property>
   </action>
   <action name="actionVoucherList">
    <property name="text">
-    <string>Gutscheinliste</string>
+    <string>Voucher List</string>
    </property>
   </action>
   <action name="actionOpenFile">
    <property name="text">
-    <string>Datei öffnen</string>
+    <string>Open File</string>
    </property>
   </action>
   <action name="actionTransactions">
    <property name="text">
-    <string>Transaktionen</string>
+    <string>Transactions</string>
+   </property>
+  </action>
+  <action name="actionEnglish">
+   <property name="text">
+    <string>English</string>
    </property>
   </action>
  </widget>

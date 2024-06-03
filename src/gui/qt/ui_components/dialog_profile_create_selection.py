@@ -36,8 +36,8 @@ class Ui_Dialog_Profile_Create_Selection(object):
     # setupUi
 
     def retranslateUi(self, Dialog_Profile_Create_Selection):
-        Dialog_Profile_Create_Selection.setWindowTitle(QCoreApplication.translate("Dialog_Profile_Create_Selection", u"Dialog", None))
-        self.pushButton_create_new_profile.setText(QCoreApplication.translate("Dialog_Profile_Create_Selection", u"Neues Profil erstellen", None))
-        self.pushButton_restore_exisitin_profile.setText(QCoreApplication.translate("Dialog_Profile_Create_Selection", u"Altes Profil wiederherstellen", None))
+        Dialog_Profile_Create_Selection.setWindowTitle(QCoreApplication.translate("Dialog_Profile_Create_Selection", u"Dialogue", None))
+        self.pushButton_create_new_profile.setText(QCoreApplication.translate("Dialog_Profile_Create_Selection", u"Create New Profile", None))
+        self.pushButton_restore_exisitin_profile.setText(QCoreApplication.translate("Dialog_Profile_Create_Selection", u"Restore Old Profile", None))
     # retranslateUi
 

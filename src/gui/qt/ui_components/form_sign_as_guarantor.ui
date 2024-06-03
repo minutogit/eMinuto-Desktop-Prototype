@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Als Bürge unterschreiben</string>
+   <string>Sign as Guarantor</string>
   </property>
   <widget class="QWidget" name="">
    <property name="geometry">
@@ -33,7 +33,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Unterschrift des Gutscheins als Bürge</string>
+       <string>Signature of the voucher as Guarantor</string>
       </property>
      </widget>
     </item>
@@ -45,7 +45,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Hinweis: Durch Ihre Unterschrift übernehmen Sie die Verantwortung, im Falle des Ablebens oder der Leistungsunfähigkeit des Gutscheinerstellers, dessen zugesagte Arbeitsleistung für die vereinbarte Dauer zu erbringen.</string>
+       <string>Note: By signing, you take responsibility to provide the promised service for the agreed duration in case of the voucher creator's death or incapacity.</string>
       </property>
       <property name="wordWrap">
        <bool>true</bool>
@@ -62,14 +62,14 @@
          </font>
         </property>
         <property name="text">
-         <string>Ich habe den Hinweis verstanden</string>
+         <string>I understand the note</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="pushButton_sign_as_guarantor">
         <property name="text">
-         <string>Jetzt als Bürge unterschreiben</string>
+         <string>Sign as Guarantor Now</string>
         </property>
        </widget>
       </item>
@@ -83,7 +83,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Nach der Unterschrift müssen Sie dem Bürgen die Datei zukommen lassen.</string>
+       <string>After signing, you must provide the file to the guarantor.</string>
       </property>
      </widget>
     </item>
@@ -100,7 +100,7 @@
          </font>
         </property>
         <property name="text">
-         <string>E-Mail Adresse des Erstellers:</string>
+         <string>Email Address of the Creator:</string>
         </property>
        </widget>
       </item>
@@ -113,7 +113,7 @@
          <string/>
         </property>
         <property name="placeholderText">
-         <string>E-Mail Versand noch nicht möglich</string>
+         <string>Email sending not available yet</string>
         </property>
        </widget>
       </item>
@@ -133,7 +133,7 @@
          <string/>
         </property>
         <property name="text">
-         <string>Als Datei Speichern</string>
+         <string>Save as file</string>
         </property>
        </widget>
       </item>
@@ -152,7 +152,7 @@
          <string/>
         </property>
         <property name="text">
-         <string>Als E-Mail versenden</string>
+         <string>Send as email</string>
         </property>
        </widget>
       </item>

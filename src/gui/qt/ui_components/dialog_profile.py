@@ -356,34 +356,34 @@ class Ui_Form_Profile(object):
     # setupUi
 
     def retranslateUi(self, Form_Profile):
-        Form_Profile.setWindowTitle(QCoreApplication.translate("Form_Profile", u"Profil", None))
-        self.label.setText(QCoreApplication.translate("Form_Profile", u"Rufname Familienname", None))
-        self.lineEdit_first_name.setPlaceholderText(QCoreApplication.translate("Form_Profile", u"Vorname", None))
-        self.lineEdit_last_name.setPlaceholderText(QCoreApplication.translate("Form_Profile", u"Nachname", None))
-        self.label_organization.setText(QCoreApplication.translate("Form_Profile", u"Organisation / Firma", None))
-        self.label_street.setText(QCoreApplication.translate("Form_Profile", u"Stra\u00dfe", None))
-        self.label_email.setText(QCoreApplication.translate("Form_Profile", u"E-Mail", None))
-        self.label_phone.setText(QCoreApplication.translate("Form_Profile", u"Telefon", None))
-        self.label_coordinates.setText(QCoreApplication.translate("Form_Profile", u"Koordinaten", None))
+        Form_Profile.setWindowTitle(QCoreApplication.translate("Form_Profile", u"Profile", None))
+        self.label.setText(QCoreApplication.translate("Form_Profile", u"Name Surname", None))
+        self.lineEdit_first_name.setPlaceholderText(QCoreApplication.translate("Form_Profile", u"First Name", None))
+        self.lineEdit_last_name.setPlaceholderText(QCoreApplication.translate("Form_Profile", u"Last Name", None))
+        self.label_organization.setText(QCoreApplication.translate("Form_Profile", u"Organization / Company", None))
+        self.label_street.setText(QCoreApplication.translate("Form_Profile", u"Street", None))
+        self.label_email.setText(QCoreApplication.translate("Form_Profile", u"Email", None))
+        self.label_phone.setText(QCoreApplication.translate("Form_Profile", u"Phone", None))
+        self.label_coordinates.setText(QCoreApplication.translate("Form_Profile", u"Coordinates", None))
         self.lineEdit_coordinates.setText("")
-        self.label_profile_name.setText(QCoreApplication.translate("Form_Profile", u"Profilname", None))
-        self.label_service_offer.setText(QCoreApplication.translate("Form_Profile", u"Dienstleistungsangebot", None))
+        self.label_profile_name.setText(QCoreApplication.translate("Form_Profile", u"Profile Name", None))
+        self.label_service_offer.setText(QCoreApplication.translate("Form_Profile", u"Service Offering", None))
         self.textEdit_service_offer.setHtml(QCoreApplication.translate("Form_Profile", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
-        self.pushButton_save.setText(QCoreApplication.translate("Form_Profile", u"Speichern", None))
-        self.pushButton_close.setText(QCoreApplication.translate("Form_Profile", u"Schlie\u00dfen", None))
-        self.label_zip_code_city.setText(QCoreApplication.translate("Form_Profile", u"PLZ Ort", None))
-        self.lineEdit_zip_code.setPlaceholderText(QCoreApplication.translate("Form_Profile", u"PLZ", None))
-        self.lineEdit_city.setPlaceholderText(QCoreApplication.translate("Form_Profile", u"Ort", None))
-        self.label_country.setText(QCoreApplication.translate("Form_Profile", u"Land", None))
-        self.label_state_or_region.setText(QCoreApplication.translate("Form_Profile", u"Bundesland", None))
-        self.label_street_2.setText(QCoreApplication.translate("Form_Profile", u"Geschlecht", None))
-        self.comboBox_gender.setItemText(0, QCoreApplication.translate("Form_Profile", u"unbekannt", None))
-        self.comboBox_gender.setItemText(1, QCoreApplication.translate("Form_Profile", u"m\u00e4nnlich", None))
-        self.comboBox_gender.setItemText(2, QCoreApplication.translate("Form_Profile", u"weiblich", None))
+        self.pushButton_save.setText(QCoreApplication.translate("Form_Profile", u"Save", None))
+        self.pushButton_close.setText(QCoreApplication.translate("Form_Profile", u"Close", None))
+        self.label_zip_code_city.setText(QCoreApplication.translate("Form_Profile", u"Postal Code City", None))
+        self.lineEdit_zip_code.setPlaceholderText(QCoreApplication.translate("Form_Profile", u"Postal Code", None))
+        self.lineEdit_city.setPlaceholderText(QCoreApplication.translate("Form_Profile", u"City", None))
+        self.label_country.setText(QCoreApplication.translate("Form_Profile", u"Country", None))
+        self.label_state_or_region.setText(QCoreApplication.translate("Form_Profile", u"State", None))
+        self.label_street_2.setText(QCoreApplication.translate("Form_Profile", u"Gender", None))
+        self.comboBox_gender.setItemText(0, QCoreApplication.translate("Form_Profile", u"Unknown", None))
+        self.comboBox_gender.setItemText(1, QCoreApplication.translate("Form_Profile", u"Male", None))
+        self.comboBox_gender.setItemText(2, QCoreApplication.translate("Form_Profile", u"Female", None))
 
     # retranslateUi
 

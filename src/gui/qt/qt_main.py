@@ -1,7 +1,9 @@
 # qt_main.py
-import re
+import functools
+import os
+import sys
 
-from PySide6.QtCore import QSortFilterProxyModel, Qt, QSize, QModelIndex, QDateTime
+from PySide6.QtCore import QSortFilterProxyModel, Qt, QSize, QModelIndex, QDateTime, QTranslator, QCoreApplication
 from PySide6.QtGui import QAction, QShowEvent, QIcon
 from PySide6.QtWidgets import QApplication, QStatusBar, QLabel, QHBoxLayout, QWidget, QPushButton, QFileDialog, \
     QCheckBox, QVBoxLayout, QMessageBox
@@ -42,17 +44,19 @@ def open_data_file(file_type=""):
     or signature to a voucher.
     """
 
+    app = QApplication.instance()
+
     # Set the accepted file extensions
     if file_type == "transaction":
-        file_filter = "Transaktions Dateien (*.mt);;Alle Dateien (*)"
+        file_filter = app.translate("MainWindow", "Transaction Files (*.mt);;All Files (*)")
     elif file_type == "signature":
-        file_filter = "Unterschrift Dateien (*.ms);;Alle Dateien (*)"
+        file_filter = app.translate("MainWindow", "Signature Files (*.ms);;All Files (*)")
     else:
-        file_filter = "Gutschein/Unterschrift/Transaktions Dateien (*.mv *.ms *.mt);;Alle Dateien (*)"
+        file_filter = app.translate("MainWindow", "Voucher/Signature/Transaction Files (*.mv *.ms *.mt);;All Files (*)")
 
     # Create and open the dialog and get the file path
     file_dialog = QFileDialog()
-    file_path, _ = file_dialog.getOpenFileName(None, "Open File", "", file_filter)
+    file_path, _ = file_dialog.getOpenFileName(None, app.translate("MainWindow", "Open File"), "", file_filter)
 
     if file_path:
         # if not a voucher then None will be returned
@@ -60,12 +64,13 @@ def open_data_file(file_type=""):
         win['dialog_voucher_list'].init_values()
 
         frm_main_window.update_values()  # update balances in main window
-        show_message_box("Info", info_msg) # display info to user
+        show_message_box(app.translate("MainWindow", "Info"), info_msg)  # display info to user
         if voucher is not None:
             win['form_show_voucher'].show_voucher(voucher)
 
         if transaction is not None:
             win['dialog_transaction_list'].init_show()
+
 
 
 class DialogForgotPassword(QMainWindow, Ui_DialogForgotPassword):
@@ -80,23 +85,23 @@ class DialogForgotPassword(QMainWindow, Ui_DialogForgotPassword):
         password_retyped = self.lineEdit_new_password_retyped.text()
 
         if not is_password_valid(password) and not config.TEST_MODE:
-            show_message_box("Fehler!", "Passwort muss mindestens 8 Zeichen haben.")
+            show_message_box(self.tr("Error!"), self.tr("Password must be at least 8 characters long."))
             return
 
         if password != password_retyped:
-            show_message_box("Fehler", "Die Passwörter sind müssen gleich sein.")
+            show_message_box(self.tr("Error"), self.tr("Passwords must match."))
             return
 
         if not check_word_seed(seed):
-            show_message_box("Fehler", "Die Schlüsselwörter sind nicht korrekt.")
+            show_message_box(self.tr("Error"), self.tr("The seed words are not correct."))
             return
 
         if not user_profile.recover_password_with_seed(seed, password):
-            show_message_box("Fehler", "Die Schlüsselwörter sind nicht korrekt.")
+            show_message_box(self.tr("Error"), self.tr("The seed words are not correct."))
             return
         else:
             self.close()
-            show_message_box("Passwort geändert", "Das Passwort wurde erfolgreich geändert.")
+            show_message_box(self.tr("Password changed"), self.tr("Password successfully changed."))
             frm_main_window.profile_logout()
             frm_main_window.dialog_profile_login.login()
 
@@ -105,8 +110,8 @@ class FormSendMinuto(QMainWindow, Ui_FormSendMinuto):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        # set validator for correct input format
-        self.available_amount = 0 # store max amount to send
+        # Set validator for correct input format
+        self.available_amount = 0 # Store max amount to send
         self.lineEdit_transfer_amount.setValidator(DecimalFormatValidator())
         self.lineEdit_recipient_id.textChanged.connect(self.check_recipient_ID)
         self.pushButton_Send_Minuto.clicked.connect(self.send_minuto)
@@ -128,7 +133,7 @@ class FormSendMinuto(QMainWindow, Ui_FormSendMinuto):
 
     def check_recipient_ID(self):
         """
-        Check the entered guarantor ID and update the label with a green check or red cross based on validity.
+        Check the entered recipient ID and update the label with a green check or red cross based on validity.
         """
         recipient_id = self.lineEdit_recipient_id.text().strip()
         self.pushButton_Send_Minuto.setEnabled(False)
@@ -136,10 +141,10 @@ class FormSendMinuto(QMainWindow, Ui_FormSendMinuto):
             self.label_recipient_id_check.setText("")  # Clear label if input is empty
             return
 
-        # Set label based on the validity of the guarantor ID
+        # Set label based on the validity of the recipient ID
         if verify_user_ID(recipient_id):
             if recipient_id == user_profile.person.id:
-                show_message_box("Fehler!", "Nicht die eigene ID verwenden!")
+                show_message_box(self.tr("Error!"), self.tr("Do not use your own ID!"))
                 return
             self.label_recipient_id_check.setText("✅")  # Green check emoji for valid ID
             self.pushButton_Send_Minuto.setEnabled(True)
@@ -153,24 +158,25 @@ class FormSendMinuto(QMainWindow, Ui_FormSendMinuto):
         amount = float(self.lineEdit_transfer_amount.text().replace(",","."))
 
         if amount > self.available_amount:
-            show_message_box("Nicht genug Guthaben", f"Es können maximal {self.available_amount} Minuto gesendet werden.")
+            show_message_box(self.tr("Insufficient Balance"),
+                             self.tr("You can send a maximum of %s Minuto.") % self.available_amount)
             return
 
-        if not show_yes_no_box("Minuto versenden?", "Sollen die Minuto versendet werden?"):
+        if not show_yes_no_box(self.tr("Send Minuto?"), self.tr("Do you want to send the Minuto?")):
             return
 
         transaction = user_profile.send_minuto(amount, purpose, recipient_id)
         if not transaction.transaction_successful:
-            show_message_box("Fehler","Transaktion fehlgeschlagen")
+            show_message_box(self.tr("Error"), self.tr("Transaction failed"))
             return
 
-        suggested_filename = f"eMinuto-Transaktion-an-{recipient_id[:6]}.mt"
-        file_filter = "Minuto Transaction (*.mt)"
+        suggested_filename = f"eMinuto-Transaction-to-{recipient_id[:6]}.mt"
+        file_filter = self.tr("Minuto Transaction (*.mt)")
 
         # Open file save dialog
         filename_with_path, _ = QFileDialog.getSaveFileName(
             self,
-            "Transaktion speichern",
+            self.tr("Save Transaction"),
             suggested_filename,
             file_filter
         )
@@ -183,11 +189,11 @@ class FormSendMinuto(QMainWindow, Ui_FormSendMinuto):
 
         self.close()
         win['form_show_transaction'].show_transaction(transaction)
-        frm_main_window.update_values() # update balances in main window
+        frm_main_window.update_values() # Update balances in main window
 
 
     def show_init(self):
-        self.setWindowTitle(f"Minuto versenden - Profil: {user_profile.profile_name}")
+        self.setWindowTitle(self.tr("Send Minuto - Profile: %s") % user_profile.profile_name)
         self.available_amount = user_profile.person.get_amount_of_all_vouchers()
         self.lineEdit_recipient_id.setText("")
         self.lineEdit_transfer_amount.setText("")
@@ -195,6 +201,7 @@ class FormSendMinuto(QMainWindow, Ui_FormSendMinuto):
         self.check_recipient_ID()
         self.show()
         self.raise_()
+
 
 
 class FormSignAsGuarantor(QMainWindow, Ui_FormSignVoucherAsGuarantor):
@@ -246,13 +253,13 @@ class FormSignAsGuarantor(QMainWindow, Ui_FormSignVoucherAsGuarantor):
         creator_id = self.voucher.creator_id
         creator_name = self.voucher.creator_first_name
 
-        suggested_filename = f"eMinuto-{creator_name}_Unterschrift-{user_profile.person.first_name}.ms"
-        file_filter = "Minuto Unterschrift (*.ms)"
+        suggested_filename = f"eMinuto-{creator_name}_Signature-{user_profile.person.first_name}.ms"
+        file_filter = self.tr("Minuto Signature (*.ms)")
 
         # Open file save dialog
         filename_with_path, _ = QFileDialog.getSaveFileName(
             self,
-            "Unterschrift speichern",
+            self.tr("Save Signature"),
             suggested_filename,
             file_filter
         )
@@ -272,7 +279,7 @@ class FormSignAsGuarantor(QMainWindow, Ui_FormSignVoucherAsGuarantor):
 
         self.checkBox_liability_acceptance.setChecked(False)
         self.checkBox_liability_acceptance.setEnabled(True)
-        self.setWindowTitle(f"eMinuto als Bürge unterschreiben - Profil: {user_profile.profile_name}")
+        self.setWindowTitle(self.tr("Sign eMinuto as Guarantor - Profile: %s") % user_profile.profile_name)
 
         # when already own signate then change gui
         for sig in voucher.guarantor_signatures:
@@ -282,13 +289,13 @@ class FormSignAsGuarantor(QMainWindow, Ui_FormSignVoucherAsGuarantor):
                 self.pushButton_sign_as_guarantor.setEnabled(False)
                 self.pushButton_save_as_file.setEnabled(True)
                 self.show()
-                show_message_box("Unterschrift vorhanden",
-                                 "Dieser Gutschein ist bereits unterschrieben. Die Unterschrift einfach dem Ersteller "
-                                 "zukommen lassen.")
+                show_message_box(self.tr("Signature available"),
+                                 self.tr("This voucher is already signed. Simply forward the signature to the creator."))
                 return
 
         self.show()
         self.raise_()
+
 
 
 class FormSendToGuarantor(QMainWindow, Ui_FormSendToGuarantor):
@@ -320,7 +327,7 @@ class FormSendToGuarantor(QMainWindow, Ui_FormSendToGuarantor):
         # Set label based on the validity of the guarantor ID
         if verify_user_ID(guarantor_id):
             if guarantor_id == user_profile.person.id:
-                show_message_box("Fehler!", "Nicht die eigene ID verwenden!")
+                show_message_box(self.tr("Error!"), self.tr("Do not use your own ID!"))
                 return
             self.label_guarantor_id_check.setText("✅")  # Green check emoji for valid ID
 
@@ -337,16 +344,16 @@ class FormSendToGuarantor(QMainWindow, Ui_FormSendToGuarantor):
         if verify_user_ID(self.lineEdit_guarantor_ID.text().strip()):
             guarantor_id = self.lineEdit_guarantor_ID.text().strip()
         elif encrypt_data:
-            show_message_box("Fehler!", "Gültige ID des Bürgen wird für Verschlüsselung benötigt!")
+            show_message_box(self.tr("Error!"), self.tr("Valid Guarantor ID is required for encryption!"))
             return
 
-        suggested_filename = f"eMinuto-{user_profile.person.first_name}.mv"
-        file_filter = "Minuto Voucher (*.mv)"
+        suggested_filename = self.tr("eMinuto-%s.mv") % user_profile.person.first_name
+        file_filter = self.tr("Minuto Voucher (*.mv)")
 
         # Open file save dialog
         filename_with_path, _ = QFileDialog.getSaveFileName(
             self,
-            "Voucher speichern",
+            self.tr("Save Voucher"),
             suggested_filename,
             file_filter
         )
@@ -364,9 +371,10 @@ class FormSendToGuarantor(QMainWindow, Ui_FormSendToGuarantor):
     def show_form(self, voucher):
         self.voucher = voucher
         self.lineEdit_user_ID.setText(user_profile.person.id)
-        self.setWindowTitle(f"eMinuto an Bürge senden - Profil: {user_profile.profile_name}")
+        self.setWindowTitle(self.tr("Send eMinuto to Guarantor - Profile: %s") % user_profile.profile_name)
         self.show()
         self.raise_()
+
 
 
 class FormShowRawData(QMainWindow, Ui_FormShowRawData):
@@ -377,15 +385,16 @@ class FormShowRawData(QMainWindow, Ui_FormShowRawData):
 
     def show_data(self, object, title_prefix=""):
         import json
-        # Zuerst das Objekt in ein serialisierbares Dictionary umwandeln
+        # First, convert the object to a serializable dictionary
         serializable_representation = object.to_dict()
 
         # Convert the dictionary to a JSON-formatted string
         json_representation = json.dumps(serializable_representation, sort_keys=False, indent=4, ensure_ascii=False)
         self.textEdit_text_data.setText(json_representation)
-        self.setWindowTitle(f"{title_prefix}Rohdaten - Profil: {user_profile.profile_name}")
+        self.setWindowTitle(self.tr("%sRaw Data - Profile: %s") % (title_prefix, user_profile.profile_name))
         self.show()
         self.raise_()
+
 
 
 class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
@@ -433,29 +442,33 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         status = self.voucher.voucher_status(user_profile.person.id)
         amount = self.voucher.get_voucher_amount(user_profile.person.id)
         if user_profile.vouchers[id(self.voucher)]['trashed']:
-            if not show_yes_no_box("Gutschein entgültig löschen?",
-                            f"Gutschein tatsächlich entgülitig löschen? \n(Guthaben: {amount} Minuto)"):
+            if not show_yes_no_box(self.tr("Permanently delete voucher?"),
+                                   self.tr(
+                                       "Are you sure you want to permanently delete the voucher? \n(Balance: %s Minuto)") % amount):
                 return
+
 
         # if own voucher with amount
         elif status == VoucherStatus.OWN:
-            if not show_yes_no_box("Eigenen Gutschein entfernen?",
-                            f"Eigener Gutschein mit {amount} Minuto Guthaben. Soll er wirklich in den Papierkorb verschoben werden?"):
+            if not show_yes_no_box(self.tr("Remove own voucher?"),
+                                   self.tr(
+                                       "Own voucher with %s Minuto balance. Do you really want to move it to the trash?") % amount):
                 return
         # if voucher from others with amount
         elif status == VoucherStatus.OTHER:
-            if not show_yes_no_box("Gutschein mit Guthaben entfernen?",
-                            f"Dies Gutschein hat noch {amount} Minuto Guthaben. Soll er wirklich in den Papierkorb verschoben werden?"):
+            if not show_yes_no_box(self.tr("Remove voucher with balance?"),
+                                   self.tr(
+                                       "This voucher still has %s Minuto balance. Do you really want to move it to the trash?") % amount):
                 return
         # if voucher from others with amount
         elif status == VoucherStatus.UNFINISHED:
-            if not show_yes_no_box("Unfertigen Gutschein entfernen?",
-                            "Soll er wirklich in den Papierkorb verschoben werden?"):
+            if not show_yes_no_box(self.tr("Remove unfinished voucher?"),
+                            self.tr("Do you really want to move it to the trash?")):
                 return
         # if voucher from others with amount
         elif status == VoucherStatus.ARCHIVED:
-            if not show_yes_no_box("Benutzten Gutschein entfernen?",
-                            "Benutzte Gutscheine Werden zu Erkennung von Betrug benötigt. Diese sollten nicht gelöscht werden."):
+            if not show_yes_no_box(self.tr("Remove used voucher?"),
+                            self.tr("Used vouchers are needed for fraud detection. They should not be deleted.")):
                 return
 
         user_profile.save_voucher_to_disk(self.voucher, trash=True)
@@ -466,8 +479,8 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         frm_main_window.update_values() # update values in main win (calculate new amount etc)
 
     def sign_as_creator(self):
-        sign = show_yes_no_box("Gutschein selbst unterschreiben",
-                               "Soll der Gutschein unterschrieben werden? Damit ist er gültig und kann für Transaktionen verwenden werden.")
+        sign = show_yes_no_box(self.tr("Sign voucher as creator"),
+                               self.tr("Do you want to sign the voucher? This makes it valid and can be used for transactions."))
         if sign:
             signed, message = user_profile.person.sign_voucher_as_creator(self.voucher)
 
@@ -476,22 +489,24 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
                 user_profile.person.current_voucher = None
                 self.show_voucher(self.voucher)  # to update all values
                 frm_main_window.update_values()
-                show_message_box("Unterschrift erfolgreich",
-                                 "Unterschrift war erfolgreich. Der Gutschein ist nun fertig und kann verwendet werden.")
+                show_message_box(self.tr("Signature successful"),
+                                 self.tr("Signature was successful. The voucher is now ready and can be used."))
 
             else:
-                show_message_box("Fehler", f"Unterschrift fehlgeschlagen. {message}")
+                show_message_box(self.tr("Error"), self.tr("Signature failed. %s") % message)
+
 
     def sing_as_guarantor(self):
         gender_is_set = (user_profile.person.gender != 0)
         # male and female needed, so with 2 guarantors gender must be set
         if self.voucher.needed_guarantors == 2 and not gender_is_set:
-            show_message_box("Geschlecht fehlt",
-                             "Bitte unter Profil das Geschlecht einstellen, da der Gutschein einen männlichen und weiblichen Bürgen benötigt.")
+            show_message_box(self.tr("Gender missing"),
+                             self.tr("Please set the gender in the profile, as the voucher requires a male and female guarantor."))
             win['dialog_profile'].init_and_show()
             return
 
-        win['form_sign_as_guarantor'].show_form(self.voucher)
+        win['form_sign_as_guarantor'].show_form(self.voucher)  # to reload gui
+
 
     def add_guarantor_signature(self):
         # to open a file with a signature to add to voucher)
@@ -536,51 +551,51 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         if not own_voucher and not enough_guarantors and not trashed_voucher:
             self.pushButtonSignAsGuarantor.show()
 
-        if user_profile.vouchers[id(self.voucher)]['trashed'] == True:
+        if user_profile.vouchers[id(self.voucher)]['trashed']:
             self.pushButtonRecover.show()
-            self.pushButtonTrash.setText("Entgültig löschen")
-            self.pushButtonRecover.setText("Wiederherstellen")
+            self.pushButtonTrash.setText(self.tr("Permanently delete"))
+            self.pushButtonRecover.setText(self.tr("Restore"))
         else:
-            self.pushButtonTrash.setText("In Papierkorb verschieben")
+            self.pushButtonTrash.setText(self.tr("Move to Trash"))
 
         voucher_stat_text = ""
         if own_voucher:
-            voucher_stat_text += "<b>Eigener Gutschein"
-            if trashed_voucher == True:
-                voucher_stat_text += " (gelöscht)"
+            voucher_stat_text += f"<b>{self.tr('Own voucher')}"
+            if trashed_voucher:
+                voucher_stat_text += f" ({self.tr('deleted')})"
             elif number_of_guarantors == 0:
-                voucher_stat_text += " (Bürgen fehlen)"
-            elif not '1' in guarantor_genders:
-                voucher_stat_text += " (männlicher Bürge fehlt)"
-            elif not '2' in guarantor_genders:
-                voucher_stat_text += " (weiblicher Bürge fehlt)"
+                voucher_stat_text += f" ({self.tr('guarantors missing')})"
+            elif '1' not in guarantor_genders:
+                voucher_stat_text += f" ({self.tr('missing male guarantor')})"
+            elif '2' not in guarantor_genders:
+                voucher_stat_text += f" ({self.tr('missing female guarantor')})"
             elif no_creator_signature:
-                voucher_stat_text += " (Eigene Unterschrift fehlt)"
+                voucher_stat_text += f" ({self.tr('missing creator signature')})"
             elif voucher.verify_complete_voucher():
-                voucher_stat_text += " (Gültig)"
+                voucher_stat_text += f" ({self.tr('Valid')})"
             else:
-                voucher_stat_text += " (Ungültig!)"
+                voucher_stat_text += f" ({self.tr('Invalid')})"
 
         else:
-            voucher_stat_text += "<b>Erhaltener Gutschein"
+            voucher_stat_text += f"<b>{self.tr('Received voucher')}"
             if not enough_guarantors:
-                voucher_stat_text += " (Nicht genug Bürgen)"
+                voucher_stat_text += f" ({self.tr('Insufficient guarantors')})"
             elif no_creator_signature:
-                voucher_stat_text += " (Ersteller Unterschrift fehlt)"
+                voucher_stat_text += f" ({self.tr('missing creator signature')})"
             elif voucher.verify_complete_voucher():
-                voucher_stat_text += " (Gültig)"
+                voucher_stat_text += f" ({self.tr('Valid')})"
             else:
-                voucher_stat_text += " (Ungültig!)"
+                voucher_stat_text += f" ({self.tr('Invalid')})"
         voucher_stat_text += "</b>"
 
         self.labelInfoTextLeft.setText(voucher_stat_text)
 
         available_amount = voucher.get_voucher_amount(user_profile.person.id)
-        self.labelInfoTextRight.setText(f"<b>Verfügbarer Betrag:  {available_amount} Minuto</b>")
+        self.labelInfoTextRight.setText("<b>%s: %s Minuto</b>" % (self.tr('Available Balance'), available_amount))
 
     def show_raw_data(self):
         """ Display raw data of the voucher. """
-        win['form_show_raw_data'].show_data(self.voucher, "eMinuto-")
+        win['form_show_raw_data'].show_data(self.voucher, self.tr("eMinuto-"))
 
     def init_table(self, voucher: MinutoVoucher = None):
         if voucher is None:
@@ -588,32 +603,32 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
 
         model = QStandardItemModel(self)
         model.setColumnCount(2)
-        model.setHorizontalHeaderLabels(["Inhalt", "Wert"])
+        model.setHorizontalHeaderLabels([self.tr("Content"), self.tr("Value")])
 
         # Translate and display each voucher attribute
         translations = {
-            'voucher_id': 'Gutschein-ID',
-            'creator_id': 'Ersteller-ID',
-            'creator_first_name': 'Vorname',
-            'creator_last_name': 'Nachname',
-            'creator_organization': 'Organisation',
-            'creator_address': 'Adresse',
-            'creator_gender': 'Geschlecht',
-            'amount': 'Betrag',
-            'description': 'Beschreibung',
-            'footnote': 'Fußnote',
-            'service_offer': 'Serviceangebot',
-            'valid_until': 'Gültig bis',
-            'region': 'Region',
-            'coordinates': 'Koordinaten',
-            'email': 'E-Mail',
-            'phone': 'Telefon',
-            'creation_date': 'Erstellungsdatum',
-            'is_test_voucher': 'Ist Testgutschein',
-            'guarantor_signatures': 'Anzahl Bürgen',
-            'creator_signature': 'Unterschrift des Erstellers',
-            'transactions': 'Transaktionen',
-            'needed_guarantors': "benötigte Bürgenanzahl"
+            'voucher_id': self.tr('Voucher ID'),
+            'creator_id': self.tr('Creator ID'),
+            'creator_first_name': self.tr('First Name'),
+            'creator_last_name': self.tr('Last Name'),
+            'creator_organization': self.tr('Organization'),
+            'creator_address': self.tr('Address'),
+            'creator_gender': self.tr('Gender'),
+            'amount': self.tr('Amount'),
+            'description': self.tr('Description'),
+            'footnote': self.tr('Footnote'),
+            'service_offer': self.tr('Service Offer'),
+            'valid_until': self.tr('Valid Until'),
+            'region': self.tr('Region'),
+            'coordinates': self.tr('Coordinates'),
+            'email': self.tr('Email'),
+            'phone': self.tr('Phone'),
+            'creation_date': self.tr('Creation Date'),
+            'is_test_voucher': self.tr('Is Test Voucher'),
+            'guarantor_signatures': self.tr('Number of Guarantors'),
+            'creator_signature': self.tr('Creator Signature'),
+            'transactions': self.tr('Transactions'),
+            'needed_guarantors': self.tr('Needed Guarantors')
         }
 
         for attr, value in vars(voucher).items():
@@ -621,13 +636,13 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
 
             # Convert value to a more human-readable format if necessary
             if attr == 'creator_gender':
-                value = {0: "Unbekannt", 1: "Männlich", 2: "Weiblich"}.get(value, "Unbekannt")
+                value = {0: self.tr("Unknown"), 1: self.tr("Male"), 2: self.tr("Female")}.get(value, self.tr("Unknown"))
             elif attr == 'is_test_voucher':
-                value = "Ja" if value else "Nein"
+                value = self.tr("Yes") if value else self.tr("No")
             elif isinstance(value, list):
                 value = str(len(value))  # For lists, show their length
             elif attr == 'creator_signature':
-                value = "Unterschrieben" if value else "Nicht unterschrieben"
+                value = self.tr("Signed") if value else self.tr("Not Signed")
 
             label_item = QStandardItem(translated_attr)
             value_item = QStandardItem(str(value))
@@ -650,7 +665,7 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
         self.voucher = voucher
         self.init_table(voucher)
         self.update_status(voucher)
-        self.setWindowTitle(f"eMinuto Details - Profil: {user_profile.profile_name}")
+        self.setWindowTitle(self.tr("eMinuto Details - Profile: %s") % user_profile.profile_name)
         self.show()
         self.raise_()
         # close other forms and dialog which depend on voucher
@@ -659,11 +674,8 @@ class FormShowVoucher(QMainWindow, Ui_FormShowVoucher):
 
         # if ready to sign as creator show message
         if not self.pushButtonSignAsCreator.isHidden():
-            show_message_box("Gutschein mit Unterschrift vervollständigen",
-                             "Unterschreibe diesen Gutschein damit dieser genutzt werden kann.")
-
-
-
+            show_message_box(self.tr("Complete Voucher Signature"),
+                             self.tr("Sign this voucher to make it usable."))
 
 
 class FormShowTransaction(QMainWindow, Ui_FormShowTransaction):
@@ -701,34 +713,35 @@ class FormShowTransaction(QMainWindow, Ui_FormShowTransaction):
         """ Display raw data of the voucher. """
         win['form_show_raw_data'].show_data(self.transaction, "Transaktions-")
 
-    def init_table(self, transaction:UserTransaction = None):
+    def init_table(self, transaction: UserTransaction = None):
         if transaction is None:
             transaction = self.transaction
 
         model = QStandardItemModel(self)
         model.setColumnCount(2)
-        model.setHorizontalHeaderLabels(["Inhalt", "Wert"])
+        model.setHorizontalHeaderLabels([self.tr("Content"), self.tr("Value")])
 
-        # Translate and display each voucher attribute
+        # Translate and display each transaction attribute
         translations = {
-            'transaction_id': 'Transaktions-ID',
-            'transaction_sender_id': 'Sender-ID',
-            'transaction_recipient_id': 'Empfänger-ID',
-            'transaction_amount': 'Betrag',
-            'transaction_purpose': 'Zweck',
-            'transaction_vouchers': 'Anzahl Gutscheine',
-            'transaction_successful': 'Gültige Transaktion',
-            'transaction_failure_reason': 'Transaktions-Fehlerursache',
-            'transaction_start_timestamp': 'Start-Zeitstempel',
-            'transaction_end_timestamp': 'End-Zeitstempel'
+            'transaction_id': self.tr('Transaction ID'),
+            'transaction_sender_id': self.tr('Sender ID'),
+            'transaction_recipient_id': self.tr('Recipient ID'),
+            'transaction_amount': self.tr('Amount'),
+            'transaction_purpose': self.tr('Purpose'),
+            'transaction_vouchers': self.tr('Number of Vouchers'),
+            'transaction_successful': self.tr('Valid Transaction'),
+            'transaction_failure_reason': self.tr('Transaction Failure Reason'),
+            'transaction_start_timestamp': self.tr('Start Timestamp'),
+            'transaction_end_timestamp': self.tr('End Timestamp')
         }
+
 
         for attr, value in vars(transaction).items():
             translated_attr = translations.get(attr, attr)  # Translate or use original attribute name
 
             # Convert value to a more human-readable format if necessary
             if attr == 'transaction_successful':
-                value = "Ja" if value else "Nein"
+                value = self.tr("Yes") if value else self.tr("No")
 
             # show number of vouchers
             elif attr == 'transaction_vouchers':
@@ -751,23 +764,24 @@ class FormShowTransaction(QMainWindow, Ui_FormShowTransaction):
         self.tableView_transaction.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
 
     def save_transaction(self):
-        # saves the transaction to file (for sending agein to recipient)
+        # Saves the transaction to file (for sending again to recipient)
         recipient_id = self.transaction.transaction_recipient_id
 
-        if not show_yes_no_box("Minuto Transaktionsdatei speicher?", "Sollen die Minuto Transaktionsdatei gespeichert werden um sie dem Empfänger nochmal senden zu können?"):
+        if not show_yes_no_box(self.tr("Save Minuto Transaction File?"),
+                               self.tr("Do you want to save the Minuto transaction file to be able to send it again to the recipient?")):
             return
 
         if self.transaction.transaction_recipient_id == user_profile.person.id:
-            show_message_box("Fehler","Empfangene Transaktion kann nicht versendet werden.")
+            show_message_box(self.tr("Error"), self.tr("Received transaction cannot be sent."))
             return
 
-        suggested_filename = f"eMinuto-Transaktion-an-{recipient_id[:6]}.mt"
-        file_filter = "Minuto Transaction (*.mt)"
+        suggested_filename = f"eMinuto-Transaction-to-{recipient_id[:6]}.mt"
+        file_filter = self.tr("Minuto Transaction (*.mt)")
 
         # Open file save dialog
         filename_with_path, _ = QFileDialog.getSaveFileName(
             self,
-            "Transaktion speichern",
+            self.tr("Save Transaction"),
             suggested_filename,
             file_filter
         )
@@ -778,11 +792,9 @@ class FormShowTransaction(QMainWindow, Ui_FormShowTransaction):
             user_profile._secure_file_handler.encrypt_with_shared_secret_and_save(
                 self.transaction, filename_with_path, recipient_id, user_profile.person.id)
 
-
-
     def show_transaction(self, transaction: UserTransaction):
         """
-        Display transactoin details in a table view.
+        Display transaction details in a table view.
         Translates attribute names and formats values for presentation.
         """
         self.transaction = transaction
@@ -790,10 +802,10 @@ class FormShowTransaction(QMainWindow, Ui_FormShowTransaction):
         if transaction.transaction_recipient_id != user_profile.person.id:
             self.pushButtonSaveTransactionFile.show()
         self.init_table(transaction)
-        self.setWindowTitle(f"Transaktion Details - Profil: {user_profile.profile_name}")
+        self.setWindowTitle(self.tr("Transaction Details - Profile: %s") % user_profile.profile_name)
+
         self.show()
         self.raise_()
-
 
 
 class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
@@ -806,7 +818,7 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
         self.init_values()
 
     # initialized flag is need to prevent reset to init_values when windows was closed
-    # so form data does ntt get lost on window close
+    # so form data does not get lost on window close
     def showEvent(self, event: QShowEvent):
         """Called when the dialog is shown."""
         if not self.initialized:
@@ -816,7 +828,7 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
         self.raise_()
 
     def create_minuto(self):
-        # Extrahiere die Werte aus den GUI-Elementen
+        # Extract values from the GUI elements
         amount = int(self.lineEdit_amount.text())
         region = self.lineEdit_region.text()
         years_valid = int(self.spinBox_years_valid.text())
@@ -829,20 +841,19 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
         phone = self.lineEdit_phone.text()
         service_offer = self.textEdit_service_offer.toPlainText()
         coordinates = self.lineEdit_coordinates.text()
-        is_test_vocher = self.checkBox_is_test_voucher.isChecked()
+        is_test_voucher = self.checkBox_is_test_voucher.isChecked()
 
         gender = self.comboBox_creator_gender.currentIndex()  # 0 unknown, 1 male, 2 female
         footnote = self.label_footnote.text()
         description = self.label_voucher_description.text()
         voucher = user_profile.create_voucher(first_name, last_name, organization, address, gender, email, phone, service_offer,
-                                    coordinates, amount, region, years_valid, is_test_vocher, description, footnote)
-        # reload voucher list if open
+                                    coordinates, amount, region, years_valid, is_test_voucher, description, footnote)
+        # Reload voucher list if open
         if not win['dialog_voucher_list'].isHidden():
             win['dialog_voucher_list'].init_show()
         win['form_show_voucher'].show_voucher(voucher)
-        self.initialized = False # to load values from profile on next show
+        self.initialized = False  # to load values from profile on next show
         self.close()
-
 
     def init_values(self):
         address = (f"{user_profile.person_data['street']} {user_profile.person_data['zip_code']} "
@@ -860,16 +871,17 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
         self.lineEdit_email.setText(user_profile.person_data['email'])
         self.lineEdit_phone.setText(user_profile.person_data['phone'])
         self.textEdit_service_offer.setText(user_profile.person_data['service_offer'])
-        self.label_footnote.setText("Gutschein-Nutzung nur für Mitspieler/innen.")
-        self.setWindowTitle(f"eMinuto erstellen - Profil: {user_profile.profile_name}")
+        self.label_footnote.setText(self.tr("Voucher usage only for players."))
+        self.setWindowTitle(self.tr("Create eMinuto - Profile: %s") % user_profile.profile_name)
 
     def update_voucher_description(self, amount):
         """Update the voucher description based on the amount."""
         if amount:
             self.label_voucher_description.setText(
-                f"Gutschein für Waren oder Dienstleistungen im Wert von {amount} Minuten qualitativer Leistung.")
+                self.tr("Voucher for goods or services worth %s minutes of qualitative performance.") % amount)
         else:
-            self.label_voucher_description.setText("Gutschein für Waren oder Dienstleistungen")
+            self.label_voucher_description.setText(self.tr("Voucher for goods or services"))
+
 
 
 class CustomSortFilterProxyModel(QSortFilterProxyModel):
@@ -965,11 +977,11 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
 
         # Define table headers
         self.headers = [
-            "Gutschein-ID", "Betrag", "Betrag (verfügbar)", "Gültigkeit bis", "Ersteller",
-            "Organisation", "Adresse", "Geschlecht", "Dienstleistungsangebot",
-            "Region", "Koordinaten", "E-Mail", "Telefon",
-            "Erstellungsdatum", "Testgutschein", "Bürgen",
-            "Unterschrift des Erstellers", "Transaktionen"
+            self.tr("Voucher ID"), self.tr("Amount"), self.tr("Amount (Available)"), self.tr("Valid Until"), self.tr("Creator"),
+            self.tr("Organization"), self.tr("Address"), self.tr("Gender"), self.tr("Service Offer"),
+            self.tr("Region"), self.tr("Coordinates"), self.tr("Email"), self.tr("Phone"),
+            self.tr("Creation Date"), self.tr("Test Voucher"), self.tr("Guarantors"),
+            self.tr("Creator's Signature"), self.tr("Transactions")
         ]
         self.voucher_mapping = {}
         self.isTableViewConnected = False
@@ -1030,12 +1042,12 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         """
         # Translation dictionary for voucher statuses
         status_translation = {
-            VoucherStatus.UNFINISHED.value: "Nicht fertig",
-            VoucherStatus.ARCHIVED.value: "Archivierte",
-            VoucherStatus.OWN.value: "Eigene",
-            VoucherStatus.OTHER.value: "Andere",
-            VoucherStatus.TRASHED.value: "Papierkorb",
-            VoucherStatus.CORRUPT.value: "Ungültige"
+            VoucherStatus.UNFINISHED.value: self.tr("Unfinished"),
+            VoucherStatus.ARCHIVED.value: self.tr("Archived"),
+            VoucherStatus.OWN.value: self.tr("Own"),
+            VoucherStatus.OTHER.value: self.tr("Other"),
+            VoucherStatus.TRASHED.value: self.tr("Trashed"),
+            VoucherStatus.CORRUPT.value: self.tr("Corrupt")
         }
 
         # Statuses to be excluded from display
@@ -1105,9 +1117,10 @@ class DialogVoucherList(QMainWindow, Ui_DialogVoucherList):
         :param model: The table model to which the voucher will be added.
         :param voucher: The voucher object to add.
         """
-        gender_text = {0: "Unbekannt", 1: "Männlich", 2: "Weiblich"}.get(voucher.creator_gender, "Unbekannt")
-        test_voucher_text = "Ja" if voucher.is_test_voucher else "Nein"
-        creator_signature_text = "Ja" if voucher.creator_signature else "Nein"
+        gender_text = {0: self.tr("Unknown"), 1: self.tr("Male"),2: self.tr("Female")}.get(voucher.creator_gender, self.tr("Unknown"))
+        test_voucher_text = self.tr("Yes") if voucher.is_test_voucher else self.tr("No")
+        creator_signature_text = self.tr("Yes") if voucher.creator_signature else self.tr("No")
+
         available_balance = format_table_cell(
             (voucher.get_voucher_amount(user_profile.person.id))
         )
@@ -1193,12 +1206,12 @@ class DialogTransactionList(QMainWindow, Ui_DialogTransactionList):
         self.setupUi(self)  # This method needs to be defined elsewhere, typically setup by Qt Designer UI files.
         self.headers = []
         self.column_translations = {
-            'id': "Transaktions-ID",
-            'sender': "Sender",
-            'recipient': "Empfänger",
-            'amount': "Betrag",
-            'purpose': "Zweck",
-            'time': "Zeit"
+            'id': self.tr("Transaction ID"),
+            'sender': self.tr("Sender"),
+            'recipient': self.tr("Recipient"),
+            'amount': self.tr("Amount"),
+            'purpose': self.tr("Purpose"),
+            'time': self.tr("Time")
         }
         self.transaction_mapping = {}
         self.isTableViewConnected = False
@@ -1248,9 +1261,10 @@ class DialogTransactionList(QMainWindow, Ui_DialogTransactionList):
         Adjusted to handle transaction filtering for incoming and outgoing transactions.
         """
         # Simplify for the example; in real implementation, you would dynamically create these based on actual data
-        self.statusComboBox.addItem("Alle Transaktionen")
-        self.statusComboBox.addItem("Eingehend")
-        self.statusComboBox.addItem("Ausgehend")
+        self.statusComboBox.addItem(self.tr("All Transactions"))
+        self.statusComboBox.addItem(self.tr("Incoming"))
+        self.statusComboBox.addItem(self.tr("Outgoing"))
+
         # Connect comboBox changes to filter application or data reloading
         self.statusComboBox.currentIndexChanged.connect(self.init_values)
 
@@ -1260,7 +1274,7 @@ class DialogTransactionList(QMainWindow, Ui_DialogTransactionList):
         This implementation uses the index of the selection in the statusComboBox to determine
         the filter to be applied, making it independent of the actual text, which is useful for localization.
         """
-        self.setWindowTitle(f"Transaktionen - Profile: {user_profile.profile_name}")
+        self.setWindowTitle(self.tr("Transaction - Profile: %s") % user_profile.profile_name)
 
         self.model.clear()  # Clear existing items from the table model.
 
@@ -1378,12 +1392,29 @@ class DialogTransactionList(QMainWindow, Ui_DialogTransactionList):
         self.raise_()
 
 
+TRANSLATION_DIR = 'src/gui/qt/translation'
+MAIN_DIR = '.'  # Main directory where the program is run
+DEFAULT_LANG = 'English'
+QM_FILE_NAME = 'current_lang.qm'
+
+# Mapping for language codes to full language names in their respective languages
+LANGUAGE_NAMES = {
+    "de_DE": "Deutsch",
+    "fr_FR": "Français",
+    "es_ES": "Español",
+    # Add more language mappings as needed
+}
+
 
 class Frm_Mainwin(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        # load porfile windows - connect signals
+
+        # Initialize language menu
+        self.create_language_menu()
+
+        # Load profile windows - connect signals
         self.dialog_generate_profile = Dialog_Generate_Profile()
         self.dialog_generate_profile.profileCreated.connect(self.onProfileCreated)
         self.dialog_profile_login = Dialog_Profile_Login()
@@ -1394,9 +1425,9 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.dialog_profile_create_selection = Dialog_Profile_Create_Selection()
         self.dialog_profile_create_selection.frm_main_window_generate_profile.connect(self.dialog_generate_profile.show)
 
+        self.setWindowTitle("eMinuto")
 
-        self.setWindowTitle(f"eMinuto")
-        # menu actions
+        # Menu actions
         self.actionCreateProfile.triggered.connect(self.dialog_generate_profile.show)
         self.actionEditProfile.triggered.connect(self.dialog_profile.init_and_show)
         self.actionCreateMinuto.triggered.connect(win['dialog_create_minuto'].show)
@@ -1409,16 +1440,79 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.actionClose.triggered.connect(self.close)
         self.set_gui_depending_profile_status()
 
-        # buttons
+        # Buttons
         self.pushButton_copy_user_ID.clicked.connect(self.copyUserIDToClipboard)
         self.pushButton_send_minuto.clicked.connect(self.sendMinuto)
         self.pushButton_receive_minuto.clicked.connect(self.receiveMinutoTransaction)
         self.pushButton_show_transactions.clicked.connect(win['dialog_transaction_list'].init_show)
         self.pushButton_show_vouchers.clicked.connect(win['dialog_voucher_list'].init_show)
 
+    def show(self):
+        super().show()
+        if user_profile.profile_exists():
+            self.dialog_profile_login.show()
+        else:
+            self.dialog_profile_create_selection.show()
+
+    def create_language_menu(self):
+        language_menu = self.menuLanguage
+        language_menu.clear()  # Clear existing actions to avoid duplication
+        qm_files = [f for f in os.listdir(TRANSLATION_DIR) if f.endswith('.qm')]
+
+        # Add default English language option
+        default_action = QAction(DEFAULT_LANG, self, checkable=True)
+        default_action.triggered.connect(functools.partial(self.change_language, DEFAULT_LANG))
+        language_menu.addAction(default_action)
+
+        current_language = None
+        if os.path.exists(os.path.join(MAIN_DIR, 'mdata')):
+            for file in os.listdir(os.path.join(MAIN_DIR, 'mdata')):
+                if file.endswith('.qm'):
+                    current_language = file.replace('.qm', '')
+
+        if current_language is None:
+            default_action.setChecked(True)
+
+        for qm_file in qm_files:
+            lang_code = qm_file.replace('.qm', '')
+            full_language_name = LANGUAGE_NAMES.get(lang_code, lang_code)
+            action = QAction(full_language_name, self, checkable=True)
+            action.triggered.connect(functools.partial(self.change_language, lang_code))
+            language_menu.addAction(action)
+            if current_language and lang_code == current_language:
+                action.setChecked(True)
+
+    def change_language(self, lang_code, checked=True):
+        qm_file_path = os.path.join(TRANSLATION_DIR, f"{lang_code}.qm")
+        dest_qm_dir = os.path.join(MAIN_DIR, 'mdata')
+        os.makedirs(dest_qm_dir, exist_ok=True)
+
+        # Remove all existing .qm files in the mdata directory
+        for file in os.listdir(dest_qm_dir):
+            if file.endswith('.qm'):
+                os.remove(os.path.join(dest_qm_dir, file))
+
+        dest_qm_file = os.path.join(dest_qm_dir, f"{lang_code}.qm")
+
+        if lang_code == DEFAULT_LANG:
+            if os.path.exists(dest_qm_file):
+                os.remove(dest_qm_file)
+        else:
+            if os.path.exists(qm_file_path):
+                # Copy file content without shutil
+                with open(qm_file_path, 'rb') as src_file:
+                    with open(dest_qm_file, 'wb') as dst_file:
+                        dst_file.write(src_file.read())
+
+        # Restart the application
+        self.restart_application()
+
+    def restart_application(self):
+        QCoreApplication.quit()
+        os.execl(sys.executable, sys.executable, *sys.argv)
 
     def closeEvent(self, event):
-        # close all windows on close of main win
+        # Close all windows on close of main win
         for window in win.values():
             window.close()
 
@@ -1429,7 +1523,6 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
 
     def forgot_password(self):
         win['dialog_forgot_password'].show()
-
 
     def sendMinuto(self):
         win['form_send_minuto'].show_init()
@@ -1446,29 +1539,28 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.dialog_profile_login.show()
 
     def update_values(self):
-        self.setWindowTitle(f"eMinuto  -  Profil: {user_profile.profile_name}  -  ID: {user_profile.person.id[:8]}")
+        self.setWindowTitle(
+            self.tr("eMinuto - Profile: %s - ID: %s") % (user_profile.profile_name, user_profile.person.id[:8]))
         self.set_vouchers_balances()
         self.lineEdit_user_id.setText(f"{user_profile.person.id}")
         self.lineEdit_user_id.setCursorPosition(0)
         self.label_username.setText(f"{user_profile.person_data['first_name']} {user_profile.person_data['last_name']}")
 
-
     def profile_login(self):
         self.update_values()
         self.set_gui_depending_profile_status()
-        self.show_status_message("Erfolgreich eingeloggt.")
+        self.show_status_message(self.tr("Successfully logged in."))
 
     def profile_logout(self):
         user_profile.profile_logout()
         self.update_values()
         self.set_gui_depending_profile_status()
-        self.show_status_message("Erfolgreich ausgeloggt.")
+        self.show_status_message(self.tr("Successfully logged out."))
 
     def on_enter(self):
         """Update the screen when entering."""
         self.title = self.get_title()
         self.set_vouchers_balances()
-
 
     def get_title(self):
         """Get the user's full name for the title."""
@@ -1481,15 +1573,14 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.lineEdit_own_balance.setText(user_profile.get_minuto_balance(VoucherStatus.OWN.value))
         self.lineEdit_other_balance.setText(user_profile.get_minuto_balance(VoucherStatus.OTHER.value))
 
-
     def set_gui_depending_profile_status(self):
-        """changes the gui depending on whether the profile exists and is active or inactive."""
+        """Changes the GUI depending on whether the profile exists and is active or inactive."""
 
         profile_exists = user_profile.profile_exists()
         profile_initialized = user_profile.profile_initialized()
 
         profile_name = user_profile.profile_name
-        window_title = f"eMinuto"
+        window_title = "eMinuto"
 
         def hide(object):  # helper
             object.setVisible(False)
@@ -1503,7 +1594,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         def enable(object):
             object.setEnabled(True)
 
-        # changings of GUI
+        # Changings of GUI
         if profile_initialized:
             show(self.actionEditProfile)
             show(self.actionProfileLogout)
@@ -1539,7 +1630,6 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
             hide(self.actionCreateMinuto)
             hide(self.actionVoucherList)
 
-            # disable(self.menuMinuto) does not work
             disable(self.lineEdit_own_balance)
             disable(self.lineEdit_other_balance)
 
@@ -1550,7 +1640,21 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
 app = QApplication([])
 apply_global_styles(app)
 
-# dict of all windwos
+# Load translation file if available
+translator = QTranslator()
+qm_file = None
+if os.path.exists(os.path.join(MAIN_DIR, 'mdata')):
+    for file in os.listdir(os.path.join(MAIN_DIR, 'mdata')):
+        if file.endswith('.qm'):
+            qm_file = os.path.join(MAIN_DIR, 'mdata', file)
+            break
+
+if qm_file and translator.load(qm_file):
+    app.installTranslator(translator)
+
+
+
+# Dictionary of all windows
 win = {
     'form_send_minuto': FormSendMinuto(),
     'form_sign_as_guarantor': FormSignAsGuarantor(),
@@ -1565,3 +1669,6 @@ win = {
 }
 
 frm_main_window = Frm_Mainwin()
+frm_main_window.show()
+
+sys.exit(app.exec())

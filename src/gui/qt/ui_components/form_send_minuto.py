@@ -172,19 +172,19 @@ class Ui_FormSendMinuto(object):
     # setupUi
 
     def retranslateUi(self, FormSendMinuto):
-        FormSendMinuto.setWindowTitle(QCoreApplication.translate("FormSendMinuto", u"Minuto versenden", None))
+        FormSendMinuto.setWindowTitle(QCoreApplication.translate("FormSendMinuto", u"Send Minuto", None))
 #if QT_CONFIG(tooltip)
         self.label_recipient_id_check.setToolTip("")
 #endif // QT_CONFIG(tooltip)
         self.label_recipient_id_check.setText("")
-        self.label.setText(QCoreApplication.translate("FormSendMinuto", u"Minuto versenden", None))
-        self.label_recipient_id.setText(QCoreApplication.translate("FormSendMinuto", u"Empf\u00e4nger ID (Adresse):", None))
-        self.label_purpose.setText(QCoreApplication.translate("FormSendMinuto", u"Zweck:", None))
-        self.label_transfer_amount_text.setText(QCoreApplication.translate("FormSendMinuto", u"Betrag:", None))
+        self.label.setText(QCoreApplication.translate("FormSendMinuto", u"Send Minuto", None))
+        self.label_recipient_id.setText(QCoreApplication.translate("FormSendMinuto", u"Recipient ID (Address):", None))
+        self.label_purpose.setText(QCoreApplication.translate("FormSendMinuto", u"Purpose:", None))
+        self.label_transfer_amount_text.setText(QCoreApplication.translate("FormSendMinuto", u"Amount:", None))
         self.lineEdit_transfer_amount.setInputMask("")
         self.label_amount_currency_text.setText(QCoreApplication.translate("FormSendMinuto", u"Minuto", None))
-        self.pushButton_Send_Minuto.setText(QCoreApplication.translate("FormSendMinuto", u"Minuto jetzt versenden", None))
-        self.label_note_text.setText(QCoreApplication.translate("FormSendMinuto", u"Hinweis:", None))
-        self.label_note.setText(QCoreApplication.translate("FormSendMinuto", u"Es wird eine Datei erstellt die dann dem Empf\u00e4nger gesendet werden muss. (per E-Mail, Messenger, Datentr\u00e4ger, ..)", None))
+        self.pushButton_Send_Minuto.setText(QCoreApplication.translate("FormSendMinuto", u"Send Minuto Now", None))
+        self.label_note_text.setText(QCoreApplication.translate("FormSendMinuto", u"Note:", None))
+        self.label_note.setText(QCoreApplication.translate("FormSendMinuto", u"A file will be created that must then be sent to the recipient. (via email, messenger, physical media, etc.)", None))
     # retranslateUi
 

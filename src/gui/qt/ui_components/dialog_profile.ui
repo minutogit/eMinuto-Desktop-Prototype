@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Profil</string>
+   <string>Profile</string>
   </property>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
@@ -37,7 +37,7 @@
     <item>
      <widget class="QLabel" name="label">
       <property name="text">
-       <string>Rufname Familienname</string>
+       <string>Name Surname</string>
       </property>
      </widget>
     </item>
@@ -50,7 +50,7 @@
        </size>
       </property>
       <property name="placeholderText">
-       <string>Vorname</string>
+       <string>First Name</string>
       </property>
      </widget>
     </item>
@@ -63,7 +63,7 @@
        </size>
       </property>
       <property name="placeholderText">
-       <string>Nachname</string>
+       <string>Last Name</string>
       </property>
      </widget>
     </item>
@@ -104,7 +104,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Organisation / Firma</string>
+       <string>Organization / Company</string>
       </property>
      </widget>
     </item>
@@ -155,7 +155,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Straße</string>
+       <string>Street</string>
       </property>
      </widget>
     </item>
@@ -206,7 +206,7 @@
        </font>
       </property>
       <property name="text">
-       <string>E-Mail</string>
+       <string>Email</string>
       </property>
      </widget>
     </item>
@@ -257,7 +257,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Telefon</string>
+       <string>Phone</string>
       </property>
      </widget>
     </item>
@@ -308,7 +308,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Koordinaten</string>
+       <string>Coordinates</string>
       </property>
      </widget>
     </item>
@@ -362,7 +362,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Profilname</string>
+       <string>Profile Name</string>
       </property>
      </widget>
     </item>
@@ -402,7 +402,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Dienstleistungsangebot</string>
+       <string>Service Offering</string>
       </property>
      </widget>
     </item>
@@ -442,7 +442,7 @@ p, li { white-space: pre-wrap; }
        </font>
       </property>
       <property name="text">
-       <string>Speichern</string>
+       <string>Save</string>
       </property>
       <property name="icon">
        <iconset theme="media-floppy">
@@ -464,7 +464,7 @@ p, li { white-space: pre-wrap; }
        </font>
       </property>
       <property name="text">
-       <string>Schließen</string>
+       <string>Close</string>
       </property>
       <property name="icon">
        <iconset theme="window-close">
@@ -515,7 +515,7 @@ p, li { white-space: pre-wrap; }
        </font>
       </property>
       <property name="text">
-       <string>PLZ Ort</string>
+       <string>Postal Code City</string>
       </property>
      </widget>
     </item>
@@ -534,7 +534,7 @@ p, li { white-space: pre-wrap; }
        </size>
       </property>
       <property name="placeholderText">
-       <string>PLZ</string>
+       <string>Postal Code</string>
       </property>
      </widget>
     </item>
@@ -553,7 +553,7 @@ p, li { white-space: pre-wrap; }
        </size>
       </property>
       <property name="placeholderText">
-       <string>Ort</string>
+       <string>City</string>
       </property>
      </widget>
     </item>
@@ -594,7 +594,7 @@ p, li { white-space: pre-wrap; }
        </font>
       </property>
       <property name="text">
-       <string>Land</string>
+       <string>Country</string>
       </property>
      </widget>
     </item>
@@ -645,7 +645,7 @@ p, li { white-space: pre-wrap; }
        </font>
       </property>
       <property name="text">
-       <string>Bundesland</string>
+       <string>State</string>
       </property>
      </widget>
     </item>
@@ -696,7 +696,7 @@ p, li { white-space: pre-wrap; }
        </font>
       </property>
       <property name="text">
-       <string>Geschlecht</string>
+       <string>Gender</string>
       </property>
      </widget>
     </item>
@@ -704,17 +704,17 @@ p, li { white-space: pre-wrap; }
      <widget class="QComboBox" name="comboBox_gender">
       <item>
        <property name="text">
-        <string>unbekannt</string>
+        <string>Unknown</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>männlich</string>
+        <string>Male</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>weiblich</string>
+        <string>Female</string>
        </property>
       </item>
      </widget>

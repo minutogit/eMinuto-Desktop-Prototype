@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Minuto schöpfen</string>
+   <string>Mint Minuto</string>
   </property>
   <widget class="QWidget" name="widget_creator_first_name">
    <property name="geometry">
@@ -43,7 +43,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Rufname</string>
+       <string>First Name</string>
       </property>
      </widget>
     </item>
@@ -82,7 +82,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Familienname</string>
+       <string>Last Name</string>
       </property>
      </widget>
     </item>
@@ -121,7 +121,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Organisation / Firma</string>
+       <string>Organization / Company</string>
       </property>
      </widget>
     </item>
@@ -160,7 +160,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Adresse</string>
+       <string>Address</string>
       </property>
      </widget>
     </item>
@@ -205,7 +205,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Geschlecht</string>
+       <string>Gender</string>
       </property>
      </widget>
     </item>
@@ -221,17 +221,17 @@
       </property>
       <item>
        <property name="text">
-        <string>unbekannt</string>
+        <string>unknown</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>männlich</string>
+        <string>male</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>weiblich</string>
+        <string>female</string>
        </property>
       </item>
      </widget>
@@ -262,7 +262,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Wie viel Minuto sollen geschöpft werden?</string>
+       <string>How many Minuto should be minted?</string>
       </property>
       <property name="wordWrap">
        <bool>true</bool>
@@ -316,7 +316,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Als Testgutschein nutzen (ohne Wert)</string>
+       <string>Use as test voucher (without value)</string>
       </property>
      </widget>
     </item>
@@ -346,7 +346,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Telefon</string>
+       <string>Phone</string>
       </property>
      </widget>
     </item>
@@ -385,7 +385,7 @@
        </font>
       </property>
       <property name="text">
-       <string>eMail Adresse</string>
+       <string>Email Address</string>
       </property>
      </widget>
     </item>
@@ -417,7 +417,7 @@
     </font>
    </property>
    <property name="text">
-    <string>Eigene Daten</string>
+    <string>Personal Data</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_voucher_data">
@@ -437,7 +437,7 @@
     </font>
    </property>
    <property name="text">
-    <string>Gutschein Daten</string>
+    <string>Voucher Data</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_footnote">
@@ -500,7 +500,7 @@
     </font>
    </property>
    <property name="text">
-    <string>Erstellen</string>
+    <string>Create</string>
    </property>
   </widget>
   <widget class="QWidget" name="layoutWidget">
@@ -527,7 +527,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Angebote / Fähigkeiten</string>
+       <string>Offers / Skills</string>
       </property>
      </widget>
     </item>
@@ -572,7 +572,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Gültigkeit</string>
+       <string>Validity</string>
       </property>
      </widget>
     </item>
@@ -614,7 +614,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Jahre</string>
+       <string>Years</string>
       </property>
      </widget>
     </item>
@@ -689,7 +689,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Koordinaten</string>
+         <string>Coordinates</string>
         </property>
        </widget>
       </item>

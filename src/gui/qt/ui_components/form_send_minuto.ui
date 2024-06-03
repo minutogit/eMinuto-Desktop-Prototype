@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Minuto versenden</string>
+   <string>Send Minuto</string>
   </property>
   <widget class="QLabel" name="label_recipient_id_check">
    <property name="geometry">
@@ -72,7 +72,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Minuto versenden</string>
+       <string>Send Minuto</string>
       </property>
      </widget>
     </item>
@@ -88,7 +88,7 @@
            </font>
           </property>
           <property name="text">
-           <string>Empfänger ID (Adresse):</string>
+           <string>Recipient ID (Address):</string>
           </property>
          </widget>
         </item>
@@ -100,7 +100,7 @@
            </font>
           </property>
           <property name="text">
-           <string>Zweck:</string>
+           <string>Purpose:</string>
           </property>
          </widget>
         </item>
@@ -112,7 +112,7 @@
            </font>
           </property>
           <property name="text">
-           <string>Betrag:</string>
+           <string>Amount:</string>
           </property>
          </widget>
         </item>
@@ -212,7 +212,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Minuto jetzt versenden</string>
+       <string>Send Minuto Now</string>
       </property>
      </widget>
     </item>
@@ -240,7 +240,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Hinweis:</string>
+         <string>Note:</string>
         </property>
         <property name="wordWrap">
          <bool>false</bool>
@@ -261,7 +261,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Es wird eine Datei erstellt die dann dem Empfänger gesendet werden muss. (per E-Mail, Messenger, Datenträger, ..)</string>
+         <string>A file will be created that must then be sent to the recipient. (via email, messenger, physical media, etc.)</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>

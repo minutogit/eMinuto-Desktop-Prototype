@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Einloggen</string>
+   <string>Log in</string>
   </property>
   <property name="layoutDirection">
    <enum>Qt::RightToLeft</enum>
@@ -58,7 +58,7 @@
     <number>-1</number>
    </property>
    <property name="text">
-    <string>Passwort eingeben:</string>
+    <string>Enter password:</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignCenter</set>

@@ -84,8 +84,8 @@ class Ui_DialogTransactionList(object):
     # setupUi
 
     def retranslateUi(self, DialogTransactionList):
-        DialogTransactionList.setWindowTitle(QCoreApplication.translate("DialogTransactionList", u"Transaktionsliste", None))
-        self.label_voucher_list.setText(QCoreApplication.translate("DialogTransactionList", u"Liste aller Transaktionen", None))
-        self.labelFilter.setText(QCoreApplication.translate("DialogTransactionList", u"  Filter:", None))
+        DialogTransactionList.setWindowTitle(QCoreApplication.translate("DialogTransactionList", u"Transaction List", None))
+        self.label_voucher_list.setText(QCoreApplication.translate("DialogTransactionList", u"List of all transactions", None))
+        self.labelFilter.setText(QCoreApplication.translate("DialogTransactionList", u"Filter:", None))
     # retranslateUi
 

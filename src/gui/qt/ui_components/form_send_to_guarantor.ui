@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Von anderen Bürgen unterschreiben lassen</string>
+   <string>Have Others Sign as Guarantors</string>
   </property>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
@@ -34,7 +34,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Eigene Nutzer ID (Adresse zum Empfangen))</string>
+       <string>Your User ID (Address to Receive)</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
@@ -56,7 +56,7 @@
       <item>
        <widget class="QPushButton" name="pushButton_copy_user_ID">
         <property name="toolTip">
-         <string>Kopieren</string>
+         <string>Copy</string>
         </property>
         <property name="text">
          <string/>
@@ -83,7 +83,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Bürgen ID (Adresse des Bürgen der unterzeichnen soll)</string>
+       <string>Guarantor ID (Address of Guarantor to Sign)</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
@@ -144,7 +144,7 @@
          </font>
         </property>
         <property name="text">
-         <string>EMail Adresse des Bürgen:</string>
+         <string>Guarantor's Email Address:</string>
         </property>
        </widget>
       </item>
@@ -157,7 +157,7 @@
          <string/>
         </property>
         <property name="placeholderText">
-         <string>EMail Versand noch nicht möglich</string>
+         <string>Email sending not available yet</string>
         </property>
        </widget>
       </item>
@@ -203,7 +203,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Daten verschlüsseln</string>
+         <string>Encrypt data</string>
         </property>
         <property name="checked">
          <bool>true</bool>
@@ -222,7 +222,7 @@
          <string/>
         </property>
         <property name="text">
-         <string>Als Datei Speichern</string>
+         <string>Save as file</string>
         </property>
        </widget>
       </item>
@@ -241,7 +241,7 @@
          <string/>
         </property>
         <property name="text">
-         <string>Als E-Mail versenden</string>
+         <string>Send as email</string>
         </property>
        </widget>
       </item>

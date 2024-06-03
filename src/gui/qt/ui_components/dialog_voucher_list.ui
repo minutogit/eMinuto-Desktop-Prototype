@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Gutscheinliste</string>
+   <string>Voucher List</string>
   </property>
   <widget class="QLabel" name="label_voucher_list">
    <property name="geometry">
@@ -40,7 +40,7 @@
     </font>
    </property>
    <property name="text">
-    <string>Gutscheinliste</string>
+    <string>Voucher List</string>
    </property>
   </widget>
   <widget class="QWidget" name="layoutWidget">
@@ -81,7 +81,7 @@
          </font>
         </property>
         <property name="text">
-         <string>  Filter:</string>
+         <string>Filter:</string>
         </property>
        </widget>
       </item>
@@ -115,7 +115,7 @@
     <item>
      <widget class="QPushButton" name="pushButton_open_voucher_or_signature">
       <property name="text">
-       <string>Gutschein oder Bürgenunterschrift aus Datei öffen</string>
+       <string>Open voucher or guarantor signature from file</string>
       </property>
      </widget>
     </item>

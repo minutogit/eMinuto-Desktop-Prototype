@@ -155,20 +155,20 @@ class Ui_DialogGenerateProfile(object):
     # setupUi
 
     def retranslateUi(self, DialogGenerateProfile):
-        DialogGenerateProfile.setWindowTitle(QCoreApplication.translate("DialogGenerateProfile", u"Profil generieren", None))
-        self.btn_new_seed_words.setText(QCoreApplication.translate("DialogGenerateProfile", u"Neue W\u00f6rter generieren", None))
-        self.label.setText(QCoreApplication.translate("DialogGenerateProfile", u"Schl\u00fcsselw\u00f6rter", None))
-        self.label_2.setText(QCoreApplication.translate("DialogGenerateProfile", u"Schl\u00fcsselw\u00f6rter zur Best\u00e4tigung nochmal eingeben", None))
-        self.btn_create_profile.setText(QCoreApplication.translate("DialogGenerateProfile", u"Profil erstellen", None))
-        self.label_3.setText(QCoreApplication.translate("DialogGenerateProfile", u"Profilname (beliebig w\u00e4hlbar)", None))
-        self.label_info.setText(QCoreApplication.translate("DialogGenerateProfile", u"Diese W\u00f6rter erzeugen eine digitale Identit\u00e4t. Aufschreiben und geheim halten. Die Worte dienen auch zur Profil- und Passwortwiederherstellung.", None))
+        DialogGenerateProfile.setWindowTitle(QCoreApplication.translate("DialogGenerateProfile", u"Generate profile", None))
+        self.btn_new_seed_words.setText(QCoreApplication.translate("DialogGenerateProfile", u"Generate new words", None))
+        self.label.setText(QCoreApplication.translate("DialogGenerateProfile", u"Keywords", None))
+        self.label_2.setText(QCoreApplication.translate("DialogGenerateProfile", u"Enter keywords again for confirmation", None))
+        self.btn_create_profile.setText(QCoreApplication.translate("DialogGenerateProfile", u"Create profile", None))
+        self.label_3.setText(QCoreApplication.translate("DialogGenerateProfile", u"Profile name (freely selectable)", None))
+        self.label_info.setText(QCoreApplication.translate("DialogGenerateProfile", u"These words create a digital identity. Write down and keep secret. The words are also used for profile and password recovery.", None))
         self.lineEdit_organization.setText("")
-        self.label_6.setText(QCoreApplication.translate("DialogGenerateProfile", u"Organisation / Firma:", None))
-        self.label_4.setText(QCoreApplication.translate("DialogGenerateProfile", u"Rufname", None))
-        self.label_5.setText(QCoreApplication.translate("DialogGenerateProfile", u"Familienname", None))
+        self.label_6.setText(QCoreApplication.translate("DialogGenerateProfile", u"Organization / Company:", None))
+        self.label_4.setText(QCoreApplication.translate("DialogGenerateProfile", u"Nickname", None))
+        self.label_5.setText(QCoreApplication.translate("DialogGenerateProfile", u"Surname", None))
         self.lineEdit_password.setText("")
         self.lineEdit_password_confirmed.setText("")
-        self.label_7.setText(QCoreApplication.translate("DialogGenerateProfile", u"Passwort", None))
-        self.label_8.setText(QCoreApplication.translate("DialogGenerateProfile", u"Passwort wiederholen", None))
+        self.label_7.setText(QCoreApplication.translate("DialogGenerateProfile", u"Password", None))
+        self.label_8.setText(QCoreApplication.translate("DialogGenerateProfile", u"Repeat password", None))
     # retranslateUi
 

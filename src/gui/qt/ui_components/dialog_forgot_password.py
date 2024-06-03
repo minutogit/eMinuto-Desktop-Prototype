@@ -96,10 +96,10 @@ class Ui_DialogForgotPassword(object):
     # setupUi
 
     def retranslateUi(self, DialogForgotPassword):
-        DialogForgotPassword.setWindowTitle(QCoreApplication.translate("DialogForgotPassword", u"Neues Passwort eingeben", None))
-        self.label_3.setText(QCoreApplication.translate("DialogForgotPassword", u"Schl\u00fcsselw\u00f6rter", None))
-        self.label.setText(QCoreApplication.translate("DialogForgotPassword", u"Neues Passwort:", None))
-        self.label_2.setText(QCoreApplication.translate("DialogForgotPassword", u"Passwort wiederholen:", None))
-        self.pushButton_save_new_password.setText(QCoreApplication.translate("DialogForgotPassword", u"Neues Passwort speichern", None))
+        DialogForgotPassword.setWindowTitle(QCoreApplication.translate("DialogForgotPassword", u"Enter new password", None))
+        self.label_3.setText(QCoreApplication.translate("DialogForgotPassword", u"Keywords", None))
+        self.label.setText(QCoreApplication.translate("DialogForgotPassword", u"New password:", None))
+        self.label_2.setText(QCoreApplication.translate("DialogForgotPassword", u"Repeat password:", None))
+        self.pushButton_save_new_password.setText(QCoreApplication.translate("DialogForgotPassword", u"Save new password", None))
     # retranslateUi
 
