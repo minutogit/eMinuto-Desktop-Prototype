@@ -5,6 +5,23 @@ import re
 from datetime import datetime
 import os, random, string
 
+def get_version():
+    """
+    Reads the project version from the VERSION file.
+
+    Returns:
+        str: The version number or an error message if the file is not found.
+    """
+    try:
+        # Determine the absolute path to the VERSION file
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        version_file_path = os.path.join(base_dir, "../../VERSION")
+
+        with open(version_file_path) as version_file:
+            return version_file.read().strip()
+    except FileNotFoundError:
+        return "" # empty if Version file not found
+
 def read_file_content(file_path):
     """
     Reads the content of a file and returns it as a string.

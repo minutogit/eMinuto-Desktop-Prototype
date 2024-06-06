@@ -35,7 +35,7 @@ from PySide6.QtWidgets import QAbstractItemView
 from src import config
 
 
-from src.services.utils import dprint, display_balance, is_iso8601_datetime, is_password_valid
+from src.services.utils import dprint, display_balance, is_iso8601_datetime, is_password_valid, get_version
 
 
 def open_data_file(file_type=""):
@@ -1425,7 +1425,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         self.dialog_profile_create_selection = Dialog_Profile_Create_Selection()
         self.dialog_profile_create_selection.frm_main_window_generate_profile.connect(self.dialog_generate_profile.show)
 
-        self.setWindowTitle("eMinuto")
+        self.setWindowTitle(f"eMinuto v{get_version()}")
 
         # Menu actions
         self.actionCreateProfile.triggered.connect(self.dialog_generate_profile.show)
@@ -1540,7 +1540,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
 
     def update_values(self):
         self.setWindowTitle(
-            self.tr("eMinuto - Profile: %s - ID: %s") % (user_profile.profile_name, user_profile.person.id[:8]))
+            self.tr("eMinuto v%s - Profile: %s - ID: %s") % (get_version(), user_profile.profile_name, user_profile.person.id[:8]))
         self.set_vouchers_balances()
         self.lineEdit_user_id.setText(f"{user_profile.person.id}")
         self.lineEdit_user_id.setCursorPosition(0)
@@ -1578,9 +1578,6 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
 
         profile_exists = user_profile.profile_exists()
         profile_initialized = user_profile.profile_initialized()
-
-        profile_name = user_profile.profile_name
-        window_title = "eMinuto"
 
         def hide(object):  # helper
             object.setVisible(False)
