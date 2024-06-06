@@ -17,9 +17,10 @@ jobs:
     - name: Read Version
       id: get_version
       run: |
-        version=$(cat VERSION)
+        $version = Get-Content VERSION
         echo "::set-output name=version::$version"
-        echo "VERSION=$version" >> $GITHUB_ENV
+        echo "VERSION=$version" >> $env:GITHUB_ENV
+      shell: pwsh
 
     - name: Set up Node.js
       uses: actions/setup-node@v4
@@ -51,7 +52,7 @@ jobs:
         release_name: Release v${{ env.VERSION }}
         draft: false
         prerelease: false
-
+    
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
