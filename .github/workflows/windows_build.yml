@@ -13,6 +13,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Read Version
+      id: get_version
+      run: |
+        version=$(cat VERSION)
+        echo "::set-output name=version::$version"
+        echo "VERSION=$version" >> $GITHUB_ENV
+
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
@@ -39,11 +47,11 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: release-${{ github.run_number }}
-        release_name: Release ${{ github.run_number }}
+        tag_name: v${{ env.VERSION }}
+        release_name: Release v${{ env.VERSION }}
         draft: false
         prerelease: false
-    
+
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
@@ -53,4 +61,3 @@ jobs:
         asset_path: ./build/eMinuto-windows.zip
         asset_name: eMinuto.zip
         asset_content_type: application/zip
-
