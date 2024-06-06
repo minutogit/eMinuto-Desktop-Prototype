@@ -18,8 +18,7 @@ jobs:
       id: get_version
       run: |
         $version = Get-Content VERSION
-        echo "::set-output name=version::$version"
-        echo "VERSION=$version" >> $env:GITHUB_ENV
+        echo "version=$version" >> $GITHUB_ENV
       shell: pwsh
 
     - name: Set up Node.js
@@ -48,8 +47,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v${{ env.VERSION }}
-        release_name: Release v${{ env.VERSION }}
+        tag_name: v${{ env.version }}
+        release_name: Release v${{ env.version }}
         draft: false
         prerelease: false
     
