@@ -1,0 +1,68 @@
+name: Build Linux Executable with Release
+
+on:
+  workflow_dispatch:
+
+permissions: # Explicitly setting permissions
+  contents: write
+  issues: write
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Read Version
+      id: get_version
+      run: |
+        version=$(cat VERSION)
+        echo "version=$version" >> $GITHUB_ENV
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-pip build-essential fakeroot dpkg-dev
+        pip install nuitka PySide6 base58==2.1.1 cryptography==3.4.8 mnemonic==0.21 PySide6==6.6.1 PySide6_Addons==6.6.1 PySide6_Essentials==6.6.1 shiboken6==6.6.1
+
+    - name: Compile with Nuitka
+      run: |
+        python3.9 -m nuitka --output-filename=eMinuto --output-dir=./build --follow-imports --include-module=mnemonic --enable-plugin=pyside6 --standalone main_qt.py
+
+    - name: Check if Release Exists
+      id: check_release
+      run: |
+        release=$(gh api repos/${{ github.repository }}/releases/tags/v${{ env.version }} -q '.id' || echo "")
+        if [ -z "$release" ]; then
+          echo "release_exists=false" >> $GITHUB_ENV
+        else
+          echo "release_exists=true" >> $GITHUB_ENV
+        fi
+
+    - name: Create Release
+      if: env.release_exists == 'false'
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ env.version }}
+        release_name: Release v${{ env.version }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build/eMinuto
+        asset_name: eMinuto-linux-${{ env.version }}
+        asset_content_type: application/octet-stream
