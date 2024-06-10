@@ -27,6 +27,23 @@ jobs:
     - name: Compile with Nuitka
       run: |
         python3.9 -m nuitka --follow-imports --include-module=mnemonic --enable-plugin=pyside6 --disable-console --standalone --output-dir=./dist --output-filename=eMinuto main_qt.py --assume-yes-for-downloads
+      shell: bash
+
+    - name: Debug - List dist directory contents
+      run: |
+        echo "Contents of ./dist directory:"
+        ls -l ./dist
+        echo "Contents of ./dist/eMinuto.dist directory:"
+        ls -l ./dist/eMinuto.dist
+
+    - name: Verify Compiled File
+      run: |
+        if [ ! -f "./dist/eMinuto.dist/eMinuto" ]; then
+          echo "Compiled file not found!"
+          exit 1
+        else
+          echo "Compiled file found at ./dist/eMinuto.dist/eMinuto"
+        fi
 
     - name: Check if release exists
       id: check_release
@@ -46,6 +63,11 @@ jobs:
             core.setOutput('upload_url', '');
           }
 
+    - name: Debug - Check Release Outputs
+      run: |
+        echo "Release ID: ${{ steps.check_release.outputs.release_id }}"
+        echo "Upload URL: ${{ steps.check_release.outputs.upload_url }}"
+
     - name: Create Release
       if: ${{ steps.check_release.outputs.release_id == '' }}
       id: create_release
@@ -57,6 +79,12 @@ jobs:
         release_name: eMinuto v${{ env.VERSION }}
         draft: false
         prerelease: false
+
+    - name: Debug - New Release Outputs
+      if: ${{ steps.check_release.outputs.release_id == '' }}
+      run: |
+        echo "New release created."
+        echo "Upload URL: ${{ steps.create_release.outputs.upload_url }}"
 
     - name: Set Upload URL for New Release
       if: ${{ steps.check_release.outputs.release_id == '' }}
@@ -70,8 +98,9 @@ jobs:
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        UPLOAD_URL: ${{ steps.create_release.outputs.upload_url || steps.check_release.outputs.upload_url }}
       with:
         upload_url: ${{ env.UPLOAD_URL }}
-        asset_path: ./dist/eMinuto
+        asset_path: ./dist/eMinuto.dist/eMinuto
         asset_name: eMinuto-${{ env.VERSION }}-linux
         asset_content_type: application/octet-stream
