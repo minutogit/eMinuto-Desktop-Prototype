@@ -45,6 +45,10 @@ jobs:
           echo "Compiled file found at ./dist/main_qt.dist/eMinuto"
         fi
 
+    - name: Create Archive
+      run: |
+        tar -czvf ./dist/eMinuto-${{ env.VERSION }}-linux.tar.gz -C ./dist main_qt.dist
+
     - name: Check if release exists
       id: check_release
       uses: actions/github-script@v6
@@ -101,6 +105,6 @@ jobs:
         UPLOAD_URL: ${{ steps.create_release.outputs.upload_url || steps.check_release.outputs.upload_url }}
       with:
         upload_url: ${{ env.UPLOAD_URL }}
-        asset_path: ./dist/main_qt.dist/eMinuto
-        asset_name: eMinuto-${{ env.VERSION }}-linux
-        asset_content_type: application/octet-stream
+        asset_path: ./dist/eMinuto-${{ env.VERSION }}-linux.tar.gz
+        asset_name: eMinuto-${{ env.VERSION }}-linux.tar.gz
+        asset_content_type: application/gzip
