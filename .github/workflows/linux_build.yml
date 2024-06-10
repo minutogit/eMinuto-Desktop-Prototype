@@ -1,0 +1,50 @@
+name: Build Linux with Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Get version from file
+      run: echo "VERSION=$(<VERSION)" >> $GITHUB_ENV
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3.9 python3.9-venv python3.9-dev build-essential
+        python3.9 -m pip install --upgrade pip
+        python3.9 -m pip install nuitka PySide6 base58==2.1.1 cryptography==3.4.8 mnemonic==0.21 PySide6==6.6.1 PySide6_Addons==6.6.1 PySide6_Essentials==6.6.1 shiboken6==6.6.1
+
+    - name: Compile with Nuitka
+      run: |
+        python3.9 -m nuitka --output-filename=eMinuto --output-dir=/app/dist --follow-imports --include-module=mnemonic --enable-plugin=pyside6 --standalone /app/main_qt.py
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ env.VERSION }}
+        release_name: eMinuto v${{ env.VERSION }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: /app/dist/eMinuto
+        asset_name: eMinuto-${{ env.VERSION }}-linux
+        asset_content_type: application/octet-stream
