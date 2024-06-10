@@ -20,13 +20,19 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y python3.9 python3.9-venv python3.9-dev build-essential
+        sudo apt-get install -y python3.9 python3.9-venv python3.9-dev build-essential libxkbcommon-x11-0
         python3.9 -m pip install --upgrade pip
         pip install nuitka PySide6 base58==2.1.1 cryptography==3.4.8 mnemonic==0.21 PySide6==6.6.1 PySide6_Addons==6.6.1 PySide6_Essentials==6.6.1 shiboken6==6.6.1
 
     - name: Compile with Nuitka
       run: |
-        python3.9 -m nuitka --follow-imports --include-package=cryptography --include-module=mnemonic --include-package=src --enable-plugin=pyside6 --disable-console --standalone --output-dir=./dist --output-filename=eMinuto main_qt.py --assume-yes-for-downloads
+        python3.9 -m nuitka --follow-imports --include-package=cryptography --include-module=mnemonic --include-package=src --enable-plugin=pyside6 --plugin-enable=numpy --standalone --output-dir=./dist --output-filename=eMinuto main_qt.py --assume-yes-for-downloads
+      shell: bash
+
+    - name: Copy Qt Plugins
+      run: |
+        mkdir -p ./dist/main_qt.dist/platforms
+        cp -r $(dirname $(python3.9 -c "import PySide6.QtCore; print(PySide6.QtCore.__file__)"))/../../../libexec/pyside6/* ./dist/main_qt.dist/platforms/
       shell: bash
 
     - name: Debug - List dist directory contents
@@ -45,9 +51,12 @@ jobs:
           echo "Compiled file found at ./dist/main_qt.dist/eMinuto"
         fi
 
+    - name: Rename Directory
+      run: mv ./dist/main_qt.dist ./dist/eMinuto
+
     - name: Create Archive
       run: |
-        tar -czvf ./dist/eMinuto-${{ env.VERSION }}-linux.tar.gz -C ./dist main_qt.dist
+        tar -czvf ./dist/eMinuto-${{ env.VERSION }}-linux.tar.gz -C ./dist eMinuto
 
     - name: Check if release exists
       id: check_release
