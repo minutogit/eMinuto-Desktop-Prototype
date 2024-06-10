@@ -33,16 +33,16 @@ jobs:
       run: |
         echo "Contents of ./dist directory:"
         ls -l ./dist
-        echo "Contents of ./dist/eMinuto.dist directory:"
-        ls -l ./dist/eMinuto.dist
+        echo "Contents of ./dist/main_qt.dist directory:"
+        ls -l ./dist/main_qt.dist
 
     - name: Verify Compiled File
       run: |
-        if [ ! -f "./dist/eMinuto.dist/eMinuto" ]; then
+        if [ ! -f "./dist/main_qt.dist/eMinuto" ]; then
           echo "Compiled file not found!"
           exit 1
         else
-          echo "Compiled file found at ./dist/eMinuto.dist/eMinuto"
+          echo "Compiled file found at ./dist/main_qt.dist/eMinuto"
         fi
 
     - name: Check if release exists
@@ -101,6 +101,6 @@ jobs:
         UPLOAD_URL: ${{ steps.create_release.outputs.upload_url || steps.check_release.outputs.upload_url }}
       with:
         upload_url: ${{ env.UPLOAD_URL }}
-        asset_path: ./dist/eMinuto.dist/eMinuto
+        asset_path: ./dist/main_qt.dist/eMinuto
         asset_name: eMinuto-${{ env.VERSION }}-linux
         asset_content_type: application/octet-stream
