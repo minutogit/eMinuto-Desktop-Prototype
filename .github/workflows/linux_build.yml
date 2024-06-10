@@ -29,12 +29,6 @@ jobs:
         python3.9 -m nuitka --follow-imports --include-package=cryptography --include-module=mnemonic --include-package=src --enable-plugin=pyside6 --plugin-enable=numpy --standalone --output-dir=./dist --output-filename=eMinuto main_qt.py --assume-yes-for-downloads
       shell: bash
 
-    - name: Copy Qt Plugins
-      run: |
-        mkdir -p ./dist/main_qt.dist/platforms
-        cp -r $(dirname $(python3.9 -c "import PySide6.QtCore; print(PySide6.QtCore.__file__)"))/../../../libexec/pyside6/* ./dist/main_qt.dist/platforms/
-      shell: bash
-
     - name: Debug - List dist directory contents
       run: |
         echo "Contents of ./dist directory:"
