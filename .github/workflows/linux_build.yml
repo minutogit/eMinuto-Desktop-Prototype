@@ -26,7 +26,7 @@ jobs:
 
     - name: Compile with Nuitka
       run: |
-        python3.9 -m nuitka --output-filename=eMinuto --output-dir=/app/dist --follow-imports --include-module=mnemonic --enable-plugin=pyside6 --standalone /app/main_qt.py
+        python3.9 -m nuitka --follow-imports --include-module=mnemonic --enable-plugin=pyside6 --disable-console --standalone --output-dir=./dist --output-filename=eMinuto main_qt.py --assume-yes-for-downloads
 
     - name: Create Release
       id: create_release
@@ -45,6 +45,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: /app/dist/eMinuto
+        asset_path: ./dist/eMinuto
         asset_name: eMinuto-${{ env.VERSION }}-linux
         asset_content_type: application/octet-stream
