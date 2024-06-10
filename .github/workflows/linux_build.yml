@@ -59,11 +59,11 @@ jobs:
         prerelease: false
 
     - name: Set Upload URL for New Release
-      if: ${{ steps.create_release.outputs.upload_url }}
+      if: ${{ steps.check_release.outputs.release_id == '' }}
       run: echo "UPLOAD_URL=${{ steps.create_release.outputs.upload_url }}" >> $GITHUB_ENV
 
     - name: Set Upload URL for Existing Release
-      if: ${{ steps.check_release.outputs.upload_url }}
+      if: ${{ steps.check_release.outputs.release_id != '' }}
       run: echo "UPLOAD_URL=${{ steps.check_release.outputs.upload_url }}" >> $GITHUB_ENV
 
     - name: Upload Release Asset
