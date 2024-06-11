@@ -20,42 +20,46 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y python3.9 python3.9-venv python3.9-dev build-essential libxkbcommon-x11-0 libxrender1 libxtst6 libdbus-1-3 libharfbuzz0b libxcb-xinerama0 libxcb-util1 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xkb1 libxcb-xfixes0
-        python3.9 -m pip install --upgrade pip
+        sudo apt-get install -y python3.10 python3.10-venv python3.10-dev build-essential libxkbcommon-x11-0 libxrender1 libxtst6 libdbus-1-3 libharfbuzz0b libxcb-xinerama0 libxcb-util1 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xkb1 libxcb-xfixes0
+        python3.10 -m pip install --upgrade pip
         pip install nuitka PySide6 base58==2.1.1 cryptography==3.4.8 mnemonic==0.21 PySide6==6.6.1 PySide6_Addons==6.6.1 PySide6_Essentials==6.6.1 shiboken6==6.6.1
 
     - name: Compile with Nuitka
       run: |
-        python3.9 -m nuitka --follow-imports --include-package=cryptography --include-module=mnemonic --include-package=src --enable-plugin=pyside6 --plugin-enable=numpy --standalone --output-dir=./dist --output-filename=eMinuto main_qt.py --assume-yes-for-downloads --include-qt-plugins=platforms --include-data-dir=$(dirname $(python3.9 -c "import PySide6.QtCore; print(PySide6.QtCore.__file__)"))/../../../../../share/Qt/plugins/platforms=./platforms
+        python3.10 -m nuitka \
+        --follow-imports \
+        --include-package=cryptography \
+        --include-module=mnemonic \
+        --include-package=src \
+        --enable-plugin=pyside6 \
+        --disable-console \
+        --standalone \
+        --output-dir=./dist \
+        --output-filename=eMinuto \
+        main_qt.py \
+        --assume-yes-for-downloads \
+        --include-data-dir=./src/gui/qt/translation=src/gui/qt/translation
       shell: bash
 
     - name: Debug - List dist directory contents
       run: |
         echo "Contents of ./dist directory:"
         ls -l ./dist
-        echo "Contents of ./dist/main_qt.dist directory:"
-        ls -l ./dist/main_qt.dist
-
-    - name: Check for Qt Plugins
-      run: |
-        echo "Checking for Qt platform plugins:"
-        find ./dist/main_qt.dist -name "libqxcb.so"
+        echo "Contents of ./dist/eMinuto.dist directory:"
+        ls -l ./dist/eMinuto.dist
 
     - name: Verify Compiled File
       run: |
-        if [ ! -f "./dist/main_qt.dist/eMinuto" ]; then
+        if [ ! -f "./dist/eMinuto.dist/eMinuto" ]; then
           echo "Compiled file not found!"
           exit 1
         else
-          echo "Compiled file found at ./dist/main_qt.dist/eMinuto"
+          echo "Compiled file found at ./dist/eMinuto.dist/eMinuto"
         fi
-
-    - name: Rename Directory
-      run: mv ./dist/main_qt.dist ./dist/eMinuto
 
     - name: Create Archive
       run: |
-        tar -czvf ./dist/eMinuto-${{ env.VERSION }}-linux.tar.gz -C ./dist eMinuto
+        tar -czvf ./dist/eMinuto-${{ env.VERSION }}-linux.tar.gz -C ./dist eMinuto.dist
 
     - name: Check if release exists
       id: check_release
@@ -105,6 +109,9 @@ jobs:
     - name: Set Upload URL for Existing Release
       if: ${{ steps.check_release.outputs.release_id != '' }}
       run: echo "UPLOAD_URL=${{ steps.check_release.outputs.upload_url }}" >> $GITHUB_ENV
+
+    - name: Debug - Final Upload URL
+      run: echo "Final Upload URL: $UPLOAD_URL"
 
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
