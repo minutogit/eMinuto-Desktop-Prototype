@@ -27,7 +27,7 @@ jobs:
 
     - name: Compile with Nuitka
       run: |
-        python3.9 -m nuitka --follow-imports --include-package=cryptography --include-module=mnemonic --include-package=src --enable-plugin=pyside6 --include-data-dir=./src/gui/qt/translation=translation --disable-console --standalone --output-dir=./dist --output-filename=eMinuto main_qt.py --assume-yes-for-downloads
+        python3.9 -m nuitka --follow-imports --include-package=cryptography --include-module=mnemonic --include-package=src --enable-plugin=pyside6 --include-data-dir=./src/gui/qt/translation=src/gui/qt/translation --disable-console --standalone --output-dir=./dist --output-filename=eMinuto main_qt.py --assume-yes-for-downloads
       shell: bash
 
     - name: Debug - List dist directory contents
