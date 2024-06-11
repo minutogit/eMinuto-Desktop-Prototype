@@ -20,7 +20,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y python3.9 python3.9-venv python3.9-dev build-essential libxkbcommon-x11-0
+        sudo apt-get install -y python3.9 python3.9-venv python3.9-dev build-essential libxkbcommon-x11-0 libxrender1 libxtst6 libdbus-1-3 libharfbuzz0b libxcb-xinerama0
         python3.9 -m pip install --upgrade pip
         pip install nuitka PySide6 base58==2.1.1 cryptography==3.4.8 mnemonic==0.21 PySide6==6.6.1 PySide6_Addons==6.6.1 PySide6_Essentials==6.6.1 shiboken6==6.6.1
 
@@ -35,6 +35,11 @@ jobs:
         ls -l ./dist
         echo "Contents of ./dist/main_qt.dist directory:"
         ls -l ./dist/main_qt.dist
+
+    - name: Check for Qt Plugins
+      run: |
+        echo "Checking for Qt platform plugins:"
+        find ./dist/main_qt.dist -name "libqxcb.so"
 
     - name: Verify Compiled File
       run: |
