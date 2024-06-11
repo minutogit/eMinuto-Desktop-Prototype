@@ -1,0 +1,122 @@
+name: Build Linux with Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Get version from file
+      run: echo "VERSION=$(<VERSION)" >> $GITHUB_ENV
+
+    - name: Set up Docker Build
+      run: |
+        echo "Creating Dockerfile"
+        echo "FROM ubuntu:20.04" > Dockerfile
+        echo "ARG DEBIAN_FRONTEND=noninteractive" >> Dockerfile
+        echo "RUN apt-get update" >> Dockerfile
+        echo "RUN apt-get install -y python3.9 python3.9-dev python3-pip" >> Dockerfile
+        echo "RUN apt-get install -y build-essential pkg-config libcairo2-dev libgirepository1.0-dev patchelf" >> Dockerfile
+        echo "RUN apt-get clean && rm -rf /var/lib/apt/lists/*" >> Dockerfile
+        echo "RUN python3.9 -m pip install --upgrade pip" >> Dockerfile
+        echo "RUN python3.9 -m pip install -U nuitka" >> Dockerfile
+        echo "COPY requirements.txt /tmp/requirements.txt" >> Dockerfile
+        echo "RUN python3.9 -m pip install --no-cache-dir -r /tmp/requirements.txt" >> Dockerfile
+        echo "WORKDIR /app" >> Dockerfile
+        echo "COPY . /app" >> Dockerfile
+
+    - name: Build Docker Image
+      run: docker build -t eminuto-build .
+
+    - name: Compile with Nuitka inside Docker
+      run: |
+        docker run -v $(pwd):/app eminuto-build python3.9 -m nuitka --follow-imports --include-package=cryptography --include-module=mnemonic --include-package=src --enable-plugin=pyside6 --disable-console --standalone --output-dir=/app/dist --output-filename=eMinuto /app/main_qt.py --assume-yes-for-downloads
+      shell: bash
+
+    - name: Debug - List dist directory contents
+      run: |
+        echo "Contents of ./dist directory:"
+        ls -l ./dist
+        echo "Contents of ./dist/main_qt.dist directory:"
+        ls -l ./dist/main_qt.dist
+
+    - name: Verify Compiled File
+      run: |
+        if [ ! -f "./dist/main_qt.dist/eMinuto" ]; then
+          echo "Compiled file not found!"
+          exit 1
+        else
+          echo "Compiled file found at ./dist/main_qt.dist/eMinuto"
+        fi
+
+    - name: Create Archive
+      run: |
+        tar -czvf ./dist/eMinuto-${{ env.VERSION }}-linux.tar.gz -C ./dist main_qt.dist
+
+    - name: Check if release exists
+      id: check_release
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const releases = await github.rest.repos.listReleases({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+          });
+          const release = releases.data.find(release => release.tag_name === `v${process.env.VERSION}`);
+          if (release) {
+            core.setOutput('release_id', release.id);
+            core.setOutput('upload_url', release.upload_url);
+          } else {
+            core.setOutput('release_id', '');
+            core.setOutput('upload_url', '');
+          }
+
+    - name: Debug - Check Release Outputs
+      run: |
+        echo "Release ID: ${{ steps.check_release.outputs.release_id }}"
+        echo "Upload URL: ${{ steps.check_release.outputs.upload_url }}"
+
+    - name: Create Release
+      if: ${{ steps.check_release.outputs.release_id == '' }}
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ env.VERSION }}
+        release_name: eMinuto v${{ env.VERSION }}
+        draft: false
+        prerelease: false
+
+    - name: Debug - New Release Outputs
+      if: ${{ steps.check_release.outputs.release_id == '' }}
+      run: |
+        echo "New release created."
+        echo "Upload URL: ${{ steps.create_release.outputs.upload_url }}"
+
+    - name: Set Upload URL for New Release
+      if: ${{ steps.check_release.outputs.release_id == '' }}
+      run: echo "UPLOAD_URL=${{ steps.create_release.outputs.upload_url }}" >> $GITHUB_ENV
+
+    - name: Set Upload URL for Existing Release
+      if: ${{ steps.check_release.outputs.release_id != '' }}
+      run: echo "UPLOAD_URL=${{ steps.check_release.outputs.upload_url }}" >> $GITHUB_ENV
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        UPLOAD_URL: ${{ steps.create_release.outputs.upload_url || steps.check_release.outputs.upload_url }}
+      with:
+        upload_url: ${{ env.UPLOAD_URL }}
+        asset_path: ./dist/eMinuto-${{ env.VERSION }}-linux.tar.gz
+        asset_name: eMinuto-${{ env.VERSION }}-linux.tar.gz
+        asset_content_type: application/gzip
