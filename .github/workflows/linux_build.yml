@@ -22,7 +22,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y python3.9 python3.9-venv python3.9-dev build-essential
         python3.9 -m pip install --upgrade pip
-        pip install nuitka PySide6 base58==2.1.1 cryptography==3.4.8 mnemonic==0.21 PySide6==6.6.1 PySide6_Addons==6.6.1 PySide6_Essentials==6.6.1 shiboken6==6.6.1
+        pip install nuitka PySide6 base58==2.1.1 cryptography==42.0.8 mnemonic==0.21 PySide6==6.6.1 PySide6_Addons==6.6.1 PySide6_Essentials==6.6.1 shiboken6==6.6.1
 
     - name: Compile with Nuitka
       run: |
