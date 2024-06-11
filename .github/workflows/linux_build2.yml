@@ -20,18 +20,25 @@ jobs:
     - name: Set up Docker Build
       run: |
         echo "Creating Dockerfile"
-        echo "FROM ubuntu:20.04" > Dockerfile
-        echo "ARG DEBIAN_FRONTEND=noninteractive" >> Dockerfile
-        echo "RUN apt-get update" >> Dockerfile
-        echo "RUN apt-get install -y python3.9 python3.9-dev python3-pip" >> Dockerfile
-        echo "RUN apt-get install -y build-essential pkg-config libcairo2-dev libgirepository1.0-dev patchelf" >> Dockerfile
-        echo "RUN apt-get clean && rm -rf /var/lib/apt/lists/*" >> Dockerfile
-        echo "RUN python3.9 -m pip install --upgrade pip" >> Dockerfile
-        echo "RUN python3.9 -m pip install -U nuitka" >> Dockerfile
-        echo "COPY requirements.txt /tmp/requirements.txt" >> Dockerfile
-        echo "RUN python3.9 -m pip install --no-cache-dir -r /tmp/requirements.txt" >> Dockerfile
-        echo "WORKDIR /app" >> Dockerfile
-        echo "COPY . /app" >> Dockerfile
+        cat << 'EOF' > Dockerfile
+        FROM ubuntu:20.04
+
+        ARG DEBIAN_FRONTEND=noninteractive
+        RUN apt-get update && \
+            apt-get install -y python3.9 python3.9-dev python3-pip \
+                               build-essential pkg-config libcairo2-dev \
+                               libgirepository1.0-dev patchelf git && \
+            apt-get clean && rm -rf /var/lib/apt/lists/*
+
+        RUN python3.9 -m pip install --upgrade pip && \
+            python3.9 -m pip install -U nuitka
+
+        COPY requirements.txt /tmp/requirements.txt
+        RUN python3.9 -m pip install --no-cache-dir -r /tmp/requirements.txt
+
+        WORKDIR /app
+        COPY . /app
+        EOF
 
     - name: Build Docker Image
       run: docker build -t eminuto-build .
@@ -41,25 +48,33 @@ jobs:
         docker run -v $(pwd):/app eminuto-build python3.9 -m nuitka --follow-imports --include-package=cryptography --include-module=mnemonic --include-package=src --enable-plugin=pyside6 --disable-console --standalone --output-dir=/app/dist --output-filename=eMinuto /app/main_qt.py --assume-yes-for-downloads
       shell: bash
 
-    - name: Debug - List dist directory contents
+    - name: Install linuxdeploy and AppImage tools
       run: |
-        echo "Contents of ./dist directory:"
-        ls -l ./dist
-        echo "Contents of ./dist/main_qt.dist directory:"
-        ls -l ./dist/main_qt.dist
+        sudo apt-get update
+        sudo apt-get install -y wget
+        wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+        chmod +x linuxdeploy*.AppImage
 
-    - name: Verify Compiled File
+    - name: Create AppImage
       run: |
-        if [ ! -f "./dist/main_qt.dist/eMinuto" ]; then
-          echo "Compiled file not found!"
+        mkdir -p appimage/appdir
+        cp -r dist/main_qt.dist/* appimage/appdir/
+        ./linuxdeploy-x86_64.AppImage --appdir=appimage/appdir --output appimage
+
+    - name: Debug - List appimage directory contents
+      run: |
+        echo "Contents of appimage directory:"
+        ls -l appimage
+
+    - name: Verify AppImage
+      run: |
+        if [ ! -f "./appimage/eMinuto*.AppImage" ]; then
+          echo "AppImage file not found!"
           exit 1
         else
-          echo "Compiled file found at ./dist/main_qt.dist/eMinuto"
+          echo "AppImage file found"
         fi
-
-    - name: Create Archive
-      run: |
-        tar -czvf ./dist/eMinuto-${{ env.VERSION }}-linux.tar.gz -C ./dist main_qt.dist
 
     - name: Check if release exists
       id: check_release
@@ -117,6 +132,6 @@ jobs:
         UPLOAD_URL: ${{ steps.create_release.outputs.upload_url || steps.check_release.outputs.upload_url }}
       with:
         upload_url: ${{ env.UPLOAD_URL }}
-        asset_path: ./dist/eMinuto-${{ env.VERSION }}-linux.tar.gz
-        asset_name: eMinuto-${{ env.VERSION }}-linux.tar.gz
-        asset_content_type: application/gzip
+        asset_path: ./appimage/eMinuto*.AppImage
+        asset_name: eMinuto-${{ env.VERSION }}-linux.AppImage
+        asset_content_type: application/octet-stream

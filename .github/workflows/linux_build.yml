@@ -45,9 +45,12 @@ jobs:
           echo "Compiled file found at ./dist/main_qt.dist/eMinuto"
         fi
 
+    - name: Rename Directory
+      run: mv ./dist/main_qt.dist ./dist/eMinuto
+
     - name: Create Archive
       run: |
-        tar -czvf ./dist/eMinuto-${{ env.VERSION }}-linux.tar.gz -C ./dist main_qt.dist
+        tar -czvf ./dist/eMinuto-${{ env.VERSION }}-linux.tar.gz -C ./dist eMinuto
 
     - name: Check if release exists
       id: check_release
