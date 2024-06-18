@@ -575,13 +575,48 @@
     </message>
     <message>
         <location filename="../qt_main.py" line="881"/>
-        <source>Voucher for goods or services worth %s minutes of qualitative performance.</source>
+        <source>Voucher for goods or services worth %s minutes of quality work.</source>
         <translation>Gutschein für Waren oder Dienstleistungen im Wert von %s Minuten qualitativer Leistung.</translation>
+    </message>
+    <message>
+        <source>Voucher for goods or services worth %s minutes of qualitative performance.</source>
+        <translation type="vanished">Gutschein für Waren oder Dienstleistungen im Wert von %s Minuten qualitativer Leistung.</translation>
     </message>
     <message>
         <location filename="../qt_main.py" line="883"/>
         <source>Voucher for goods or services</source>
         <translation>Gutschein für Waren oder Dienstleistungen</translation>
+    </message>
+</context>
+<context>
+    <name>Dialog_Generate_Profile</name>
+    <message>
+        <location filename="../profile_dialogs.py" line="42"/>
+        <location filename="../profile_dialogs.py" line="45"/>
+        <location filename="../profile_dialogs.py" line="48"/>
+        <location filename="../profile_dialogs.py" line="51"/>
+        <source>Error!</source>
+        <translation>Fehler!</translation>
+    </message>
+    <message>
+        <location filename="../profile_dialogs.py" line="42"/>
+        <source>Seed phrases do not match. Please check!</source>
+        <translation>Die Schlüsselwörter stimmen nicht überein. Bitte prüfen!</translation>
+    </message>
+    <message>
+        <location filename="../profile_dialogs.py" line="45"/>
+        <source>Please enter a profile name.</source>
+        <translation>Bitte geben Sie einen Profilnamen ein.</translation>
+    </message>
+    <message>
+        <location filename="../profile_dialogs.py" line="48"/>
+        <source>Passwords do not match.</source>
+        <translation>Die Passwörter stimmen nicht überein.</translation>
+    </message>
+    <message>
+        <location filename="../profile_dialogs.py" line="51"/>
+        <source>Password must be at least 8 characters long.</source>
+        <translation>Das Passwort muss mindestens 8 Zeichen lang sein.</translation>
     </message>
 </context>
 <context>
@@ -600,6 +635,29 @@
         <location filename="../ui_components/dialog_profile_create_selection.ui" line="39"/>
         <source>Restore Old Profile</source>
         <translation>Altes Profil wiederherstellen</translation>
+    </message>
+    <message>
+        <location filename="../profile_dialogs.py" line="155"/>
+        <source>No Profile Found</source>
+        <translation>Kein Profil gefunden</translation>
+    </message>
+</context>
+<context>
+    <name>Dialog_Profile_Login</name>
+    <message>
+        <location filename="../profile_dialogs.py" line="79"/>
+        <source>Incorrect password</source>
+        <translation>Passwort falsch</translation>
+    </message>
+    <message>
+        <location filename="../profile_dialogs.py" line="84"/>
+        <source>Forgot password?</source>
+        <translation>Passwort vergessen?</translation>
+    </message>
+    <message>
+        <location filename="../profile_dialogs.py" line="84"/>
+        <source>Would you like to set a new password?</source>
+        <translation>Möchten Sie ein neues Passwort festlegen?</translation>
     </message>
 </context>
 <context>
@@ -1487,9 +1545,13 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>Frm_Mainwin</name>
     <message>
-        <location filename="../qt_main.py" line="1543"/>
         <source>eMinuto - Profile: %s - ID: %s</source>
-        <translation>eMinuto - Profil: %s - ID: %s</translation>
+        <translation type="vanished">eMinuto - Profil: %s - ID: %s</translation>
+    </message>
+    <message>
+        <location filename="../qt_main.py" line="1543"/>
+        <source>eMinuto v%s - Profile: %s - ID: %s</source>
+        <translation>eMinuto v%s - Profil: %s - ID: %s</translation>
     </message>
     <message>
         <location filename="../qt_main.py" line="1552"/>

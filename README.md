@@ -2,9 +2,9 @@
 
 eMinuto is a free and open-source desktop software for a self-created, decentralized, trust-based digital means of payment, based on the idea of Minuto Cash. For more information about Minuto, visit [minuto.wiki](https://minuto.org/).
 
-eMinuto is Based on Minuto: What is Minuto?
+## eMinuto is Based on Minuto-Cash: What is Minuto-Cash?
 
-Minuto is a service-based currency (vouchers backed by labor time), where 60 Minuto equals a voucher for goods and services worth 60 minutes of quality work. Creators issue vouchers additionally secured by a male and female guarantor.
+Minuto-Cash is a service-based currency (vouchers backed by labor time), where 60 Minuto equals a voucher for goods and services worth 60 minutes of quality work. Creators issue vouchers additionally secured by a male and female guarantor.
 
 ### Key Features of Minuto
 

@@ -37,22 +37,22 @@ class Dialog_Generate_Profile(QMainWindow, Ui_DialogGenerateProfile):
         first_name = self.lineEdit_first_name.text().strip()
         last_name = self.lineEdit_last_name.text().strip()
 
-        #check conditions
+        # Check conditions
         if not seed == retyped_seed.strip():
-            show_message_box("Fehler!", "Schlüsselwörter stimmen nicht überein. Bitte prüfen!")
+            show_message_box(self.tr("Error!"), self.tr("Seed phrases do not match. Please check!"))
             return
-        if profile_name.replace(" ","") == "":
-            show_message_box("Fehler!", "Bitte Profilnamen eingeben.")
+        if profile_name.replace(" ", "") == "":
+            show_message_box(self.tr("Error!"), self.tr("Please enter a profile name."))
             return
         if password != password_confirmed:
-            show_message_box("Fehler!", "Passwörter stimmen nicht überein.")
+            show_message_box(self.tr("Error!"), self.tr("Passwords do not match."))
             return
         if not is_password_valid(password) and not config.TEST_MODE:
-            show_message_box("Fehler!", "Passwort muss mindestens 8 Zeichen haben.")
+            show_message_box(self.tr("Error!"), self.tr("Password must be at least 8 characters long."))
             return
 
         user_profile.create_new_profile(profile_name, first_name, last_name, organization, seed, password)
-        self.profileCreated.emit() # emit signal
+        self.profileCreated.emit()  # Emit signal
         self.close()
 
 class Dialog_Profile_Login(QMainWindow, Ui_DialogProfileLogin):
@@ -75,13 +75,13 @@ class Dialog_Profile_Login(QMainWindow, Ui_DialogProfileLogin):
     def check_password(self):
         password = self.lineEdit_entered_password.text()
         if not user_profile.init_existing_profile(password):
-            self.failed_attempts += 1  # Fehlgeschlagene Versuche erhöhen
-            self.label_status.setText("Passwort falsch")
+            self.failed_attempts += 1  # Increase failed attempts
+            self.label_status.setText(self.tr("Incorrect password"))
             self.lineEdit_entered_password.clear()
             self.lineEdit_entered_password.setFocus()
 
             if self.failed_attempts % 3 == 0:
-                if show_yes_no_box("Passwort vergessen?", "Soll ein neues Passwort gesetzt werden?"):
+                if show_yes_no_box(self.tr("Forgot password?"), self.tr("Would you like to set a new password?")):
                     self.label_status.setText("")
                     self.overwritePassword.emit()
                     self.close()
@@ -89,7 +89,7 @@ class Dialog_Profile_Login(QMainWindow, Ui_DialogProfileLogin):
 
         self.failed_attempts = 0
         self.lineEdit_entered_password.clear()
-        self.profileLogin.emit()  # Signal senden
+        self.profileLogin.emit()  # Emit signal
         self.close()
 
     def login(self):
@@ -152,7 +152,7 @@ class Dialog_Profile_Create_Selection(QMainWindow, Ui_Dialog_Profile_Create_Sele
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.setWindowTitle("Kein Profil gefunden")
+        self.setWindowTitle(self.tr("No Profile Found"))
 
         self.pushButton_create_new_profile.clicked.connect(self.generate_new_profile)
         self.pushButton_restore_exisitin_profile.clicked.connect(self.restore_profile)

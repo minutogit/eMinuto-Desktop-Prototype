@@ -878,7 +878,7 @@ class Dialog_Create_Minuto(QMainWindow, Ui_DialogCreateMinuto):
         """Update the voucher description based on the amount."""
         if amount:
             self.label_voucher_description.setText(
-                self.tr("Voucher for goods or services worth %s minutes of qualitative performance.") % amount)
+                self.tr("Voucher for goods or services worth %s minutes of quality work.") % amount)
         else:
             self.label_voucher_description.setText(self.tr("Voucher for goods or services"))
 

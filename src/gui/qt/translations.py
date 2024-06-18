@@ -40,7 +40,8 @@ if __name__ == "__main__":
 
     # Define any additional files to be included
     additional_files = [
-        'src/gui/qt/qt_main.py'
+        'src/gui/qt/qt_main.py',
+        'src/gui/qt/profile_dialogs.py'
     ]
 
     # Ensure the output directory exists
