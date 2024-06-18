@@ -54,7 +54,7 @@ Download the latest release, unzip, make `eMinuto` executable, and start it. If 
 
 ## Contact
 
-[hello@eminuto.org](mailto:hello@eminuto.org) (protected from spam)
+hello (at) eminuto (dot) org
 
 ## Future Development
 
