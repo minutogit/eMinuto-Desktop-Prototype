@@ -1504,12 +1504,8 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
                     with open(dest_qm_file, 'wb') as dst_file:
                         dst_file.write(src_file.read())
 
-        # Restart the application
-        self.restart_application()
+        show_message_box(self.tr("Notice"), self.tr("Please restart the application to apply the new language settings."))
 
-    def restart_application(self):
-        QCoreApplication.quit()
-        os.execl(sys.executable, sys.executable, *sys.argv)
 
     def closeEvent(self, event):
         # Close all windows on close of main win

@@ -1549,17 +1549,27 @@ p, li { white-space: pre-wrap; }
         <translation type="vanished">eMinuto - Profil: %s - ID: %s</translation>
     </message>
     <message>
-        <location filename="../qt_main.py" line="1543"/>
+        <location filename="../qt_main.py" line="1507"/>
+        <source>Notice</source>
+        <translation>Hinweis</translation>
+    </message>
+    <message>
+        <location filename="../qt_main.py" line="1507"/>
+        <source>Please restart the application to apply the new language settings.</source>
+        <translation>Bitte starten Sie die Anwendung neu, damit die neuen Spracheinstellungen übernommen werden.</translation>
+    </message>
+    <message>
+        <location filename="../qt_main.py" line="1539"/>
         <source>eMinuto v%s - Profile: %s - ID: %s</source>
         <translation>eMinuto v%s - Profil: %s - ID: %s</translation>
     </message>
     <message>
-        <location filename="../qt_main.py" line="1552"/>
+        <location filename="../qt_main.py" line="1548"/>
         <source>Successfully logged in.</source>
         <translation>Erfolgreich eingeloggt.</translation>
     </message>
     <message>
-        <location filename="../qt_main.py" line="1558"/>
+        <location filename="../qt_main.py" line="1554"/>
         <source>Successfully logged out.</source>
         <translation>Erfolgreich ausgeloggt.</translation>
     </message>
