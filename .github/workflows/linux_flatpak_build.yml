@@ -15,7 +15,8 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Get version from file
-      run: echo "VERSION=$(<VERSION)" >> $GITHUB_ENV
+      run: |
+        echo "VERSION=$(<VERSION)" >> $GITHUB_ENV
 
     - name: Install Dependencies
       run: |
@@ -60,7 +61,7 @@ jobs:
 
     - name: Create Flatpak Manifest
       run: |
-        cat <<EOF > flatpak-build-context/eMinuto.json
+        cat <<EOF > eMinuto.json
         {
           "id": "com.example.eMinuto",
           "runtime": "org.freedesktop.Platform",
@@ -72,15 +73,12 @@ jobs:
               "name": "eMinuto",
               "buildsystem": "simple",
               "build-commands": [
-                "mkdir -p /app/bin",
-                "ls -l /app/bin",
-                "cp -rv flatpak-build-context/dist/main_qt.dist/* /app/bin/",
-                "ls -l /app/bin"
+                "cp -a ./eMinuto /app/bin/eMinuto"
               ],
               "sources": [
                 {
                   "type": "dir",
-                  "path": "flatpak-build-context/dist/main_qt.dist"
+                  "path": "./dist/eMinuto"
                 }
               ]
             }
@@ -88,25 +86,15 @@ jobs:
         }
         EOF
 
-    - name: Debug - Display Flatpak Manifest
-      run: cat flatpak-build-context/eMinuto.json
-
     - name: Build Flatpak
       run: |
-        echo "Starting Flatpak build..."
-        flatpak-builder --force-clean --repo=repo flatpak-build-context flatpak-build-context/eMinuto.json
-        echo "Flatpak build finished."
-
-    - name: Debug - List flatpak-build-context contents
-      run: |
-        echo "Contents of flatpak-build-context:"
-        ls -l flatpak-build-context
+        cd ${GITHUB_WORKSPACE}
+        flatpak-builder --force-clean --repo=repo build-dir ${GITHUB_WORKSPACE}/eMinuto.json
 
     - name: Create Flatpak Bundle
       run: |
-        echo "Creating Flatpak bundle..."
+        cd ${GITHUB_WORKSPACE}
         flatpak build-bundle repo eMinuto-${{ env.VERSION }}.flatpak com.example.eMinuto
-        echo "Flatpak bundle created."
 
     - name: Check if release exists
       id: check_release
@@ -161,7 +149,7 @@ jobs:
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        UPLOAD_URL: ${{ steps.create_release.outputs.upload_url || steps.check_release.outputs.upload_url }}
+        UPLOAD_URL: ${{ env.UPLOAD_URL }}
       with:
         upload_url: ${{ env.UPLOAD_URL }}
         asset_path: ./eMinuto-${{ env.VERSION }}.flatpak
