@@ -1411,6 +1411,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
 
+        self.language_actions = {}  # Dictionary to store language actions
         # Initialize language menu
         self.create_language_menu()
 
@@ -1463,6 +1464,7 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
         default_action = QAction(DEFAULT_LANG, self, checkable=True)
         default_action.triggered.connect(functools.partial(self.change_language, DEFAULT_LANG))
         language_menu.addAction(default_action)
+        self.language_actions[DEFAULT_LANG] = default_action
 
         current_language = None
         if os.path.exists(os.path.join(MAIN_DIR, 'mdata')):
@@ -1479,10 +1481,19 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
             action = QAction(full_language_name, self, checkable=True)
             action.triggered.connect(functools.partial(self.change_language, lang_code))
             language_menu.addAction(action)
+            self.language_actions[lang_code] = action
             if current_language and lang_code == current_language:
                 action.setChecked(True)
 
     def change_language(self, lang_code, checked=True):
+        if not checked:
+            return
+
+        # Uncheck all other language actions
+        for code, action in self.language_actions.items():
+            if code != lang_code:
+                action.setChecked(False)
+
         qm_file_path = os.path.join(TRANSLATION_DIR, f"{lang_code}.qm")
         dest_qm_dir = os.path.join(MAIN_DIR, 'mdata')
         os.makedirs(dest_qm_dir, exist_ok=True)
@@ -1504,8 +1515,8 @@ class Frm_Mainwin(QMainWindow, Ui_MainWindow):
                     with open(dest_qm_file, 'wb') as dst_file:
                         dst_file.write(src_file.read())
 
-        show_message_box(self.tr("Notice"), self.tr("Please restart the application to apply the new language settings."))
-
+        show_message_box(self.tr("Notice"),
+                         self.tr("Please restart the application to apply the new language settings."))
 
     def closeEvent(self, event):
         # Close all windows on close of main win
