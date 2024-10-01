@@ -1,7 +1,10 @@
-name: Build Linux with Release
+name: Create XPI and Release
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'   # Startet den Workflow bei neuen Versionstags
+  workflow_dispatch:  # Ermöglicht das manuelle Starten des Workflows
 
 permissions:
   contents: write
@@ -9,49 +12,42 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Check out the repository
+      uses: actions/checkout@v3
 
-    - name: Get version from file
-      run: echo "VERSION=$(<VERSION)" >> $GITHUB_ENV
-
-    - name: Install Dependencies
+    - name: Extract version from manifest.json
+      id: get_version
       run: |
-        sudo apt-get update
-        sudo apt-get install -y python3.9 python3.9-venv python3.9-dev build-essential
-        python3.9 -m pip install --upgrade pip
-        # Nuitka 1.9.7 is required as versions after 1.9 have changed behavior regarding the inclusion of libraries, leading to missing xcb components.
-        pip install nuitka==1.9.7 PySide6 base58==2.1.1 cryptography==42.0.8 mnemonic==0.21 PySide6==6.6.1 PySide6_Addons==6.6.1 PySide6_Essentials==6.6.1 shiboken6==6.6.1
+        VERSION=$(grep '"version"' src/manifest.json | sed -E 's/.*"version": "([^"]+)".*/\1/')
+        echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
-    - name: Compile with Nuitka
+    - name: Build XPI
       run: |
-        python3.9 -m nuitka --follow-imports --include-package=cryptography --include-module=mnemonic --include-package=src --enable-plugin=pyside6 --include-data-dir=./src/gui/qt/translation=src/gui/qt/translation --disable-console --standalone --output-dir=./dist --output-filename=eMinuto main_qt.py --assume-yes-for-downloads
-      shell: bash
+        mkdir -p build/PrioMailbox
+        rsync -av --exclude="assets" --exclude=".*" --exclude="*.sh" ./src/ build/PrioMailbox/
+        sed -i 's/"name": "[^"]*"/"name": "PrioMailbox"/' build/PrioMailbox/manifest.json
+        cd build/PrioMailbox
+        zip -r ../PrioMailbox_v${VERSION}.xpi . -x ".*" "*.sh" "assets/*"
+        cd ../..
 
-    - name: Debug - List dist directory contents
+    - name: Debug - List build directory contents
       run: |
-        echo "Contents of ./dist directory:"
-        ls -l ./dist
-        echo "Contents of ./dist/main_qt.dist directory:"
-        ls -l ./dist/main_qt.dist
+        echo "Contents of build directory:"
+        ls -l ./build
+        echo "Contents of PrioMailbox directory:"
+        ls -l ./build/PrioMailbox
 
-    - name: Verify Compiled File
+    - name: Verify XPI File
       run: |
-        if [ ! -f "./dist/main_qt.dist/eMinuto" ]; then
-          echo "Compiled file not found!"
+        if [ ! -f "./build/PrioMailbox_v${VERSION}.xpi" ]; then
+          echo "XPI file not found!"
           exit 1
         else
-          echo "Compiled file found at ./dist/main_qt.dist/eMinuto"
+          echo "XPI file found at ./build/PrioMailbox_v${VERSION}.xpi"
         fi
-
-    - name: Rename Directory
-      run: mv ./dist/main_qt.dist ./dist/eMinuto
-
-    - name: Create Archive
-      run: |
-        tar -czvf ./dist/eMinuto-${{ env.VERSION }}-linux.tar.gz -C ./dist eMinuto
 
     - name: Check if release exists
       id: check_release
@@ -84,7 +80,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v${{ env.VERSION }}
-        release_name: eMinuto v${{ env.VERSION }}
+        release_name: "PrioMailbox v${{ env.VERSION }}"
         draft: false
         prerelease: false
 
@@ -102,13 +98,12 @@ jobs:
       if: ${{ steps.check_release.outputs.release_id != '' }}
       run: echo "UPLOAD_URL=${{ steps.check_release.outputs.upload_url }}" >> $GITHUB_ENV
 
-    - name: Upload Release Asset
+    - name: Upload XPI to Release
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        UPLOAD_URL: ${{ steps.create_release.outputs.upload_url || steps.check_release.outputs.upload_url }}
       with:
         upload_url: ${{ env.UPLOAD_URL }}
-        asset_path: ./dist/eMinuto-${{ env.VERSION }}-linux.tar.gz
-        asset_name: eMinuto-${{ env.VERSION }}-linux.tar.gz
-        asset_content_type: application/gzip
+        asset_path: ./build/PrioMailbox_v${{ env.VERSION }}.xpi
+        asset_name: PrioMailbox_v${{ env.VERSION }}.xpi
+        asset_content_type: application/x-xpinstall
