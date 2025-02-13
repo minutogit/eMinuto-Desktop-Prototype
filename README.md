@@ -22,7 +22,9 @@ Unlike cryptocurrencies often used for speculation, eMinuto is designed solely a
 
 ## How it works
 
-The eMinuto prototype uses text files that contain a transaction list (= a mini blockchain). Instead of anonymous addresses, known user IDs are used. These text files are digitally signed by the creator and guarantors using their user IDs.
+The eMinuto prototype uses a new method for creating, managing and exchanging decentralized, trust-based, electronic vouchers, see [this whitepaper](Link zum Repo https://github.com/minutogit/decentralized-voucher-payment-system).
+
+Instead of traditional anonymous addresses, eMinuto relies on text files that function as transaction logs (a mini blockchain), where known user IDs replace pseudonymous identifiers. These files are digitally signed by their creator and guarantors to ensure authenticity.
 
 eMinuto files can be sent to other users, with digital signatures in the transaction list confirming ownership. A global blockchain is unnecessary (serverless).
 
